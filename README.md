@@ -12,6 +12,8 @@ Script normalizes and cleans up a number of issues, so far mostly for Pashto, Fa
 * norm-punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
+This script is still very much work in progress. Ulf plans to port more normalization/cleaning code from Perl into *norm_clean_text.py*.
+
 ### wildebeest
 
 Script searches a tokenized text for a range of potential problems,
