@@ -8,10 +8,10 @@ Examples:
   norm_clean_text.py --lc fas -i 3S-dev-ssplit.src.tok -o 3S-dev-ssplit.src.clean2.tok
   norm_clean_text.py --lc fas --verbose --skip digit,norm-punct < 3S-dev-ssplit.src.tok > 3S-dev-ssplit.src.clean1.tok
 List of available normalization/cleaning-types (default: all are applied):
- * windows-1252 (maps characters encoded in Windows-1252 to UTF8)
+ * repair-windows-1252 (maps characters encoded in Windows-1252 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
         alternative/backup to windows-1252)
- * del-ctrl-char (deletes control characters (expect tab and linefeed, zero-width characters, byte order mark,
+ * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark,
         directional marks, join marks, variation selectors, Arabic tatweel)
  * farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
  * pres-form-norm (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
@@ -44,7 +44,7 @@ def reg_surrogate_to_utf8(match: Match[str]) -> str:
     return chr(ord(s[0]) - 0xDC00)
 
 
-def windows1252_to_utf8(s: str, undef_default: str = '') -> str:
+def repair_windows1252(s: str, undef_default: str = '') -> str:
     """Interpret non-UTF8 characters (read in as surrogate characters \uDC80-\uDCFF]) as Windows 1252 characters."""
     if re.search(r"[\uDC80-\uDCFF]", s):
         if re.search(r"[\uDC80-\uDC9F]", s):
@@ -497,7 +497,7 @@ def norm_clean_string(s: str, ht: dict, lang_code='') -> str:
     number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
     ht['NUMBER-OF-LINES'] = number_of_lines
     orig_s = s
-    s = norm_clean_string_group(s, ht, 'windows-1252', windows1252_to_utf8)
+    s = norm_clean_string_group(s, ht, 'repair-windows-1252', repair_windows1252)
     s = norm_clean_string_group(s, ht, 'del-surrogate', delete_surrogates)  # alternative/backup to windows-1252
     s = norm_clean_string_group(s, ht, 'del-ctrl-char', delete_control_characters)
     s = norm_clean_string_group(s, ht, 'del-diacr', delete_arabic_diacritics)
