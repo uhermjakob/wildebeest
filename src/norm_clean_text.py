@@ -25,12 +25,59 @@ import logging as log
 import re
 import sys
 import unicodedata as ud
-from typing import Callable, TextIO
+from typing import Callable, Match, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4'
-last_mod_date = 'September 18, 2020'
+__version__ = '0.4.2'
+last_mod_date = 'September 21, 2020'
+
+
+def reg_surrogate_to_utf8(match: Match[str]) -> str:
+    # Map surrogate character (U+DCA0 - U+DCFF) to Latin+ characters
+    s = match.group()
+    return chr(ord(s[0]) - 0xDC00)
+
+
+def windows1252_to_utf8(s: str, undef_default: str = '') -> str:
+    """Interpret non-UTF8 characters (read in as surrogate characters \uDC80-\uDCFF]) as Windows 1252 characters."""
+    if re.search(r"[\uDC80-\uDCFF]", s):
+        if re.search(r"[\uDC80-\uDC9F]", s):
+            s = s.replace('\uDC80', '\u20AC')  # Euro Sign
+            s = s.replace('\uDC82', '\u201A')  # Single Low-9 Quotation Mark
+            s = s.replace('\uDC83', '\u0192')  # Latin Small Letter F With Hook
+            s = s.replace('\uDC84', '\u201E')  # Double Low-9 Quotation Mark
+            s = s.replace('\uDC85', '\u2026')  # Horizontal Ellipsis
+            s = s.replace('\uDC86', '\u2020')  # Dagger
+            s = s.replace('\uDC87', '\u2021')  # Double Dagger
+            s = s.replace('\uDC88', '\u02C6')  # Modifier Letter Circumflex Accent
+            s = s.replace('\uDC89', '\u2030')  # Per Mille Sign
+            s = s.replace('\uDC8A', '\u0160')  # Latin Capital Letter S With Caron
+            s = s.replace('\uDC8B', '\u2039')  # Single Left-Pointing Angle Quotation Mark
+            s = s.replace('\uDC8C', '\u0152')  # Latin Capital Ligature OE
+            s = s.replace('\uDC8E', '\u017D')  # Latin Capital Letter Z With Caron
+            s = s.replace('\uDC91', '\u2018')  # Left Single Quotation Mark
+            s = s.replace('\uDC92', '\u2019')  # Right Single Quotation Mark
+            s = s.replace('\uDC93', '\u201C')  # Left Double Quotation Mark
+            s = s.replace('\uDC94', '\u201D')  # Right Double Quotation Mark
+            s = s.replace('\uDC95', '\u2022')  # Bullet
+            s = s.replace('\uDC96', '\u2013')  # En Dash
+            s = s.replace('\uDC97', '\u2014')  # Em Dash
+            s = s.replace('\uDC98', '\u02DC')  # Small Tilde
+            s = s.replace('\uDC99', '\u2122')  # Trade Mark Sign
+            s = s.replace('\uDC9A', '\u0161')  # Latin Small Letter S With Caron
+            s = s.replace('\uDC9B', '\u203A')  # Single Right-Pointing Angle Quotation Mark
+            s = s.replace('\uDC9C', '\u0153')  # Latin Small Ligature OE
+            s = s.replace('\uDC9E', '\u017E')  # Latin Small Letter Z With Caron
+            s = s.replace('\uDC9F', '\u0178')  # Latin Capital Letter Y With Diaeresis
+            s = re.sub(r'[\uDC80-\uDC9F]', undef_default, s)  # for undefined Windows 1252 codepoints (81,8D,8F,90,9D)
+        s = re.sub(r'[\uDCA0-\uDCFF]', reg_surrogate_to_utf8, s)
+    return s
+
+
+def delete_surrogates(s: str, default: str = '') -> str:
+    """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters \uDC80-\uDCFF])."""
+    return re.sub(r"[\uDC80-\uDCFF]", default, s)
 
 
 def delete_arabic_diacritics(s: str) -> str:
@@ -428,6 +475,8 @@ def norm_clean_string(s: str, ht: dict, lang_code='') -> str:
     number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
     ht['NUMBER-OF-LINES'] = number_of_lines
     orig_s = s
+    s = norm_clean_string_group(s, ht, 'windows-1252', windows1252_to_utf8)
+    s = norm_clean_string_group(s, ht, 'del-surrogate', delete_surrogates)  # alternative/backup to windows-1252
     s = norm_clean_string_group(s, ht, 'del-diacr', delete_arabic_diacritics)
     s = norm_clean_string_group(s, ht, 'pres-form-norm', normalize_arabic_pres_form_characters)
     s = norm_clean_string_group(s, ht, 'indic-diacr', normalize_indic_diacritics)
@@ -504,7 +553,7 @@ def main(argv):
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
-    parser.add_argument('-i', '--input', type=argparse.FileType('r', encoding='utf-8', errors='ignore'),
+    parser.add_argument('-i', '--input', type=argparse.FileType('r', encoding='utf-8', errors='surrogateescape'),
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=sys.stdout, metavar='OUTPUT-FILENAME', help='(default: STDOUT)')
