@@ -8,6 +8,11 @@ Examples:
   norm_clean_text.py --lc fas -i 3S-dev-ssplit.src.tok -o 3S-dev-ssplit.src.clean2.tok
   norm_clean_text.py --lc fas --verbose --skip digit,norm-punct < 3S-dev-ssplit.src.tok > 3S-dev-ssplit.src.clean1.tok
 List of available normalization/cleaning-types (default: all are applied):
+ * windows-1252 (maps characters encoded in Windows-1252 to UTF8)
+ * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
+        alternative/backup to windows-1252)
+ * del-ctrl-char (deletes control characters (expect tab and linefeed, zero-width characters, byte order mark,
+        directional marks, join marks, variation selectors, Arabic tatweel)
  * farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
  * pres-form-norm (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ring-char-norm (e.g. maps ring-characters that are common in Pashto to non-ring characters)
@@ -77,6 +82,18 @@ def windows1252_to_utf8(s: str, undef_default: str = '') -> str:
             s = s.replace('\uDC9F', '\u0178')  # Latin Capital Letter Y With Diaeresis
             s = re.sub(r'[\uDC80-\uDC9F]', undef_default, s)  # for undefined Windows 1252 codepoints (81,8D,8F,90,9D)
         s = re.sub(r'[\uDCA0-\uDCFF]', reg_surrogate_to_utf8, s)
+    return s
+
+
+def delete_control_characters(s: str) -> str:
+    """Deletes control chacters (except tab and linefeed), zero-width characters, byte order mark,
+       directional marks, join marks, variation selectors, Arabic tatweel"""
+    s = re.sub(r'[\u0000-\u0008\u000B-\u001F\u007F-\u009F]', '', s)  # control characters (except tab x9, linefeed xA)
+    s = s.replace('\u0640', '')                       # Arabic tatweel
+    s = re.sub(r'[\u200B-\u200F]', '', s)             # zero width space/non-joiner/joiner, direction marks
+    s = re.sub(r'[\uFE00-\uFE0F]', '', s)             # variation selectors 1-16
+    s = s.replace('\uFEFF', '')                       # byte order mark, zero width no-break space
+    s = re.sub(r'[\U000E0100-\U000E01EF]', '', s)     # variation selectors 17-256
     return s
 
 
@@ -482,6 +499,7 @@ def norm_clean_string(s: str, ht: dict, lang_code='') -> str:
     orig_s = s
     s = norm_clean_string_group(s, ht, 'windows-1252', windows1252_to_utf8)
     s = norm_clean_string_group(s, ht, 'del-surrogate', delete_surrogates)  # alternative/backup to windows-1252
+    s = norm_clean_string_group(s, ht, 'del-ctrl-char', delete_control_characters)
     s = norm_clean_string_group(s, ht, 'del-diacr', delete_arabic_diacritics)
     s = norm_clean_string_group(s, ht, 'pres-form-norm', normalize_arabic_pres_form_characters)
     s = norm_clean_string_group(s, ht, 'indic-diacr', normalize_indic_diacritics)
