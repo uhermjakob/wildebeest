@@ -34,7 +34,7 @@ last_mod_date = 'September 21, 2020'
 
 
 def reg_surrogate_to_utf8(match: Match[str]) -> str:
-    # Map surrogate character (U+DCA0 - U+DCFF) to Latin+ characters
+    # Map surrogate character (U+DCA0 - U+DCFF) to Latin+ characters (U+00A0-U+00FF)
     s = match.group()
     return chr(ord(s[0]) - 0xDC00)
 
@@ -44,6 +44,7 @@ def windows1252_to_utf8(s: str, undef_default: str = '') -> str:
     if re.search(r"[\uDC80-\uDCFF]", s):
         if re.search(r"[\uDC80-\uDC9F]", s):
             s = s.replace('\uDC80', '\u20AC')  # Euro Sign
+            # \81 unassigned in Windows-1252
             s = s.replace('\uDC82', '\u201A')  # Single Low-9 Quotation Mark
             s = s.replace('\uDC83', '\u0192')  # Latin Small Letter F With Hook
             s = s.replace('\uDC84', '\u201E')  # Double Low-9 Quotation Mark
@@ -55,7 +56,10 @@ def windows1252_to_utf8(s: str, undef_default: str = '') -> str:
             s = s.replace('\uDC8A', '\u0160')  # Latin Capital Letter S With Caron
             s = s.replace('\uDC8B', '\u2039')  # Single Left-Pointing Angle Quotation Mark
             s = s.replace('\uDC8C', '\u0152')  # Latin Capital Ligature OE
+            # \8D unassigned in Windows-1252
             s = s.replace('\uDC8E', '\u017D')  # Latin Capital Letter Z With Caron
+            # \8F unassigned in Windows-1252
+            # \90 unassigned in Windows-1252
             s = s.replace('\uDC91', '\u2018')  # Left Single Quotation Mark
             s = s.replace('\uDC92', '\u2019')  # Right Single Quotation Mark
             s = s.replace('\uDC93', '\u201C')  # Left Double Quotation Mark
@@ -68,6 +72,7 @@ def windows1252_to_utf8(s: str, undef_default: str = '') -> str:
             s = s.replace('\uDC9A', '\u0161')  # Latin Small Letter S With Caron
             s = s.replace('\uDC9B', '\u203A')  # Single Right-Pointing Angle Quotation Mark
             s = s.replace('\uDC9C', '\u0153')  # Latin Small Ligature OE
+            # \9D unassigned in Windows-1252
             s = s.replace('\uDC9E', '\u017E')  # Latin Small Letter Z With Caron
             s = s.replace('\uDC9F', '\u0178')  # Latin Capital Letter Y With Diaeresis
             s = re.sub(r'[\uDC80-\uDC9F]', undef_default, s)  # for undefined Windows 1252 codepoints (81,8D,8F,90,9D)
