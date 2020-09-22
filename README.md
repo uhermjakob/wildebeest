@@ -3,6 +3,9 @@
 ### norm_clean_text.py
 
 Script normalizes and cleans up a number of issues, so far mostly for Pashto, Farsi, Devanagari.
+* windows-1252 (character repair: maps characters encoded in Windows-1252 to UTF8)
+* del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
+* del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
 * farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
 * pres-form-norm (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
 * ring-char-norm (e.g. maps ring-characters that are common in Pashto to non-ring characters)
