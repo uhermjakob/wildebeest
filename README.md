@@ -1,9 +1,27 @@
 # wildebeest
 
-### wildebeest.py
+## wildebeest.py
 
-Script normalizes and cleans up a number of issues, with some modules specific to Pashto, Farsi, Devanagari.
-* repair-windows-1252 (character repair: maps characters encoded in Windows-1252 to UTF8)
+Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
+punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
+A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
+The script contains a list of normalization modules as listed below. The script argument --skip allows users to specify
+any normalization modules they want to skip.
+
+# repair-encodings-errors
+The script generally expects input encoded in UTF8. However, it will recognize and repair some common text encoding
+errors.
+* (Some) text is still encoded in Windows1252 or Latin1. Any byte that is not part of a well-formed UTF8 character will
+ be interpreted as a Windows1252 character (and mapped to UTF8). This will also handle Latin1 characters.
+* Text in Windows1252 was incorrectly converted to UTF8 by a Latin1-to-UTF8 converter. This maps Windows1252 characters
+ \x80-\x9F to \u0080-\uu009F, which is the Unicode block of C1 control characters. These C1 control characters are
+ extremely rare, and so our script will interpret such C1 control characters as ill-converted Windows1252 characters,
+ as do many major software standards such as Google Chrome, Microsoft Outlook, Github and PyCharm (often displayed
+ in a slightly different form).
+* Text in Windows1252 or Latin1 was converted twice, using some combination of Latin1-to-UTF8 converter and
+ Windows1252-to-UTF converter; or a file already in UTF8 was incorrectly subjected to another conversion.
+
+# Other normalization modules
 * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
 * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
 * farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
