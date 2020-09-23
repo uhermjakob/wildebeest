@@ -1,6 +1,6 @@
 """
 Written by Ulf Hermjakob, USC/ISI
-Pytest for norm_clean_text.py
+Pytest for wildebeest.py
 """
 # -*- encoding: utf-8 -*-
 import norm_clean_text as nc

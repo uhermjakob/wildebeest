@@ -30,7 +30,7 @@ $long_token_min = 20;
 *SUMMARY = *STDOUT;
 
 sub print_version {
-   print STDERR "Script wildebeest.pl\n";
+   print STDERR "Script wildebeest_analysis.pl\n";
    print STDERR "   Version 2.3 (September 18, 2020)\n";
    print STDERR "   Author: Ulf Hermjakob - USC Information Sciences Institute\n";
    print STDERR "   Status: Checks for UNSPLIT_PUNCT still rudimentary.\n";
@@ -48,7 +48,7 @@ Purpose: Script searches a tokenized text for a range of potential problems,
    XML tokens.
    It will report the number of instances in each category and give examples.
 
-Usage: wildebeest.pl [-options] < text.tok
+Usage: wildebeest_analysis.pl [-options] < text.tok
    Input: (tokenized) plain text, from STDIN
       Expected encoding: UTF-8
    Output: analysis of input text, to STDOUT
@@ -868,7 +868,7 @@ print STDERR "Analysed $total_n_tokens tokens (thereof $n_fast_track_tokens fast
 
 # write out analysis
 $lang_code_clause = ($lang_code) ? " (language code: $lang_code)" : "";
-print SUMMARY "Encoding, script, and tokenization analysis (wildebeest.pl):\n";
+print SUMMARY "Encoding, script, and tokenization analysis (wildebeest_analysis.pl):\n";
 print SUMMARY "Analysed $total_n_tokens tokens in $line_number lines$lang_code_clause\n";
 $consider_skipping_next_blank_line_p = 0;
 foreach $descr_tag (@descr_tags) {

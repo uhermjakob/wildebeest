@@ -1,8 +1,8 @@
-# norm-clean-text
+# wildebeest
 
-### norm_clean_text.py
+### wildebeest.py
 
-Script normalizes and cleans up a number of issues, so far mostly for Pashto, Farsi, Devanagari.
+Script normalizes and cleans up a number of issues, with some modules specific to Pashto, Farsi, Devanagari.
 * repair-windows-1252 (character repair: maps characters encoded in Windows-1252 to UTF8)
 * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
 * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
@@ -15,9 +15,9 @@ Script normalizes and cleans up a number of issues, so far mostly for Pashto, Fa
 * norm-punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
-This script is still very much work in progress. Ulf plans to port more normalization/cleaning code from Perl into *norm_clean_text.py*.
+This script is still work in progress.
 
-### wildebeest
+### wildebeest_analysis
 
 Script searches a tokenized text for a range of potential problems,
 such as UTF-8 encoding violations, control characters, non-ASCII punctuation,
@@ -27,5 +27,5 @@ XML tokens.
 
 It will report the number of instances in each category and give examples.
 
-Currently available: wildebeest.pl (Perl) v2.3 (September 18, 2020)
+Currently available: wildebeest_analysis.pl (Perl) v2.3 (September 18, 2020)
 
