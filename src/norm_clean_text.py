@@ -8,7 +8,7 @@ Examples:
   norm_clean_text.py --lc fas -i 3S-dev-ssplit.src.tok -o 3S-dev-ssplit.src.clean2.tok
   norm_clean_text.py --lc fas --verbose --skip digit,norm-punct < 3S-dev-ssplit.src.tok > 3S-dev-ssplit.src.clean1.tok
 List of available normalization/cleaning-types (default: all are applied):
- * repair-windows-1252 (maps characters encoded in Windows-1252 to UTF8)
+ * repair-encodings-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
         alternative/backup to windows-1252)
  * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark,
@@ -30,7 +30,7 @@ import logging as log
 import re
 import sys
 import unicodedata as ud
-from typing import Callable, Match, TextIO
+from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
@@ -38,51 +38,134 @@ __version__ = '0.4.2'
 last_mod_date = 'September 21, 2020'
 
 
-def reg_surrogate_to_utf8(match: Match[str]) -> str:
-    # Map surrogate character (U+DCA0 - U+DCFF) to Latin+ characters (U+00A0-U+00FF)
+# This dictionary captures the irregular mappings from Windows1252 to UTF8.
+spec_windows1252_to_utf8_dict = {
+    '\x80': '\u20AC',  # Euro Sign
+    #  81 is unassigned in Windows-1252
+    '\x82': '\u201A',  # Single Low-9 Quotation Mark
+    '\x83': '\u0192',  # Latin Small Letter F With Hook
+    '\x84': '\u201E',  # Double Low-9 Quotation Mark
+    '\x85': '\u2026',  # Horizontal Ellipsis
+    '\x86': '\u2020',  # Dagger
+    '\x87': '\u2021',  # Double Dagger
+    '\x88': '\u02C6',  # Modifier Letter Circumflex Accent
+    '\x89': '\u2030',  # Per Mille Sign
+    '\x8A': '\u0160',  # Latin Capital Letter S With Caron
+    '\x8B': '\u2039',  # Single Left-Pointing Angle Quotation Mark
+    '\x8C': '\u0152',  # Latin Capital Ligature OE
+    #  8D is unassigned in Windows-1252
+    '\x8E': '\u017D',  # Latin Capital Letter Z With Caron
+    #  8F is unassigned in Windows-1252
+    #  90 is unassigned in Windows-1252
+    '\x91': '\u2018',  # Left Single Quotation Mark
+    '\x92': '\u2019',  # Right Single Quotation Mark
+    '\x93': '\u201C',  # Left Double Quotation Mark
+    '\x94': '\u201D',  # Right Double Quotation Mark
+    '\x95': '\u2022',  # Bullet
+    '\x96': '\u2013',  # En Dash
+    '\x97': '\u2014',  # Em Dash
+    '\x98': '\u02DC',  # Small Tilde
+    '\x99': '\u2122',  # Trade Mark Sign
+    '\x9A': '\u0161',  # Latin Small Letter S With Caron
+    '\x9B': '\u203A',  # Single Right-Pointing Angle Quotation Mark
+    '\x9C': '\u0153',  # Latin Small Ligature OE
+    #  9D is unassigned in Windows-1252
+    '\x9E': '\u017E',  # Latin Small Letter Z With Caron
+    '\x9F': '\u0178'   # Latin Capital Letter Y With Diaeresis
+}
+encoding_repair_dict = {}
+
+
+def windows1252_to_utf8_char(index: int) -> str:
+    """ Typical input: 0x80       Typical output: '€' """
+    s = chr(index)
+    if s in spec_windows1252_to_utf8_dict:
+        return spec_windows1252_to_utf8_dict[s]
+    else:
+        return s
+
+
+def set_encoding_repair_dict(key: str, value: str, index: int, byte_string: Optional[bytes], loc: str,
+                             verbose: bool = False) -> None:
+    encoding_repair_dict[key] = value
+    if verbose:
+        log.info(f'map-{loc} {index} {key} -> {value}   byte_string:{byte_string}')
+
+
+def init_encoding_repair_dict(undef_default: str = '') -> None:
+    """Initialize encoding_repair_dict that maps from various mis-encodings to proper UTF8."""
+    # Mis-encodings that resulted from missing conversion from Windows1252/Latin1 to UTF8.
+    # Control characters section in surrogate codeblock
+    for index in range(0x80, 0xA0):
+        spec_windows1252_char = chr(index)
+        surrogate_char = chr(index + 0xDC00)
+        if spec_windows1252_char in spec_windows1252_to_utf8_dict:
+            set_encoding_repair_dict(surrogate_char, spec_windows1252_to_utf8_dict[spec_windows1252_char],
+                                     index, None, 's1')
+        else:  # x81,x8D,x8F,x90,x9D
+            set_encoding_repair_dict(surrogate_char, undef_default, index, None, 's2')
+    # Other characters in surrogate codeblock
+    for index in range(0xA0, 0x100):
+        latin1_char = chr(index)
+        surrogate_char = chr(index + 0xDC00)
+        set_encoding_repair_dict(surrogate_char, latin1_char, index, None, 's3')
+    # Mis-encodings that resulted applying conversion from wrong or double Windows1252/Latin1-to-UTF8 conversion.
+    for index in range(0x80, 0x100):
+        latin1_char = chr(index)
+        windows1252_char = windows1252_to_utf8_char(index)
+        byte_string = latin1_char.encode('utf-8')
+        latin1_latin1_char = ''.join([chr(x) for x in byte_string])
+        repl_char = latin1_char if index >= 0xA0 else windows1252_char
+        # to repair Latin1-to-UTF8 plus Latin1-to-UTF8
+        set_encoding_repair_dict(latin1_latin1_char, repl_char, index, byte_string, 'm1')
+        # encoding_repair_dict[latin1_latin1_char] = repl_char
+        if byte_string[1] < 0xA0:
+            latin1_windows1252_char = ''.join([windows1252_to_utf8_char(x) for x in byte_string])
+            # to repair Latin1-to-UTF8 plus Windows1252-to-UTF8
+            set_encoding_repair_dict(latin1_windows1252_char, repl_char, index, None, 'm2')
+            # encoding_repair_dict[latin1_windows1252_char] = repl_char
+        if index < 0xA0:
+            # to repair Latin1-to-UTF8 instead of Windows1252-to-UTF8
+            set_encoding_repair_dict(latin1_char, windows1252_char, index, None, 'm3')
+            # encoding_repair_dict[latin1_char] = windows1252_char
+            byte_string = windows1252_char.encode('utf-8')
+            windows1252_latin1_char = ''.join([chr(x) for x in byte_string])
+            # to repair Windows1252-to-UTF8 plus Latin1-to-UTF8
+            set_encoding_repair_dict(windows1252_latin1_char, windows1252_char, index, byte_string, 'm4')
+            encoding_repair_dict[windows1252_latin1_char] = windows1252_char
+
+
+def repair_encoding_char(match: Match[str]) -> str:
+    """Maps substring resulting from mis-encoding to repaired UTF8."""
     s = match.group()
-    return chr(ord(s[0]) - 0xDC00)
+    if s in encoding_repair_dict:
+        return encoding_repair_dict[s]
+    else:
+        return s
 
 
-def repair_windows1252(s: str, undef_default: str = '') -> str:
-    """Interpret non-UTF8 characters (read in as surrogate characters \uDC80-\uDCFF]) as Windows 1252 characters."""
+def repair_encoding_errors(s: str) -> str:
+    """
+    Interpret non-UTF8 characters (standalone \x80-\xFF, read in as surrogate characters \uDC80-\uDCFF])
+    as one-byte Windows-1252/Latin-1 (ISO-8859-1) characters. Please note that ASCII characters (\u0000-\u007F)
+    are encoded identically in UTF-8, Latin-1, and Windows-1252, so no conversion is necessary in that case.
+    """
+    # Correct missing converstion to UTF8
     if re.search(r"[\uDC80-\uDCFF]", s):
-        if re.search(r"[\uDC80-\uDC9F]", s):
-            s = s.replace('\uDC80', '\u20AC')  # Euro Sign
-            # \81 unassigned in Windows-1252
-            s = s.replace('\uDC82', '\u201A')  # Single Low-9 Quotation Mark
-            s = s.replace('\uDC83', '\u0192')  # Latin Small Letter F With Hook
-            s = s.replace('\uDC84', '\u201E')  # Double Low-9 Quotation Mark
-            s = s.replace('\uDC85', '\u2026')  # Horizontal Ellipsis
-            s = s.replace('\uDC86', '\u2020')  # Dagger
-            s = s.replace('\uDC87', '\u2021')  # Double Dagger
-            s = s.replace('\uDC88', '\u02C6')  # Modifier Letter Circumflex Accent
-            s = s.replace('\uDC89', '\u2030')  # Per Mille Sign
-            s = s.replace('\uDC8A', '\u0160')  # Latin Capital Letter S With Caron
-            s = s.replace('\uDC8B', '\u2039')  # Single Left-Pointing Angle Quotation Mark
-            s = s.replace('\uDC8C', '\u0152')  # Latin Capital Ligature OE
-            # \8D unassigned in Windows-1252
-            s = s.replace('\uDC8E', '\u017D')  # Latin Capital Letter Z With Caron
-            # \8F unassigned in Windows-1252
-            # \90 unassigned in Windows-1252
-            s = s.replace('\uDC91', '\u2018')  # Left Single Quotation Mark
-            s = s.replace('\uDC92', '\u2019')  # Right Single Quotation Mark
-            s = s.replace('\uDC93', '\u201C')  # Left Double Quotation Mark
-            s = s.replace('\uDC94', '\u201D')  # Right Double Quotation Mark
-            s = s.replace('\uDC95', '\u2022')  # Bullet
-            s = s.replace('\uDC96', '\u2013')  # En Dash
-            s = s.replace('\uDC97', '\u2014')  # Em Dash
-            s = s.replace('\uDC98', '\u02DC')  # Small Tilde
-            s = s.replace('\uDC99', '\u2122')  # Trade Mark Sign
-            s = s.replace('\uDC9A', '\u0161')  # Latin Small Letter S With Caron
-            s = s.replace('\uDC9B', '\u203A')  # Single Right-Pointing Angle Quotation Mark
-            s = s.replace('\uDC9C', '\u0153')  # Latin Small Ligature OE
-            # \9D unassigned in Windows-1252
-            s = s.replace('\uDC9E', '\u017E')  # Latin Small Letter Z With Caron
-            s = s.replace('\uDC9F', '\u0178')  # Latin Capital Letter Y With Diaeresis
-            s = re.sub(r'[\uDC80-\uDC9F]', undef_default, s)  # for undefined Windows 1252 codepoints (81,8D,8F,90,9D)
-        s = re.sub(r'[\uDCA0-\uDCFF]', reg_surrogate_to_utf8, s)
+        s = re.sub(r'[\uDC80-\uDCFF]', repair_encoding_char, s)
+    # Correct UTF8 misencodings due to wrong or double application of Windows1252/Latin1-to-UTF converter
+    if re.search(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', s):
+        s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', repair_encoding_char, s)
+    if re.search(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', s):
+        s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', repair_encoding_char, s)
+    if re.search(r'[\u0080-\u00BF]', s):
+        s = re.sub(r'[\u0080-\u00BF]', repair_encoding_char, s)
     return s
+
+
+def delete_surrogates(s: str, default: str = '') -> str:
+    """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters \uDC80-\uDCFF])."""
+    return re.sub(r"[\uDC80-\uDCFF]", default, s)
 
 
 def delete_control_characters(s: str) -> str:
@@ -95,11 +178,6 @@ def delete_control_characters(s: str) -> str:
     s = s.replace('\uFEFF', '')                       # byte order mark, zero width no-break space
     s = re.sub(r'[\U000E0100-\U000E01EF]', '', s)     # variation selectors 17-256
     return s
-
-
-def delete_surrogates(s: str, default: str = '') -> str:
-    """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters \uDC80-\uDCFF])."""
-    return re.sub(r"[\uDC80-\uDCFF]", default, s)
 
 
 def delete_arabic_diacritics(s: str) -> str:
@@ -334,7 +412,7 @@ def map_digits_to_ascii(s: str) -> str:
     This does not include non-digit numbers such Chinese/Japanese 百 (100).
     """
     if not re.search(r"[\u0660-\u0DEF]", s):
-       return s
+        return s
     if re.search(r"[\u0660-\u0669]", s):
         s = s.replace('\u0660', '0')  # U+0660 ARABIC-INDIC DIGIT ZERO ٠ -> 0
         s = s.replace('\u0661', '1')  # U+0661 ARABIC-INDIC DIGIT ONE ١ -> 1
@@ -497,7 +575,7 @@ def norm_clean_string(s: str, ht: dict, lang_code='') -> str:
     number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
     ht['NUMBER-OF-LINES'] = number_of_lines
     orig_s = s
-    s = norm_clean_string_group(s, ht, 'repair-windows-1252', repair_windows1252)
+    s = norm_clean_string_group(s, ht, 'repair-encodings-errors', repair_encoding_errors)
     s = norm_clean_string_group(s, ht, 'del-surrogate', delete_surrogates)  # alternative/backup to windows-1252
     s = norm_clean_string_group(s, ht, 'del-ctrl-char', delete_control_characters)
     s = norm_clean_string_group(s, ht, 'del-diacr', delete_arabic_diacritics)
@@ -588,6 +666,7 @@ def main(argv):
     args = parser.parse_args(argv)
     lang_code = args.lc
     skip_list_csv = args.skip
+    init_encoding_repair_dict()
 
     # Open any input or output files. Make sure utf-8 encoding is properly set (in older Python3 versions).
     if args.input is sys.stdin and not re.search('utf-8', sys.stdin.encoding, re.IGNORECASE):

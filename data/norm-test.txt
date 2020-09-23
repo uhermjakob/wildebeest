@@ -5,3 +5,5 @@ Devanagari: बड़े टुकड़े गाज़ा क़ख़ग़ज़ड़ढ़फ़य़ �
 Malayalam: ₹൯൦
 Latin: ９０Ａｚ！
 Control characters: ABC​‌‍‎‏︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿DE󠄀󠇯F
+Double conversion: Donât tell your âfiancÃ©â â SchÃ¶ne GrÃ¼Ãe aus MÃ¤hrenâ¦ â Ma sÅur trouve Ã§a Â«bÃªteÂ». Â¡CoÃ±o! â¬50 â¢ 25kmÂ² â¢ Â½Âµm
+Wrong conversion: Dont tell your fiancé  Schöne Grüße aus Mähren  Ma sur trouve ça «bête». ¡Coño! 50  25km²  ½µm
