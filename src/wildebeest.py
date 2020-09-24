@@ -21,6 +21,7 @@ List of available normalization/cleaning-types (default: all are applied):
  * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
  * norm-punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
+ * norm-space (e.g. normalizes non-zero spaces to normal space)
  * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 When using STDIN and/or STDOUT, if might be necessary, particularly for older versions of Python, to do
 'export PYTHONIOENCODING=UTF-8' before calling this Python script to ensure UTF-8 encoding.
@@ -407,6 +408,16 @@ def normalize_arabic_punctuation(s: str) -> str:
     return s
 
 
+def normalize_non_zero_spaces(s: str) -> str:
+    """
+    Map NO-BREAK SPACE, EN SPACE, EM SPACE, THREE-PER-EM SPACE, FOUR-PER-EM SPACE, SIX-PER-EM SPACE, FIGURE SPACE,
+    PUNCTUATION SPACE, THIN SPACE, HAIR SPACE, NARROW NO-BREAK SPACE, MEDIUM MATHEMATICAL SPACE, IDEOGRAPHIC SPACE
+    to regular SPACE.
+    """
+    s = re.sub(r'[\u00A0\u2002-\u200A]\u202F\u205F\u3000]', ' ', s)
+    return s
+
+
 def map_digits_to_ascii(s: str) -> str:
     """
     This function replaces non-ASCII (Arabic, Indic) digits by ASCII digits.
@@ -583,6 +594,7 @@ def norm_clean_string(s: str, ht: dict, lang_code='') -> str:
     s = norm_clean_string_group(s, ht, 'pres-form-norm', normalize_arabic_pres_form_characters)
     s = norm_clean_string_group(s, ht, 'indic-diacr', normalize_indic_diacritics)
     s = norm_clean_string_group(s, ht, 'norm-punct', normalize_arabic_punctuation)
+    s = norm_clean_string_group(s, ht, 'norm-space', normalize_non_zero_spaces)
     s = norm_clean_string_group(s, ht, 'digit', map_digits_to_ascii)
     if lang_code == 'fas':
         s = norm_clean_string_group(s, ht, 'farsi-char-norm', normalize_farsi_characters)

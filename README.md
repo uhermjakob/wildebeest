@@ -31,6 +31,7 @@ errors.
 * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
 * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
 * norm-punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
+* norm-space (e.g. maps non-zero spaces to normal space)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
 This script is still work in progress.
