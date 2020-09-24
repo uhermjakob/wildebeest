@@ -21,7 +21,7 @@ errors:
 * Text in Windows1252 or Latin1 was converted twice, using some combination of Latin1-to-UTF8 converter and
  Windows1252-to-UTF converter; or a file already in UTF8 was incorrectly subjected to another conversion.
  Sample *wildebeest* repair:
-    * Input: Donât tell your âfiancÃ©â
+    * Input: Donât tell your âfiancÃ©â.
     * Output: Don’t tell your “fiancé”.
 
 ### Other normalization modules
