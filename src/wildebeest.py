@@ -17,6 +17,7 @@ List of available normalization/cleaning-types (default: all are applied):
  * farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
  * pres-form-norm (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ring-char-norm (e.g. maps ring-characters that are common in Pashto to non-ring characters)
+ * fullwidth (e.g. maps fullwidth characters to ASCII, e.g. Ａ to A)
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
  * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
@@ -36,7 +37,7 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 last_mod_date = 'September 23, 2020'
 
 
@@ -75,7 +76,7 @@ spec_windows1252_to_utf8_dict = {
     '\x9E': '\u017E',  # Latin Small Letter Z With Caron
     '\x9F': '\u0178'   # Latin Capital Letter Y With Diaeresis
 }
-encoding_repair_dict = {}
+encoding_map_dict = {}
 
 
 def windows1252_to_utf8_char(index: int) -> str:
@@ -87,30 +88,30 @@ def windows1252_to_utf8_char(index: int) -> str:
         return s
 
 
-def set_encoding_repair_dict(key: str, value: str, index: int, byte_string: Optional[bytes], loc: str,
+def set_encoding_map_dict(key: str, value: str, index: int, byte_string: Optional[bytes], loc: str,
                              verbose: bool = False) -> None:
-    encoding_repair_dict[key] = value
+    encoding_map_dict[key] = value
     if verbose:
         log.info(f'map-{loc} {index} {key} -> {value}   byte_string:{byte_string}')
 
 
-def init_encoding_repair_dict(undef_default: str = '') -> None:
-    """Initialize encoding_repair_dict that maps from various mis-encodings to proper UTF8."""
+def init_encoding_map_dict(undef_default: str = '') -> None:
+    """Initialize encoding_map_dict that maps from various mis-encodings to proper UTF8."""
     # Mis-encodings that resulted from missing conversion from Windows1252/Latin1 to UTF8.
     # Control characters section in surrogate codeblock
     for index in range(0x80, 0xA0):
         spec_windows1252_char = chr(index)
         surrogate_char = chr(index + 0xDC00)
         if spec_windows1252_char in spec_windows1252_to_utf8_dict:
-            set_encoding_repair_dict(surrogate_char, spec_windows1252_to_utf8_dict[spec_windows1252_char],
+            set_encoding_map_dict(surrogate_char, spec_windows1252_to_utf8_dict[spec_windows1252_char],
                                      index, None, 's1')
         else:  # x81,x8D,x8F,x90,x9D
-            set_encoding_repair_dict(surrogate_char, undef_default, index, None, 's2')
+            set_encoding_map_dict(surrogate_char, undef_default, index, None, 's2')
     # Other characters in surrogate codeblock
     for index in range(0xA0, 0x100):
         latin1_char = chr(index)
         surrogate_char = chr(index + 0xDC00)
-        set_encoding_repair_dict(surrogate_char, latin1_char, index, None, 's3')
+        set_encoding_map_dict(surrogate_char, latin1_char, index, None, 's3')
     # Mis-encodings that resulted applying conversion from wrong or double Windows1252/Latin1-to-UTF8 conversion.
     for index in range(0x80, 0x100):
         latin1_char = chr(index)
@@ -119,29 +120,28 @@ def init_encoding_repair_dict(undef_default: str = '') -> None:
         latin1_latin1_char = ''.join([chr(x) for x in byte_string])
         repl_char = latin1_char if index >= 0xA0 else windows1252_char
         # to repair Latin1-to-UTF8 plus Latin1-to-UTF8
-        set_encoding_repair_dict(latin1_latin1_char, repl_char, index, byte_string, 'm1')
-        # encoding_repair_dict[latin1_latin1_char] = repl_char
+        set_encoding_map_dict(latin1_latin1_char, repl_char, index, byte_string, 'm1')
         if byte_string[1] < 0xA0:
             latin1_windows1252_char = ''.join([windows1252_to_utf8_char(x) for x in byte_string])
             # to repair Latin1-to-UTF8 plus Windows1252-to-UTF8
-            set_encoding_repair_dict(latin1_windows1252_char, repl_char, index, None, 'm2')
-            # encoding_repair_dict[latin1_windows1252_char] = repl_char
+            set_encoding_map_dict(latin1_windows1252_char, repl_char, index, None, 'm2')
         if index < 0xA0:
             # to repair Latin1-to-UTF8 instead of Windows1252-to-UTF8
-            set_encoding_repair_dict(latin1_char, windows1252_char, index, None, 'm3')
-            # encoding_repair_dict[latin1_char] = windows1252_char
+            set_encoding_map_dict(latin1_char, windows1252_char, index, None, 'm3')
             byte_string = windows1252_char.encode('utf-8')
             windows1252_latin1_char = ''.join([chr(x) for x in byte_string])
             # to repair Windows1252-to-UTF8 plus Latin1-to-UTF8
-            set_encoding_repair_dict(windows1252_latin1_char, windows1252_char, index, byte_string, 'm4')
-            encoding_repair_dict[windows1252_latin1_char] = windows1252_char
+            set_encoding_map_dict(windows1252_latin1_char, windows1252_char, index, byte_string, 'm4')
+    for index in range(0xFF01, 0xFF5F):
+        fullwidth_char = chr(index)
+        standard_char = chr(index-0xFEE0)  # starting at codepoint \u0021
+        set_encoding_map_dict(fullwidth_char, standard_char, index, None, 'f1')
 
-
-def repair_encoding_char(match: Match[str]) -> str:
+def map_encoding_char(match: Match[str]) -> str:
     """Maps substring resulting from mis-encoding to repaired UTF8."""
     s = match.group()
-    if s in encoding_repair_dict:
-        return encoding_repair_dict[s]
+    if s in encoding_map_dict:
+        return encoding_map_dict[s]
     else:
         return s
 
@@ -154,14 +154,14 @@ def repair_encoding_errors(s: str) -> str:
     """
     # Correct missing converstion to UTF8
     if re.search(r"[\uDC80-\uDCFF]", s):
-        s = re.sub(r'[\uDC80-\uDCFF]', repair_encoding_char, s)
+        s = re.sub(r'[\uDC80-\uDCFF]', map_encoding_char, s)
     # Correct UTF8 misencodings due to wrong or double application of Windows1252/Latin1-to-UTF converter
     if re.search(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', s):
-        s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', repair_encoding_char, s)
+        s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', map_encoding_char, s)
     if re.search(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', s):
-        s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', repair_encoding_char, s)
+        s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', map_encoding_char, s)
     if re.search(r'[\u0080-\u00BF]', s):
-        s = re.sub(r'[\u0080-\u00BF]', repair_encoding_char, s)
+        s = re.sub(r'[\u0080-\u00BF]', map_encoding_char, s)
     return s
 
 
@@ -418,6 +418,13 @@ def normalize_non_zero_spaces(s: str) -> str:
     return s
 
 
+def normalize_fullwidth_characters(s: str) -> str:
+    """Replace fullwidth characters such as Ａ with regular Latin letters such as A."""
+    if re.search(r'[\uFF01-\uFF5E]', s):
+        s = re.sub(r'[\uFF01-\uFF5E]', map_encoding_char, s)
+    return s
+
+
 def map_digits_to_ascii(s: str) -> str:
     """
     This function replaces non-ASCII (Arabic, Indic) digits by ASCII digits.
@@ -592,6 +599,7 @@ def norm_clean_string(s: str, ht: dict, lang_code='') -> str:
     s = norm_clean_string_group(s, ht, 'del-ctrl-char', delete_control_characters)
     s = norm_clean_string_group(s, ht, 'del-diacr', delete_arabic_diacritics)
     s = norm_clean_string_group(s, ht, 'pres-form-norm', normalize_arabic_pres_form_characters)
+    s = norm_clean_string_group(s, ht, 'fullwidth', normalize_fullwidth_characters)
     s = norm_clean_string_group(s, ht, 'indic-diacr', normalize_indic_diacritics)
     s = norm_clean_string_group(s, ht, 'norm-punct', normalize_arabic_punctuation)
     s = norm_clean_string_group(s, ht, 'norm-space', normalize_non_zero_spaces)
@@ -679,7 +687,7 @@ def main(argv):
     args = parser.parse_args(argv)
     lang_code = args.lc
     skip_list_csv = args.skip
-    init_encoding_repair_dict()
+    init_encoding_map_dict()
 
     # Open any input or output files. Make sure utf-8 encoding is properly set (in older Python3 versions).
     if args.input is sys.stdin and not re.search('utf-8', sys.stdin.encoding, re.IGNORECASE):

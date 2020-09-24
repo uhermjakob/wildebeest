@@ -29,6 +29,7 @@ errors:
 * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
 * farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
 * pres-form-norm (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
+* fullwidth (e.g. maps fullwidth characters to ASCII, e.g. Ａ to A)
 * ring-char-norm (e.g. maps ring-characters that are common in Pashto to non-ring characters)
 * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
 * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
