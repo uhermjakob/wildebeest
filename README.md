@@ -16,8 +16,8 @@ errors:
 * Text in Windows1252 was incorrectly converted to UTF8 by a Latin1-to-UTF8 converter. This maps Windows1252 characters
  \x80-\x9F to \u0080-\uu009F, which is the Unicode block of C1 control characters. These C1 control characters are
  extremely rare, and so our script will interpret such C1 control characters as ill-converted Windows1252 characters,
- as do many major software applications such as Google Chrome, Microsoft Outlook, Github (diff) and PyCharm (where they are
- often displayed in a slightly different form).
+ as do many major software applications such as Google Chrome, Microsoft Outlook, Github (text files) and PyCharm 
+ (where they are often displayed in a slightly different form).
 * Text in Windows1252 or Latin1 was converted twice, using some combination of Latin1-to-UTF8 converter and
  Windows1252-to-UTF converter; or a file already in UTF8 was incorrectly subjected to another conversion.
  Sample *wildebeest* repair:
