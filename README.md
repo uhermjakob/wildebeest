@@ -21,8 +21,8 @@ errors:
 * Text in Windows1252 or Latin1 was converted twice, using some combination of Latin1-to-UTF8 converter and
  Windows1252-to-UTF converter; or a file already in UTF8 was incorrectly subjected to another conversion.
  Sample *wildebeest* repair:
-    * Input: Donât tell your âfiancÃ©â.
-    * Output: Don’t tell your “fiancé”.
+    * Input: Donât tell your âfiancÃ©â â SchÃ¶ne GrÃ¼Ãe aus MÃ¤hrenâ¦ â Ma sÅur trouve Ã§a Â«bÃªteÂ». Â¡CoÃ±o! â¬50 â¢ 25kmÂ² â¢ Â½Âµm
+    * Output: Don’t tell your “fiancé” — Schöne Grüße aus Mähren… – Ma sœur trouve ça «bête». ¡Coño! €50 • 25km² • ½µm
 
 ### Other normalization modules
 * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
