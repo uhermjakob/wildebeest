@@ -89,7 +89,7 @@ def windows1252_to_utf8_char(index: int) -> str:
 
 
 def set_encoding_map_dict(key: str, value: str, index: int, byte_string: Optional[bytes], loc: str,
-                             verbose: bool = False) -> None:
+                          verbose: bool = False) -> None:
     encoding_map_dict[key] = value
     if verbose:
         log.info(f'map-{loc} {index} {key} -> {value}   byte_string:{byte_string}')
@@ -103,8 +103,8 @@ def init_encoding_map_dict(undef_default: str = '') -> None:
         spec_windows1252_char = chr(index)
         surrogate_char = chr(index + 0xDC00)
         if spec_windows1252_char in spec_windows1252_to_utf8_dict:
-            set_encoding_map_dict(surrogate_char, spec_windows1252_to_utf8_dict[spec_windows1252_char],
-                                     index, None, 's1')
+            set_encoding_map_dict(surrogate_char, spec_windows1252_to_utf8_dict[spec_windows1252_char], index, None,
+                                  's1')
         else:  # x81,x8D,x8F,x90,x9D
             set_encoding_map_dict(surrogate_char, undef_default, index, None, 's2')
     # Other characters in surrogate codeblock
@@ -136,6 +136,7 @@ def init_encoding_map_dict(undef_default: str = '') -> None:
         fullwidth_char = chr(index)
         standard_char = chr(index-0xFEE0)  # starting at codepoint \u0021
         set_encoding_map_dict(fullwidth_char, standard_char, index, None, 'f1')
+
 
 def map_encoding_char(match: Match[str]) -> str:
     """Maps substring resulting from mis-encoding to repaired UTF8."""
@@ -413,8 +414,13 @@ def normalize_non_zero_spaces(s: str) -> str:
     Map NO-BREAK SPACE, EN SPACE, EM SPACE, THREE-PER-EM SPACE, FOUR-PER-EM SPACE, SIX-PER-EM SPACE, FIGURE SPACE,
     PUNCTUATION SPACE, THIN SPACE, HAIR SPACE, NARROW NO-BREAK SPACE, MEDIUM MATHEMATICAL SPACE, IDEOGRAPHIC SPACE
     to regular SPACE.
+    **Not** included: tab (= horizontal tabulation/character tabulation)
     """
-    s = re.sub(r'[\u00A0\u2002-\u200A]\u202F\u205F\u3000]', ' ', s)
+    s = s.replace('\u00A0', ' ')      # U+00A0 NO-BREAK SPACE
+    s = re.sub(r'[\u2002-\u200A]', ' ', s)
+    s = s.replace('\u202F', ' ')      # U+00A0 NARROW NO-BREAK SPACE
+    s = s.replace('\u205F', ' ')      # U+00A0 MEDIUM MATHEMATICAL SPACE
+    s = s.replace('\u3000', ' ')      # U+3000 IDEOGRAPHIC SPACE
     return s
 
 
@@ -670,8 +676,9 @@ def unicode_table_mappings(codeblock: str = 'Devanagari', indent_level: int = 2)
 def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
-    all_skip_elems = ['farsi-char-norm', 'pres-form-norm', 'ring-char-norm', 'del-diacr', 'indic-diacr',
-                      'digit', 'norm-punct', 'repair-token']
+    all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'pres-form-norm',
+                      'fullwidth', 'indic-diacr', 'norm-punct', 'norm-space', 'digit', 'farsi-char-norm',
+                      'ring-char-norm', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
