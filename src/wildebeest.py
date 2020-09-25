@@ -31,6 +31,7 @@ When using STDIN and/or STDOUT, if might be necessary, particularly for older ve
 # -*- encoding: utf-8 -*-
 import argparse
 import logging as log
+import os
 import re
 import sys
 from typing import Callable, Match, Optional, TextIO
@@ -138,6 +139,18 @@ class Wildebeest:
             fullwidth_char = chr(index)
             standard_char = chr(index - 0xFEE0)  # starting at code point \u0021
             self.set_encoding_map_dict(fullwidth_char, standard_char, index, None, 'f1')
+        src_dir_path = os.path.dirname(os.path.realpath(__file__))
+        data_dir_path = os.path.join(src_dir_path, "../data")
+        for tsv_filename in ('ArabicPresentationForms.tsv', 'future_file.tsv'):
+            full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
+            try:
+                with open(full_tsv_filename, 'r', encoding='utf-8', errors='ignore') as f:
+                    for line in f:
+                        tsv_list = re.split(r'\t', line.rstrip())
+                        self.encoding_map_dict[tsv_list[0]] = tsv_list[1]
+            except FileNotFoundError:
+                log.error(f'Could not open file {full_tsv_filename}')
+
 
     def map_encoding_char(self, match: Match[str]) -> str:
         """Maps substring resulting from misencoding to repaired UTF8."""
@@ -215,166 +228,11 @@ class Wildebeest:
         s = s.replace('\u0693', '\u0631')  # Arabic reh with ring to Arabic reh
         return s
 
-    # noinspection SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection
-    @staticmethod
-    def normalize_arabic_pres_form_characters(s: str) -> str:
+    def normalize_arabic_pres_form_characters(self, s: str) -> str:
         if re.search(r"[\uFB50-\uFEFC]", s):
-            s = s.replace('\uFB56', '\u067E')  # U+FB56 peh isolated form
-            s = s.replace('\uFB57', '\u067E')  # U+FB57 peh final form
-            s = s.replace('\uFB58', '\u067E')  # U+FB58 peh initial form
-            s = s.replace('\uFB59', '\u067E')  # U+FB59 peh medial form
-            s = s.replace('\uFB7A', '\u0686')  # U+FB7A tcheh isolated form
-            s = s.replace('\uFB7B', '\u0686')  # U+FB7B tcheh final form
-            s = s.replace('\uFB7C', '\u0686')  # U+FB7C tcheh initial form
-            s = s.replace('\uFB7D', '\u0686')  # U+FB7D tcheh medial form
-            s = s.replace('\uFB8A', '\u0698')  # U+FB8A jeh isolated form
-            s = s.replace('\uFB8B', '\u0698')  # U+FB8B jeh final form
-            s = s.replace('\uFB8E', '\u06A9')  # U+FB8E keheh isolated form
-            s = s.replace('\uFB8F', '\u06A9')  # U+FB8F keheh final form
-            s = s.replace('\uFB90', '\u06A9')  # U+FB90 keheh initial form
-            s = s.replace('\uFB91', '\u06A9')  # U+FB91 keheh medial form
-            s = s.replace('\uFB92', '\u06AF')  # U+FB92 gaf isolated form
-            s = s.replace('\uFB93', '\u06AF')  # U+FB93 gaf final form
-            s = s.replace('\uFB94', '\u06AF')  # U+FB94 gaf initial form
-            s = s.replace('\uFB95', '\u06AF')  # U+FB95 gaf medial form
-            s = s.replace('\uFBE4', '\u06D0')  # U+FBE4 e isolated form
-            s = s.replace('\uFBE5', '\u06D0')  # U+FBE5 e final form
-            s = s.replace('\uFBE6', '\u06D0')  # U+FBE6 e initial form
-            s = s.replace('\uFBE7', '\u06D0')  # U+FBE7 e medial form
-            s = s.replace('\uFBFC', '\u06CC')  # U+FBFC Farsi yeh isolated form
-            s = s.replace('\uFBFD', '\u06CC')  # U+FBFD Farsi yeh final form
-            s = s.replace('\uFBFE', '\u06CC')  # U+FBFE Farsi yeh initial form
-            s = s.replace('\uFBFF', '\u06CC')  # U+FBFF Farsi yeh medial form
-            s = s.replace('\uFE80', '\u0621')  # U+FE80 hamza isolated form
-            s = s.replace('\uFE81', '\u0622')  # U+FE81 alef with madda above isolated form
-            s = s.replace('\uFE82', '\u0622')  # U+FE82 alef with madda above final form
-            s = s.replace('\uFE83', '\u0623')  # U+FE83 alef with hamza above isolated form
-            s = s.replace('\uFE84', '\u0623')  # U+FE84 alef with hamza above final form
-            s = s.replace('\uFE85', '\u0624')  # U+FE85 waw with hamza above isolated form
-            s = s.replace('\uFE86', '\u0624')  # U+FE86 waw with hamza above final form
-            s = s.replace('\uFE87', '\u0625')  # U+FE87 alef with hamza below isolated form
-            s = s.replace('\uFE88', '\u0625')  # U+FE88 alef with hamza below final form
-            s = s.replace('\uFE89', '\u0626')  # U+FE89 yeh with hamza above isolated form
-            s = s.replace('\uFE8A', '\u0626')  # U+FE8A yeh with hamza above final form
-            s = s.replace('\uFE8B', '\u0626')  # U+FE8B yeh with hamza above initial form
-            s = s.replace('\uFE8C', '\u0626')  # U+FE8C yeh with hamza above medial form
-            s = s.replace('\uFE8D', '\u0627')  # U+FE8D alef isolated form
-            s = s.replace('\uFE8E', '\u0627')  # U+FE8E alef final form
-            s = s.replace('\uFE8F', '\u0628')  # U+FE8F beh isolated form
-            s = s.replace('\uFE90', '\u0628')  # U+FE90 beh final form
-            s = s.replace('\uFE91', '\u0628')  # U+FE91 beh initial form
-            s = s.replace('\uFE92', '\u0628')  # U+FE92 beh medial form
-            s = s.replace('\uFE93', '\u0629')  # U+FE93 teh marbuta isolated form
-            s = s.replace('\uFE94', '\u0629')  # U+FE94 teh marbuta final form
-            s = s.replace('\uFE95', '\u062A')  # U+FE95 teh isolated form
-            s = s.replace('\uFE96', '\u062A')  # U+FE96 teh final form
-            s = s.replace('\uFE97', '\u062A')  # U+FE97 teh initial form
-            s = s.replace('\uFE98', '\u062A')  # U+FE98 teh medial form
-            s = s.replace('\uFE99', '\u062B')  # U+FE99 theh isolated form
-            s = s.replace('\uFE9A', '\u062B')  # U+FE9A theh final form
-            s = s.replace('\uFE9B', '\u062B')  # U+FE9B theh initial form
-            s = s.replace('\uFE9C', '\u062B')  # U+FE9C theh medial form
-            s = s.replace('\uFE9D', '\u062C')  # U+FE9D jeem isolated form
-            s = s.replace('\uFE9E', '\u062C')  # U+FE9E jeem final form
-            s = s.replace('\uFE9F', '\u062C')  # U+FE9F jeem initial form
-            s = s.replace('\uFEA0', '\u062C')  # U+FEA0 jeem medial form
-            s = s.replace('\uFEA1', '\u062D')  # U+FEA1 hah isolated form
-            s = s.replace('\uFEA2', '\u062D')  # U+FEA2 hah final form
-            s = s.replace('\uFEA3', '\u062D')  # U+FEA3 hah initial form
-            s = s.replace('\uFEA4', '\u062D')  # U+FEA4 hah medial form
-            s = s.replace('\uFEA5', '\u062E')  # U+FEA5 khah isolated form
-            s = s.replace('\uFEA6', '\u062E')  # U+FEA6 khah final form
-            s = s.replace('\uFEA7', '\u062E')  # U+FEA7 khah initial form
-            s = s.replace('\uFEA8', '\u062E')  # U+FEA8 khah medial form
-            s = s.replace('\uFEA9', '\u062F')  # U+FEA9 dal isolated form
-            s = s.replace('\uFEAA', '\u062F')  # U+FEAA dal final form
-            s = s.replace('\uFEAB', '\u0630')  # U+FEAB thal isolated form
-            s = s.replace('\uFEAC', '\u0630')  # U+FEAC thal final form
-            s = s.replace('\uFEAD', '\u0631')  # U+FEAD reh isolated form
-            s = s.replace('\uFEAE', '\u0631')  # U+FEAE reh final form
-            s = s.replace('\uFEAF', '\u0632')  # U+FEAF zain isolated form
-            s = s.replace('\uFEB0', '\u0632')  # U+FEB0 zain final form
-            s = s.replace('\uFEB1', '\u0633')  # U+FEB1 seen isolated form
-            s = s.replace('\uFEB2', '\u0633')  # U+FEB2 seen final form
-            s = s.replace('\uFEB3', '\u0633')  # U+FEB3 seen initial form
-            s = s.replace('\uFEB4', '\u0633')  # U+FEB4 seen medial form
-            s = s.replace('\uFEB5', '\u0634')  # U+FEB5 sheen isolated form
-            s = s.replace('\uFEB6', '\u0634')  # U+FEB6 sheen final form
-            s = s.replace('\uFEB7', '\u0634')  # U+FEB7 sheen initial form
-            s = s.replace('\uFEB8', '\u0634')  # U+FEB8 sheen medial form
-            s = s.replace('\uFEB9', '\u0635')  # U+FEB9 sad isolated form
-            s = s.replace('\uFEBA', '\u0635')  # U+FEBA sad final form
-            s = s.replace('\uFEBB', '\u0635')  # U+FEBB sad initial form
-            s = s.replace('\uFEBC', '\u0635')  # U+FEBC sad medial form
-            s = s.replace('\uFEBD', '\u0636')  # U+FEBD dad isolated form
-            s = s.replace('\uFEBE', '\u0636')  # U+FEBE dad final form
-            s = s.replace('\uFEBF', '\u0636')  # U+FEBF dad initial form
-            s = s.replace('\uFEC0', '\u0636')  # U+FEC0 dad medial form
-            s = s.replace('\uFEC1', '\u0637')  # U+FEC1 tah isolated form
-            s = s.replace('\uFEC2', '\u0637')  # U+FEC2 tah final form
-            s = s.replace('\uFEC3', '\u0637')  # U+FEC3 tah initial form
-            s = s.replace('\uFEC4', '\u0637')  # U+FEC4 tah medial form
-            s = s.replace('\uFEC5', '\u0638')  # U+FEC5 zah isolated form
-            s = s.replace('\uFEC6', '\u0638')  # U+FEC6 zah final form
-            s = s.replace('\uFEC7', '\u0638')  # U+FEC7 zah initial form
-            s = s.replace('\uFEC8', '\u0638')  # U+FEC8 zah medial form
-            s = s.replace('\uFEC9', '\u0639')  # U+FEC9 ain isolated form
-            s = s.replace('\uFECA', '\u0639')  # U+FECA ain final form
-            s = s.replace('\uFECB', '\u0639')  # U+FECB ain initial form
-            s = s.replace('\uFECC', '\u0639')  # U+FECC ain medial form
-            s = s.replace('\uFECD', '\u063A')  # U+FECD ghain isolated form
-            s = s.replace('\uFECE', '\u063A')  # U+FECE ghain final form
-            s = s.replace('\uFECF', '\u063A')  # U+FECF ghain initial form
-            s = s.replace('\uFED0', '\u063A')  # U+FED0 ghain medial form
-            s = s.replace('\uFED1', '\u0641')  # U+FED1 feh isolated form
-            s = s.replace('\uFED2', '\u0641')  # U+FED2 feh final form
-            s = s.replace('\uFED3', '\u0641')  # U+FED3 feh initial form
-            s = s.replace('\uFED4', '\u0641')  # U+FED4 feh medial form
-            s = s.replace('\uFED5', '\u0642')  # U+FED5 qaf isolated form
-            s = s.replace('\uFED6', '\u0642')  # U+FED6 qaf final form
-            s = s.replace('\uFED7', '\u0642')  # U+FED7 qaf initial form
-            s = s.replace('\uFED8', '\u0642')  # U+FED8 qaf medial form
-            s = s.replace('\uFED9', '\u0643')  # U+FED9 kaf isolated form
-            s = s.replace('\uFEDA', '\u0643')  # U+FEDA kaf final form
-            s = s.replace('\uFEDB', '\u0643')  # U+FEDB kaf initial form
-            s = s.replace('\uFEDC', '\u0643')  # U+FEDC kaf medial form
-            s = s.replace('\uFEDD', '\u0644')  # U+FEDD lam isolated form
-            s = s.replace('\uFEDE', '\u0644')  # U+FEDE lam final form
-            s = s.replace('\uFEDF', '\u0644')  # U+FEDF lam initial form
-            s = s.replace('\uFEE0', '\u0644')  # U+FEE0 lam medial form
-            s = s.replace('\uFEE1', '\u0645')  # U+FEE1 meem isolated form
-            s = s.replace('\uFEE2', '\u0645')  # U+FEE2 meem final form
-            s = s.replace('\uFEE3', '\u0645')  # U+FEE3 meem initial form
-            s = s.replace('\uFEE4', '\u0645')  # U+FEE4 meem medial form
-            s = s.replace('\uFEE5', '\u0646')  # U+FEE5 noon isolated form
-            s = s.replace('\uFEE6', '\u0646')  # U+FEE6 noon final form
-            s = s.replace('\uFEE7', '\u0646')  # U+FEE7 noon initial form
-            s = s.replace('\uFEE8', '\u0646')  # U+FEE8 noon medial form
-            s = s.replace('\uFEE9', '\u0647')  # U+FEE9 heh isolated form
-            s = s.replace('\uFEEA', '\u0647')  # U+FEEA heh final form
-            s = s.replace('\uFEEB', '\u0647')  # U+FEEB heh initial form
-            s = s.replace('\uFEEC', '\u0647')  # U+FEEC heh medial form
-            s = s.replace('\uFEED', '\u0648')  # U+FEED waw isolated form
-            s = s.replace('\uFEEE', '\u0648')  # U+FEEE waw final form
-            s = s.replace('\uFEEF', '\u0649')  # U+FEEF alef maksura isolated form
-            s = s.replace('\uFEF0', '\u0649')  # U+FEF0 alef maksura final form
-            s = s.replace('\uFEF1', '\u064A')  # U+FEF1 yeh isolated form
-            s = s.replace('\uFEF2', '\u064A')  # U+FEF2 yeh final form
-            s = s.replace('\uFEF3', '\u064A')  # U+FEF3 yeh initial form
-            s = s.replace('\uFEF4', '\u064A')  # U+FEF4 yeh medial form
-
-            # expand Arabic ligatures
-            s = s.replace('\uFEF5', '\u0644\u0622')  # U+FEF5 lam with alef with madda above i.f.
-            s = s.replace('\uFEF6', '\u0644\u0622')  # U+FEF6 lam with alef with madda above f.f.
-            s = s.replace('\uFEF7', '\u0644\u0623')  # U+FEF7 lam with alef with hamza above i.f.
-            s = s.replace('\uFEF8', '\u0644\u0623')  # U+FEF8 lam with alef with hamza above f.f.
-            s = s.replace('\uFEF9', '\u0644\u0625')  # U+FEF9 lam with alef with hamza below i.f.
-            s = s.replace('\uFEFA', '\u0644\u0625')  # U+FEFA lam with alef with hamza below f.f.
-            s = s.replace('\uFEFB', '\u0644\u0627')  # U+FEFB lam with alef isolated form
-            s = s.replace('\uFEFC', '\u0644\u0627')  # U+FEFC lam with alef final form
+            s = re.sub(r'[\uFB50-\uFEFC]', self.map_encoding_char, s)
         return s
 
-    # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_indic_diacritics(s: str) -> str:
         """

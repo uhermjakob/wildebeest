@@ -1,15 +1,19 @@
 """
 Written by Ulf Hermjakob, USC/ISI
-This file contains code that builds data tables and some code lines for wildebeest.py
+This file contains functions that build UnicodeData-based data tables or Python code lines for wildebeest.py
 """
 
+from itertools import chain
+import logging as log
 import re
 import unicodedata as ud
 import sys
 
+log.basicConfig(level=log.INFO)
 
-# noinspection SpellCheckingInspection
-def unicode_table_mappings(codeblock: str = 'Devanagari', indent_level: int = 2) -> None:
+
+# noinspection SpellCheckingInspection,SpellCheckingInspection
+def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: int = 2) -> None:
     """
     This function produces Python code to normalize strings. Based on UnicodeData.
     The resulting Python code can be used as a basis for other Python functions in this file.
@@ -57,10 +61,40 @@ def unicode_table_mappings(codeblock: str = 'Devanagari', indent_level: int = 2)
             print(f"{indent}s = s.replace('{us}', '{digit}')    # {uplus} {char_name} {char} -> {digit}")
 
 
+def build_wildebeest_tsv_file(codeblock: str, add_info_field_to_tsv_file_p: bool = True) -> None:
+    """
+    This function builds tsv files in the data directory that map from non-standard encoding (first field)
+    to standard encoding (second field).
+    """
+    if codeblock == 'Arabic presentation forms':  # includes Arabic ligatures
+        output_tsv_filename = '../data/ArabicPresentationForms.tsv'
+        n_output_lines = 0
+        with open(output_tsv_filename, 'w', encoding='utf-8') as f:
+            for code_point in chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00)):
+                non_standard_char = chr(code_point)
+                decomp_ssv = ud.decomposition(non_standard_char)
+                if decomp_ssv:
+                    decomp_elements = decomp_ssv.split()
+                    if (len(decomp_elements) >= 2) \
+                            and (decomp_elements[0] in ['<initial>', '<medial>', '<final>', '<isolated>']):
+                        standard_string = ''.join([chr(int(x, 16)) for x in decomp_elements[1:]])
+                        if add_info_field_to_tsv_file_p:
+                            hex_str = ('%04x' % code_point).upper()
+                            non_standard_char_name = ud.name(non_standard_char, '')
+                            f.write(f"{non_standard_char}\t{standard_string}\tU+{hex_str} {non_standard_char_name}\n")
+                        else:
+                            f.write(f"{non_standard_char}\t{standard_string}\n")
+                        n_output_lines += 1
+        log.info(f'Wrote {n_output_lines} to {output_tsv_filename}')
+
+
 def main(argv):
     if (len(argv) >= 2) and (argv[0] == 'python-code'):
-        codeblock = argv[1]
-        unicode_table_mappings(codeblock)
+        codeblock = argv[1]  # e.g. 'Devanagari', 'Indic', 'Arabic'
+        build_python_code_from_unicode(codeblock)
+    elif (len(argv) >= 2) and (argv[0] == 'tsv-file'):
+        codeblock = argv[1]  # e.g. 'Arabic presentation forms'
+        build_wildebeest_tsv_file(codeblock)
 
 
 if __name__ == "__main__":
