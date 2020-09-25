@@ -8,3 +8,9 @@ Spaces: In this sentence, there are many	different　spaces.
 Control characters: ABC​‌‍‎‏︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿DE󠄀󠇯F
 Double conversion: Donât tell your âfiancÃ©â â SchÃ¶ne GrÃ¼Ãe aus MÃ¤hrenâ¦ â Ma sÅur trouve Ã§a Â«bÃªteÂ». Â¡CoÃ±o! â¬50 â¢ 25kmÂ² â¢ Â½Âµm
 Wrong conversion: Dont tell your fiancé  Schöne Grüße aus Mähren  Ma sur trouve ça «bête». ¡Coño! 50  25km²  ½µm
+Replacement character: China�s flag isn�t green. Espa�a.
+Typos: The Phillippine offical was embarassed about the kidnaping in Sao Paolo.
+XML: &amp;amp;
+km² ㎢ km2 2³²
+# to do: review Arabic presentation forms, composed characters, ſ, ĳ ligatures, µm Å Ω, Uyghur
+# see also: utilities.pm repair_string
