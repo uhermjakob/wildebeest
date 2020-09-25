@@ -1,3 +1,4 @@
+# noinspection SpellCheckingInspection,SpellCheckingInspection
 """
 Written by Ulf Hermjakob, USC/ISI
 Ported Pashto and Farsi-specific normalization from Perl to Python in August 2020.
@@ -32,7 +33,6 @@ import argparse
 import logging as log
 import re
 import sys
-import unicodedata as ud
 from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
@@ -45,6 +45,7 @@ class Wildebeest:
     def __init__(self):
         self.encoding_map_dict = {}
         # This dictionary captures the irregular mappings from Windows1252 to UTF8.
+        # noinspection SpellCheckingInspection
         self.spec_windows1252_to_utf8_dict = {
             '\x80': '\u20AC',  # Euro Sign
             #  81 is unassigned in Windows-1252
@@ -95,6 +96,7 @@ class Wildebeest:
         if verbose:
             log.info(f'map-{loc} {index} {key} -> {value}   byte_string:{byte_string}')
 
+    # noinspection SpellCheckingInspection
     def init_encoding_map_dict(self, undef_default: str = '') -> None:
         """Initialize encoding_map_dict that maps from various misencodings to proper UTF8."""
         # Misencodings that resulted from missing conversion from Windows1252/Latin1 to UTF8.
@@ -145,6 +147,7 @@ class Wildebeest:
         else:
             return s
 
+    # noinspection SpellCheckingInspection
     def repair_encoding_errors(self, s: str) -> str:
         """
         Interpret non-UTF8 characters (standalone \x80-\xFF, read in as surrogate characters \uDC80-\uDCFF])
@@ -163,6 +166,7 @@ class Wildebeest:
             s = re.sub(r'[\u0080-\u00BF]', self.map_encoding_char, s)
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def delete_surrogates(s: str, default: str = '') -> str:
         """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters \uDC80-\uDCFF])."""
@@ -177,6 +181,7 @@ class Wildebeest:
         s = s.replace('\u0640', '')  # Arabic tatweel
         s = re.sub(r'[\u200B-\u200F]', '', s)  # zero width space/non-joiner/joiner, direction marks
         s = re.sub(r'[\uFE00-\uFE0F]', '', s)  # variation selectors 1-16
+        # noinspection SpellCheckingInspection
         s = s.replace('\uFEFF', '')  # byte order mark, zero width no-break space
         s = re.sub(r'[\U000E0100-\U000E01EF]', '', s)  # variation selectors 17-256
         return s
@@ -193,6 +198,7 @@ class Wildebeest:
         s = s.replace('\u064D', '')  # delete Arabic kasratan
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_farsi_characters(s: str) -> str:
         s = s.replace('\u064A', '\u06CC')  # Arabic to Farsi yeh
@@ -209,6 +215,7 @@ class Wildebeest:
         s = s.replace('\u0693', '\u0631')  # Arabic reh with ring to Arabic reh
         return s
 
+    # noinspection SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection
     @staticmethod
     def normalize_arabic_pres_form_characters(s: str) -> str:
         if re.search(r"[\uFB50-\uFEFC]", s):
@@ -367,6 +374,7 @@ class Wildebeest:
             s = s.replace('\uFEFC', '\u0644\u0627')  # U+FEFC lam with alef final form
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_indic_diacritics(s: str) -> str:
         """
@@ -428,6 +436,7 @@ class Wildebeest:
             s = re.sub(r'[\uFF01-\uFF5E]', self.map_encoding_char, s)
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def map_digits_to_ascii(s: str) -> str:
         """
@@ -597,6 +606,7 @@ class Wildebeest:
                     ht[loc_key] = loc_id
         return s
 
+    # noinspection SpellCheckingInspection,SpellCheckingInspection
     def norm_clean_string(self, s: str, ht: dict, lang_code: str = '', loc_id: str = '') -> str:
         """Go through a list of applicable normalization/cleaning steps and keep track of the number of changes."""
         number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
@@ -631,54 +641,7 @@ class Wildebeest:
                               + "\n")
 
 
-def unicode_table_mappings(codeblock: str = 'Devanagari', indent_level: int = 2) -> None:
-    """
-    This function produces Python code to normalize strings. Based on UnicodeData.
-    The resulting Python code can be used as a basis for other Python functions in this file.
-    Example output:
-        s = s.replace('\u0928\u093C', '\u0929')    # U+0929 DEVANAGARI LETTER NNNA ऩ -> ऩ
-        s = s.replace('\u095F', '\u092F\u093C')    # U+095F DEVANAGARI LETTER YYA य़ -> य़
-        s = s.replace('\u0967', '1')               # U+0967 DEVANAGARI DIGIT ONE १ -> 1
-    """
-    decomposition_exclusions = ()
-    if codeblock == 'Devanagari':
-        code_points = range(0x0900, 0x0980)
-        decomposition_exclusions = range(0x0958, 0x0960)
-    elif codeblock == 'Indic':
-        code_points = range(0x0900, 0x0E00)
-        decomposition_exclusions = range(0x0958, 0x0960)  # probably incomplete
-    elif codeblock == 'Arabic':
-        code_points = range(0x0600, 0x0700)
-    else:
-        code_points = range(0x0000, 0x007F)  # ASCII
-    indent = ' ' * indent_level * 4
-    for code_point in code_points:
-        char = chr(code_point)
-        char_name = ud.name(char, '')            # e.g. 'DEVANAGARI LETTER YYA'
-        hex_str = ('%04x' % code_point).upper()  # e.g. 095F
-        uplus = 'U+' + hex_str                   # e.g. U+095F
-        us = '\\u' + hex_str                     # e.g. \u095F
-        decomp_ssv = ud.decomposition(char)      # e.g. '092F 093C'
-        decomp_ssv = re.sub(r'<.*?>\s*', '', decomp_ssv)  # remove decomp type info, e.g. <compat>, <isolated>
-        if decomp_ssv:
-            # log.info(f'{uplus} decomp_ssv: {decomp_ssv}')
-            decomp_codes = decomp_ssv.split()   # e.g. ['092F', '093C']
-            decomp_chars = [chr(int(x, 16)) for x in decomp_codes]   # e.g. ['य', '़']
-            decomp_str = ''.join(decomp_chars)  # e.g. 'य़' (2 characters)
-            decomp_uss = [('\\u' + ('%04x' % int(x, 16)).upper()) for x in decomp_codes]  # e.g. ['\u092F', '\u093C']
-            decomp_us = ''.join(decomp_uss)     # e.g. '\u092F\u093C'
-            if code_point in decomposition_exclusions:
-                #    s = s.replace('\u095F', '\u092F\u093C')    # U+095F DEVANAGARI LETTER YYA य़ -> य़
-                print(f"{indent}s = s.replace('{us}', '{decomp_us}')    # {uplus} {char_name} {char} -> {decomp_str}")
-            else:
-                #    s = s.replace('\u0928\u093C', '\u0929')  # U+0929 DEVANAGARI LETTER NNNA ऩ -> ऩ
-                print(f"{indent}s = s.replace('{decomp_us}', '{us}')    # {uplus} {char_name} {decomp_str} -> {char}")
-        digit = ud.digit(char, '')
-        if digit != '':
-            #   s = s.replace('\u0967', '1')    # U+0967 DEVANAGARI DIGIT ONE १ -> 1
-            print(f"{indent}s = s.replace('{us}', '{digit}')    # {uplus} {char_name} {char} -> {digit}")
-
-
+# noinspection SpellCheckingInspection,SpellCheckingInspection
 def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments

@@ -205,7 +205,7 @@ sub init_ht {
       THAI:                 Token contains Thai character
       TIBETAN_PUNCT:        Token contains Tibetan punctuation
       TIBETAN:              Token contains Tibetan character
-      TIFINAGH:             Token contains Tifinagh character (Morroco)
+      TIFINAGH:             Token contains Tifinagh character (Morocco)
       YI_SYLLABLE:          Token contains Yi syllable (China, Vietnam, Thailand)
 
       BROKEN_EMAIL:         Broken email address
@@ -789,7 +789,7 @@ while (<STDIN>) {
             next if ($c =~ /\xE2\xB5/)            && &note_issue("TIFINAGH", $token, $line_id, $co);
             next if ($c =~ /\xE2\xB7[\xA0-\xBF]/) && &note_issue("CYRILLIC_EXTENDED", $token, $line_id, $co);
             next if ($c =~ /\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]/) && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
-            next if ($c =~ /\xE3\x83\xBB/)        && &note_issue("JAPANESE_PUNCT", $token, $line_id, $co); # katakana mioddle dot
+            next if ($c =~ /\xE3\x83\xBB/)        && &note_issue("JAPANESE_PUNCT", $token, $line_id, $co); # katakana middle dot
             next if ($c =~ /\xE3[\x81-\x83]/)     && &note_issue("JAPANESE_KANA", $token, $line_id, $co);
             next if ($c =~ /\xE3\x84[\x80-\xAF]/) && &note_issue("BOPOMOFO", $token, $line_id, $co);
             next if ($c =~ /\xE3[\x88-\x8B]/)     && &note_issue("MISC_SYMBOL", $token, $line_id, $co, $c);
