@@ -24,14 +24,17 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
         s = s.replace('\u0967', '1')               # U+0967 DEVANAGARI DIGIT ONE १ -> 1
     """
     decomposition_exclusions = ()
-    if codeblock == 'Devanagari':
+    if codeblock == 'Arabic':
+        code_points = range(0x0600, 0x0700)
+    elif codeblock == 'Devanagari':
         code_points = range(0x0900, 0x0980)
         decomposition_exclusions = range(0x0958, 0x0960)
     elif codeblock == 'Indic':
         code_points = range(0x0900, 0x0E00)
         decomposition_exclusions = range(0x0958, 0x0960)  # probably incomplete
-    elif codeblock == 'Arabic':
-        code_points = range(0x0600, 0x0700)
+    elif codeblock == 'ligature':
+        code_points = range(0x0000, 0xFB50)
+        decomposition_exclusions = range(0x0000, 0xFB50)
     else:
         code_points = range(0x0000, 0x007F)  # ASCII
     indent = ' ' * indent_level * 4
@@ -42,6 +45,11 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
         uplus = 'U+' + hex_str                   # e.g. U+095F
         us = '\\u' + hex_str                     # e.g. \u095F
         decomp_ssv = ud.decomposition(char)      # e.g. '092F 093C'
+        if ((codeblock == 'ligature')
+                and (  # (not decomp_ssv.startswith('<compat>'))
+                       # or
+                     (not ('SYMBOL' in char_name)))):
+            continue
         decomp_ssv = re.sub(r'<.*?>\s*', '', decomp_ssv)  # remove decomp type info, e.g. <compat>, <isolated>
         if decomp_ssv:
             # log.info(f'{uplus} decomp_ssv: {decomp_ssv}')
@@ -75,9 +83,12 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                      f' wildebeest_build.py (Ulf Hermjakob, USC/ISI) based on UnicodeData on {timestamp}'
     supplementary_code = ''
     if codeblock in ('ArabicPresentationFormMapping',  # includes Arabic ligatures
+                     'CJKCompatibilityMapping',        # includes IDEOGRAPHIC TELEGRAPH SYMBOL FOR months
                      'DigitMapping'):
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
+        elif codeblock == 'CJKCompatibilityMapping':
+            code_points = range(0x32C0, 0x3400)
         else:
             code_points = chain(range(0x0000, 0x3400), range(0xA000, 0xAC00), range(0xF900, 0x18D00),
                                 range(0x1B000, 0x1B300), range(0x1BC00, 0x1BD00), range(0x1D000, 0x1FC00),
@@ -93,9 +104,15 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                 action = ''
                 if decomp_ssv:
                     decomp_elements = decomp_ssv.split()
-                    if (codeblock == 'ArabicPresentationFormMapping') \
-                            and (len(decomp_elements) >= 2) \
-                            and (decomp_elements[0] in ['<initial>', '<medial>', '<final>', '<isolated>']):
+                    if ((codeblock == 'ArabicPresentationFormMapping')
+                            and (len(decomp_elements) >= 2)
+                            and (decomp_elements[0] in ['<initial>', '<medial>', '<final>', '<isolated>'])):
+                        decomp_chars = decomp_elements[1:]
+                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                        action = 'decomposition'
+                    elif ((codeblock == 'CJKCompatibilityMapping')
+                            and (len(decomp_elements) >= 2)
+                            and (decomp_elements[0] in ['<compat>', '<square>'])):
                         decomp_chars = decomp_elements[1:]
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         action = 'decomposition'
