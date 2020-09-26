@@ -25,6 +25,7 @@ List of available normalization/cleaning-types (default: all are applied):
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
  * punct (e.g. maps Arabic exclamation mark etc. to ASCII equivalent)
  * space (e.g. normalizes non-zero spaces to normal space)
+ * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
  * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 When using STDIN and/or STDOUT, if might be necessary, particularly for older versions of Python, to do
 'export PYTHONIOENCODING=UTF-8' before calling this Python script to ensure UTF-8 encoding.
@@ -440,6 +441,14 @@ class Wildebeest:
             s = re.sub(r'[\U0001E950-\U0001E959]', self.map_encoding_char, s)  # ADLAM digits
         return s
 
+    # noinspection SpellCheckingInspection
+    @staticmethod
+    def repair_xml(s: str) -> str:
+        """Repair multi-level xml-escapes such as &amp;amp;quot; to &quot;"""
+        s = re.sub(r'(?<=&)(?:amp;)+(?=(?:amp|apos|gt|lt|nbsp|quot|#\d{1,6}|#x[0-9A-F]{1,5});)',
+                   '', s, flags=re.IGNORECASE)
+        return s
+
     @staticmethod
     def repair_tokenization(s: str) -> str:
         """Detach certain punctuation -_+*|% and ASCII digits from Arabic characters."""
@@ -489,6 +498,7 @@ class Wildebeest:
         if lang_code == 'fas':
             s = self.norm_clean_string_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id)
             s = self.norm_clean_string_group(s, ht, 'ring-char', self.normalize_ring_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
         s = self.norm_clean_string_group(s, ht, 'repair-token', self.repair_tokenization, loc_id)
         if s != orig_s:
             self.increment_dict_count(ht, 'COUNT-ALL')
@@ -509,7 +519,7 @@ def main(argv):
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'pres-form',
                       'ligatures-symbols', 'fullwidth', 'indic-diacr', 'punct', 'space', 'digit', 'farsi-char',
-                      'ring-char', 'repair-token']
+                      'ring-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')

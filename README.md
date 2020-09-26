@@ -37,6 +37,7 @@ errors:
 * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
 * punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
 * space (e.g. maps non-zero spaces to normal space)
+* repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
 This script is still work in progress.
