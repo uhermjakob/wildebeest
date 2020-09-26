@@ -666,9 +666,9 @@ while (<STDIN>) {
             next if ($c =~ /[\xC0-\xC1]/)     && &note_issue("UTF8_NON_SHORTEST", $token, $line_id, $co);
             next if ($c =~ /\xC2[\x80-\x9F]/) && &note_issue("CONTROL_CHAR", $token, $line_id, $co);
             next if ($c =~ /\xC2[\xA2-\xA5]/) && &note_issue("CURRENCY", $token, $line_id, $co);
-            next if ($c =~ /\xC2\xA0/)        && &note_issue("NON_ASCII_WHITESPACE", $token, $id, $co, $c);
-            next if ($c =~ /\xC2[\xA0-\xBF]/) && &note_issue("NON_ASCII_PUNCT", $token, $id, $co, $c);
-            next if ($c =~ /\xC3[\x97\xB7]/)  && &note_issue("NON_ASCII_PUNCT", $token, $id, $co, $c);
+            next if ($c =~ /\xC2\xA0/)        && &note_issue("NON_ASCII_WHITESPACE", $token, $line_id, $co, $c);
+            next if ($c =~ /\xC2[\xA0-\xBF]/) && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
+            next if ($c =~ /\xC3[\x97\xB7]/)  && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
             next if ((($lang_code =~ /^(de|ger)$/) # German umlauts, sharp s
 		      && ($c =~ /\xC3[\x84\x96\x9C\x9F\xA4\xB6\xBC]/))
                   || (($lang_code =~ /^(es|spa)$/) # Spanish accents, n-tilde
@@ -679,8 +679,8 @@ while (<STDIN>) {
 		       || ($c =~ /\xC5[\x92\x93]/))) # OE/oe ligature
                   || (($lang_code =~ /^(ur|urd)$/) # Urdu ddal, gaf, jeh, peh, rreh, tcheh, tteh, fathatan, yeh barree, farsi yeh, noon ghunna, heh goal, ...
 		      && ($c =~ /(\xD9\x8B|\xD9\xB1|\xD9\xB9|\xD9\xBE|\xDA\x86|\xDA\x88|\xDA\x91|\xDA\x98|\xDA\xAF|\xDA\xBA|\xDB\x81|\xDB\x82|\xDB\x8C|\xDB\x92|\xDB\x93)/)))
-		  && &note_issue("LANGUAGE_SPECIFIC", $token, $id, $co);
-            next if ($c =~ /\xC3[\x80-\xBF]/) && &note_issue("LATIN_PLUS_ALPHA", $token, $id, $co);
+		  && &note_issue("LANGUAGE_SPECIFIC", $token, $line_id, $co);
+            next if ($c =~ /\xC3[\x80-\xBF]/) && &note_issue("LATIN_PLUS_ALPHA", $token, $line_id, $co);
             next if ($c =~ /\xC4[\xB2\xB3]/)  && &note_issue("LATIN_EXTENDED_LIGATURE", $token, $line_id, $co);
             next if ($c =~ /\xC5[\x92\x93]/)  && &note_issue("LATIN_EXTENDED_LIGATURE", $token, $line_id, $co);
             next if ($c =~ /[\xC4-\xC8]/)     && &note_issue("LATIN_EXTENDED", $token, $line_id, $co);
