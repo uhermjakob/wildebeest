@@ -11,8 +11,5 @@ Wrong conversion: Dont tell your fiancé  Schöne Grüße aus Mähren 
 Replacement character: China�s flag isn�t green. Espa�a.
 Typos: The Phillippine offical was embarassed about the kidnaping in Sao Paolo.
 XML: &amp;quot; &amp;amp;#8204; &amp;amp;amp;#x200C;
-Ligatures, symbols, signs: km² ㎢ ſ ĳ 2µm 2Å 2kΩ 273.15K ㍻31年㋀㏾
+Ligatures, symbols, signs: sœur bær bĳ ǈubljana Luſt   2µm 2Å 2kΩ 273.15K   ㎢ km² ㍻31年㋀㏾
 Superscripts, subscripts: 2³² aⁿ aₙ O₂-detector O²⁻detector
-# to do: composed characters, combining o¨, <small>, <vertical>, <font>, <compat> (started)
-# to do: FB2E;HEBREW LETTER ALEF WITH PATAH; Armenian punct ՚ -> ’
-# see also: utilities.pm repair_string
