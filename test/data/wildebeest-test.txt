@@ -12,6 +12,6 @@ Replacement character: China�s flag isn�t green. Espa�a.
 Typos: The Phillippine offical was embarassed about the kidnaping in Sao Paolo.
 XML: &amp;amp;
 km² ㎢ km2 2³²
-# to do: review Arabic presentation forms, composed characters, ſ, ĳ ligatures, µm Å Ω, Uyghur, <small>, <vertical>, <compat>, <font>,
+# to do: composed characters, combining o¨, ſ, ĳ ligatures, µm Å Ω, Uyghur, <small>, <vertical>, <compat>, <font>,
 # to do: FB2E;HEBREW LETTER ALEF WITH PATAH
 # see also: utilities.pm repair_string

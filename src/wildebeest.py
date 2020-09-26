@@ -141,16 +141,18 @@ class Wildebeest:
             self.set_encoding_map_dict(fullwidth_char, standard_char, index, None, 'f1')
         src_dir_path = os.path.dirname(os.path.realpath(__file__))
         data_dir_path = os.path.join(src_dir_path, "../data")
-        for tsv_filename in ('ArabicPresentationForms.tsv', 'future_file.tsv'):
+        for tsv_filename in ('ArabicPresentationFormMappingAnnotated.tsv', 'DigitMappingAnnotated.tsv'):
             full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
             try:
                 with open(full_tsv_filename, 'r', encoding='utf-8', errors='ignore') as f:
+                    line_number = 0
                     for line in f:
+                        line_number += 1
                         tsv_list = re.split(r'\t', line.rstrip())
-                        self.encoding_map_dict[tsv_list[0]] = tsv_list[1]
+                        if (len(tsv_list) >= 2) and (line_number >= 2):
+                            self.encoding_map_dict[tsv_list[0]] = tsv_list[1]
             except FileNotFoundError:
                 log.error(f'Could not open file {full_tsv_filename}')
-
 
     def map_encoding_char(self, match: Match[str]) -> str:
         """Maps substring resulting from misencoding to repaired UTF8."""
@@ -295,146 +297,77 @@ class Wildebeest:
         return s
 
     # noinspection SpellCheckingInspection
-    @staticmethod
-    def map_digits_to_ascii(s: str) -> str:
+    def map_digits_to_ascii(self, s: str) -> str:
         """
-        This function replaces non-ASCII (Arabic, Indic) digits by ASCII digits.
-        This does not include non-digit numbers such Chinese/Japanese 百 (100).
+        This function replaces non-ASCII decimal digits by ASCII digits, e.g.
+            ۱۲۳ (Arabic) -> 123
+            ൯൦ (Mayalayam) -> 90
+        This function does not map any numbers from non-decimal systems such as
+            Roman numerals (MDCCLXXVI = 1776),
+            Chinese/Japanese (二百 = 200) or
+            Ethiopic languages (፱፻ = 900),
+        as the characters of those numbers do not match one-to-one onto ASCII digits.
         """
-        if not re.search(r"[\u0660-\u0DEF]", s):
+        if not re.search(r"[\u0660-\u1E959]", s):
             return s
-        if re.search(r"[\u0660-\u0669]", s):
-            s = s.replace('\u0660', '0')  # U+0660 ARABIC-INDIC DIGIT ZERO ٠ -> 0
-            s = s.replace('\u0661', '1')  # U+0661 ARABIC-INDIC DIGIT ONE ١ -> 1
-            s = s.replace('\u0662', '2')  # U+0662 ARABIC-INDIC DIGIT TWO ٢ -> 2
-            s = s.replace('\u0663', '3')  # U+0663 ARABIC-INDIC DIGIT THREE ٣ -> 3
-            s = s.replace('\u0664', '4')  # U+0664 ARABIC-INDIC DIGIT FOUR ٤ -> 4
-            s = s.replace('\u0665', '5')  # U+0665 ARABIC-INDIC DIGIT FIVE ٥ -> 5
-            s = s.replace('\u0666', '6')  # U+0666 ARABIC-INDIC DIGIT SIX ٦ -> 6
-            s = s.replace('\u0667', '7')  # U+0667 ARABIC-INDIC DIGIT SEVEN ٧ -> 7
-            s = s.replace('\u0668', '8')  # U+0668 ARABIC-INDIC DIGIT EIGHT ٨ -> 8
-            s = s.replace('\u0669', '9')  # U+0669 ARABIC-INDIC DIGIT NINE ٩ -> 9
-        if re.search(r"[\u06F0-\u06F9]", s):
-            s = s.replace('\u06F0', '0')  # U+06F0 EXTENDED ARABIC-INDIC DIGIT ZERO ۰ -> 0
-            s = s.replace('\u06F1', '1')  # U+06F1 EXTENDED ARABIC-INDIC DIGIT ONE ۱ -> 1
-            s = s.replace('\u06F2', '2')  # U+06F2 EXTENDED ARABIC-INDIC DIGIT TWO ۲ -> 2
-            s = s.replace('\u06F3', '3')  # U+06F3 EXTENDED ARABIC-INDIC DIGIT THREE ۳ -> 3
-            s = s.replace('\u06F4', '4')  # U+06F4 EXTENDED ARABIC-INDIC DIGIT FOUR ۴ -> 4
-            s = s.replace('\u06F5', '5')  # U+06F5 EXTENDED ARABIC-INDIC DIGIT FIVE ۵ -> 5
-            s = s.replace('\u06F6', '6')  # U+06F6 EXTENDED ARABIC-INDIC DIGIT SIX ۶ -> 6
-            s = s.replace('\u06F7', '7')  # U+06F7 EXTENDED ARABIC-INDIC DIGIT SEVEN ۷ -> 7
-            s = s.replace('\u06F8', '8')  # U+06F8 EXTENDED ARABIC-INDIC DIGIT EIGHT ۸ -> 8
-            s = s.replace('\u06F9', '9')  # U+06F9 EXTENDED ARABIC-INDIC DIGIT NINE ۹ -> 9
-        if re.search(r"[\u0966-\u096F]", s):
-            s = s.replace('\u0966', '0')  # U+0966 DEVANAGARI DIGIT ZERO ० -> 0
-            s = s.replace('\u0967', '1')  # U+0967 DEVANAGARI DIGIT ONE १ -> 1
-            s = s.replace('\u0968', '2')  # U+0968 DEVANAGARI DIGIT TWO २ -> 2
-            s = s.replace('\u0969', '3')  # U+0969 DEVANAGARI DIGIT THREE ३ -> 3
-            s = s.replace('\u096A', '4')  # U+096A DEVANAGARI DIGIT FOUR ४ -> 4
-            s = s.replace('\u096B', '5')  # U+096B DEVANAGARI DIGIT FIVE ५ -> 5
-            s = s.replace('\u096C', '6')  # U+096C DEVANAGARI DIGIT SIX ६ -> 6
-            s = s.replace('\u096D', '7')  # U+096D DEVANAGARI DIGIT SEVEN ७ -> 7
-            s = s.replace('\u096E', '8')  # U+096E DEVANAGARI DIGIT EIGHT ८ -> 8
-            s = s.replace('\u096F', '9')  # U+096F DEVANAGARI DIGIT NINE ९ -> 9
-        if re.search(r"[\u09E6-\u09EF]", s):
-            s = s.replace('\u09E6', '0')  # U+09E6 BENGALI DIGIT ZERO ০ -> 0
-            s = s.replace('\u09E7', '1')  # U+09E7 BENGALI DIGIT ONE ১ -> 1
-            s = s.replace('\u09E8', '2')  # U+09E8 BENGALI DIGIT TWO ২ -> 2
-            s = s.replace('\u09E9', '3')  # U+09E9 BENGALI DIGIT THREE ৩ -> 3
-            s = s.replace('\u09EA', '4')  # U+09EA BENGALI DIGIT FOUR ৪ -> 4
-            s = s.replace('\u09EB', '5')  # U+09EB BENGALI DIGIT FIVE ৫ -> 5
-            s = s.replace('\u09EC', '6')  # U+09EC BENGALI DIGIT SIX ৬ -> 6
-            s = s.replace('\u09ED', '7')  # U+09ED BENGALI DIGIT SEVEN ৭ -> 7
-            s = s.replace('\u09EE', '8')  # U+09EE BENGALI DIGIT EIGHT ৮ -> 8
-            s = s.replace('\u09EF', '9')  # U+09EF BENGALI DIGIT NINE ৯ -> 9
-        if re.search(r"[\u0A66-\u0A6F]", s):
-            s = s.replace('\u0A66', '0')  # U+0A66 GURMUKHI DIGIT ZERO ੦ -> 0
-            s = s.replace('\u0A67', '1')  # U+0A67 GURMUKHI DIGIT ONE ੧ -> 1
-            s = s.replace('\u0A68', '2')  # U+0A68 GURMUKHI DIGIT TWO ੨ -> 2
-            s = s.replace('\u0A69', '3')  # U+0A69 GURMUKHI DIGIT THREE ੩ -> 3
-            s = s.replace('\u0A6A', '4')  # U+0A6A GURMUKHI DIGIT FOUR ੪ -> 4
-            s = s.replace('\u0A6B', '5')  # U+0A6B GURMUKHI DIGIT FIVE ੫ -> 5
-            s = s.replace('\u0A6C', '6')  # U+0A6C GURMUKHI DIGIT SIX ੬ -> 6
-            s = s.replace('\u0A6D', '7')  # U+0A6D GURMUKHI DIGIT SEVEN ੭ -> 7
-            s = s.replace('\u0A6E', '8')  # U+0A6E GURMUKHI DIGIT EIGHT ੮ -> 8
-            s = s.replace('\u0A6F', '9')  # U+0A6F GURMUKHI DIGIT NINE ੯ -> 9
-        if re.search(r"[\u0AE6-\u0AEF]", s):
-            s = s.replace('\u0AE6', '0')  # U+0AE6 GUJARATI DIGIT ZERO ૦ -> 0
-            s = s.replace('\u0AE7', '1')  # U+0AE7 GUJARATI DIGIT ONE ૧ -> 1
-            s = s.replace('\u0AE8', '2')  # U+0AE8 GUJARATI DIGIT TWO ૨ -> 2
-            s = s.replace('\u0AE9', '3')  # U+0AE9 GUJARATI DIGIT THREE ૩ -> 3
-            s = s.replace('\u0AEA', '4')  # U+0AEA GUJARATI DIGIT FOUR ૪ -> 4
-            s = s.replace('\u0AEB', '5')  # U+0AEB GUJARATI DIGIT FIVE ૫ -> 5
-            s = s.replace('\u0AEC', '6')  # U+0AEC GUJARATI DIGIT SIX ૬ -> 6
-            s = s.replace('\u0AED', '7')  # U+0AED GUJARATI DIGIT SEVEN ૭ -> 7
-            s = s.replace('\u0AEE', '8')  # U+0AEE GUJARATI DIGIT EIGHT ૮ -> 8
-            s = s.replace('\u0AEF', '9')  # U+0AEF GUJARATI DIGIT NINE ૯ -> 9
-        if re.search(r"[\u0B66-\u0B6F]", s):
-            s = s.replace('\u0B66', '0')  # U+0B66 ORIYA DIGIT ZERO ୦ -> 0
-            s = s.replace('\u0B67', '1')  # U+0B67 ORIYA DIGIT ONE ୧ -> 1
-            s = s.replace('\u0B68', '2')  # U+0B68 ORIYA DIGIT TWO ୨ -> 2
-            s = s.replace('\u0B69', '3')  # U+0B69 ORIYA DIGIT THREE ୩ -> 3
-            s = s.replace('\u0B6A', '4')  # U+0B6A ORIYA DIGIT FOUR ୪ -> 4
-            s = s.replace('\u0B6B', '5')  # U+0B6B ORIYA DIGIT FIVE ୫ -> 5
-            s = s.replace('\u0B6C', '6')  # U+0B6C ORIYA DIGIT SIX ୬ -> 6
-            s = s.replace('\u0B6D', '7')  # U+0B6D ORIYA DIGIT SEVEN ୭ -> 7
-            s = s.replace('\u0B6E', '8')  # U+0B6E ORIYA DIGIT EIGHT ୮ -> 8
-            s = s.replace('\u0B6F', '9')  # U+0B6F ORIYA DIGIT NINE ୯ -> 9
-        if re.search(r"[\u0BE6-\u0BEF]", s):
-            s = s.replace('\u0BE6', '0')  # U+0BE6 TAMIL DIGIT ZERO ௦ -> 0
-            s = s.replace('\u0BE7', '1')  # U+0BE7 TAMIL DIGIT ONE ௧ -> 1
-            s = s.replace('\u0BE8', '2')  # U+0BE8 TAMIL DIGIT TWO ௨ -> 2
-            s = s.replace('\u0BE9', '3')  # U+0BE9 TAMIL DIGIT THREE ௩ -> 3
-            s = s.replace('\u0BEA', '4')  # U+0BEA TAMIL DIGIT FOUR ௪ -> 4
-            s = s.replace('\u0BEB', '5')  # U+0BEB TAMIL DIGIT FIVE ௫ -> 5
-            s = s.replace('\u0BEC', '6')  # U+0BEC TAMIL DIGIT SIX ௬ -> 6
-            s = s.replace('\u0BED', '7')  # U+0BED TAMIL DIGIT SEVEN ௭ -> 7
-            s = s.replace('\u0BEE', '8')  # U+0BEE TAMIL DIGIT EIGHT ௮ -> 8
-            s = s.replace('\u0BEF', '9')  # U+0BEF TAMIL DIGIT NINE ௯ -> 9
-        if re.search(r"[\u0C66-\u0C6F]", s):
-            s = s.replace('\u0C66', '0')  # U+0C66 TELUGU DIGIT ZERO ౦ -> 0
-            s = s.replace('\u0C67', '1')  # U+0C67 TELUGU DIGIT ONE ౧ -> 1
-            s = s.replace('\u0C68', '2')  # U+0C68 TELUGU DIGIT TWO ౨ -> 2
-            s = s.replace('\u0C69', '3')  # U+0C69 TELUGU DIGIT THREE ౩ -> 3
-            s = s.replace('\u0C6A', '4')  # U+0C6A TELUGU DIGIT FOUR ౪ -> 4
-            s = s.replace('\u0C6B', '5')  # U+0C6B TELUGU DIGIT FIVE ౫ -> 5
-            s = s.replace('\u0C6C', '6')  # U+0C6C TELUGU DIGIT SIX ౬ -> 6
-            s = s.replace('\u0C6D', '7')  # U+0C6D TELUGU DIGIT SEVEN ౭ -> 7
-            s = s.replace('\u0C6E', '8')  # U+0C6E TELUGU DIGIT EIGHT ౮ -> 8
-            s = s.replace('\u0C6F', '9')  # U+0C6F TELUGU DIGIT NINE ౯ -> 9
-        if re.search(r"[\u0CE6-\u0CEF]", s):
-            s = s.replace('\u0CE6', '0')  # U+0CE6 KANNADA DIGIT ZERO ೦ -> 0
-            s = s.replace('\u0CE7', '1')  # U+0CE7 KANNADA DIGIT ONE ೧ -> 1
-            s = s.replace('\u0CE8', '2')  # U+0CE8 KANNADA DIGIT TWO ೨ -> 2
-            s = s.replace('\u0CE9', '3')  # U+0CE9 KANNADA DIGIT THREE ೩ -> 3
-            s = s.replace('\u0CEA', '4')  # U+0CEA KANNADA DIGIT FOUR ೪ -> 4
-            s = s.replace('\u0CEB', '5')  # U+0CEB KANNADA DIGIT FIVE ೫ -> 5
-            s = s.replace('\u0CEC', '6')  # U+0CEC KANNADA DIGIT SIX ೬ -> 6
-            s = s.replace('\u0CED', '7')  # U+0CED KANNADA DIGIT SEVEN ೭ -> 7
-            s = s.replace('\u0CEE', '8')  # U+0CEE KANNADA DIGIT EIGHT ೮ -> 8
-            s = s.replace('\u0CEF', '9')  # U+0CEF KANNADA DIGIT NINE ೯ -> 9
-        if re.search(r"[\u0D66-\u0D6F]", s):
-            s = s.replace('\u0D66', '0')  # U+0D66 MALAYALAM DIGIT ZERO ൦ -> 0
-            s = s.replace('\u0D67', '1')  # U+0D67 MALAYALAM DIGIT ONE ൧ -> 1
-            s = s.replace('\u0D68', '2')  # U+0D68 MALAYALAM DIGIT TWO ൨ -> 2
-            s = s.replace('\u0D69', '3')  # U+0D69 MALAYALAM DIGIT THREE ൩ -> 3
-            s = s.replace('\u0D6A', '4')  # U+0D6A MALAYALAM DIGIT FOUR ൪ -> 4
-            s = s.replace('\u0D6B', '5')  # U+0D6B MALAYALAM DIGIT FIVE ൫ -> 5
-            s = s.replace('\u0D6C', '6')  # U+0D6C MALAYALAM DIGIT SIX ൬ -> 6
-            s = s.replace('\u0D6D', '7')  # U+0D6D MALAYALAM DIGIT SEVEN ൭ -> 7
-            s = s.replace('\u0D6E', '8')  # U+0D6E MALAYALAM DIGIT EIGHT ൮ -> 8
-            s = s.replace('\u0D6F', '9')  # U+0D6F MALAYALAM DIGIT NINE ൯ -> 9
-        if re.search(r"[\u0DE6-\u0DEF]", s):
-            s = s.replace('\u0DE6', '0')  # U+0DE6 SINHALA LITH DIGIT ZERO ෦ -> 0
-            s = s.replace('\u0DE7', '1')  # U+0DE7 SINHALA LITH DIGIT ONE ෧ -> 1
-            s = s.replace('\u0DE8', '2')  # U+0DE8 SINHALA LITH DIGIT TWO ෨ -> 2
-            s = s.replace('\u0DE9', '3')  # U+0DE9 SINHALA LITH DIGIT THREE ෩ -> 3
-            s = s.replace('\u0DEA', '4')  # U+0DEA SINHALA LITH DIGIT FOUR ෪ -> 4
-            s = s.replace('\u0DEB', '5')  # U+0DEB SINHALA LITH DIGIT FIVE ෫ -> 5
-            s = s.replace('\u0DEC', '6')  # U+0DEC SINHALA LITH DIGIT SIX ෬ -> 6
-            s = s.replace('\u0DED', '7')  # U+0DED SINHALA LITH DIGIT SEVEN ෭ -> 7
-            s = s.replace('\u0DEE', '8')  # U+0DEE SINHALA LITH DIGIT EIGHT ෮ -> 8
-            s = s.replace('\u0DEF', '9')  # U+0DEF SINHALA LITH DIGIT NINE ෯ -> 9
+        if re.search(r'[\u0660-\u07C9]', s):
+            s = re.sub(r'[\u0660-\u0669]', self.map_encoding_char, s)  # ARABIC-INDIC digits
+            s = re.sub(r'[\u06F0-\u06F9]', self.map_encoding_char, s)  # EXTENDED ARABIC-INDIC digits
+            s = re.sub(r'[\u07C0-\u07C9]', self.map_encoding_char, s)  # NKO digits
+        if re.search(r'[\u0966-\u0D6F]', s):
+            s = re.sub(r'[\u0966-\u096F]', self.map_encoding_char, s)  # DEVANAGARI digits
+            s = re.sub(r'[\u09E6-\u09EF]', self.map_encoding_char, s)  # BENGALI digits
+            s = re.sub(r'[\u0A66-\u0A6F]', self.map_encoding_char, s)  # GURMUKHI digits
+            s = re.sub(r'[\u0AE6-\u0AEF]', self.map_encoding_char, s)  # GUJARATI digits
+            s = re.sub(r'[\u0B66-\u0B6F]', self.map_encoding_char, s)  # ORIYA digits
+            s = re.sub(r'[\u0BE6-\u0BEF]', self.map_encoding_char, s)  # TAMIL digits
+            s = re.sub(r'[\u0C66-\u0C6F]', self.map_encoding_char, s)  # TELUGU digits
+            s = re.sub(r'[\u0CE6-\u0CEF]', self.map_encoding_char, s)  # KANNADA digits
+            s = re.sub(r'[\u0D66-\u0D6F]', self.map_encoding_char, s)  # MALAYALAM digits
+        if re.search(r'[\u0DE6-\uABF9]', s):
+            s = re.sub(r'[\u0DE6-\u0DEF]', self.map_encoding_char, s)  # SINHALA LITH digits
+            s = re.sub(r'[\u0E50-\u0E59]', self.map_encoding_char, s)  # THAI digits
+            s = re.sub(r'[\u0ED0-\u0ED9]', self.map_encoding_char, s)  # LAO digits
+            s = re.sub(r'[\u0F20-\u0F29]', self.map_encoding_char, s)  # TIBETAN digits
+            s = re.sub(r'[\u1040-\u1049]', self.map_encoding_char, s)  # MYANMAR digits
+            s = re.sub(r'[\u1090-\u1099]', self.map_encoding_char, s)  # MYANMAR SHAN digits
+            s = re.sub(r'[\u17E0-\u17E9]', self.map_encoding_char, s)  # KHMER digits
+            s = re.sub(r'[\u1810-\u1819]', self.map_encoding_char, s)  # MONGOLIAN digits
+            s = re.sub(r'[\u1946-\u194F]', self.map_encoding_char, s)  # LIMBU digits
+            s = re.sub(r'[\u19D0-\u19D9]', self.map_encoding_char, s)  # NEW TAI LUE digits
+            s = re.sub(r'[\u1A80-\u1A89]', self.map_encoding_char, s)  # TAI THAM HORA digits
+            s = re.sub(r'[\u1A90-\u1A99]', self.map_encoding_char, s)  # TAI THAM THAM digits
+            s = re.sub(r'[\u1B50-\u1B59]', self.map_encoding_char, s)  # BALINESE digits
+            s = re.sub(r'[\u1BB0-\u1BB9]', self.map_encoding_char, s)  # SUNDANESE digits
+            s = re.sub(r'[\u1C40-\u1C49]', self.map_encoding_char, s)  # LEPCHA digits
+            s = re.sub(r'[\u1C50-\u1C59]', self.map_encoding_char, s)  # OL CHIKI digits
+            s = re.sub(r'[\uA620-\uA629]', self.map_encoding_char, s)  # VAI digits
+            s = re.sub(r'[\uA8D0-\uA8D9]', self.map_encoding_char, s)  # SAURASHTRA digits
+            s = re.sub(r'[\uA900-\uA909]', self.map_encoding_char, s)  # KAYAH LI digits
+            s = re.sub(r'[\uA9D0-\uA9D9]', self.map_encoding_char, s)  # JAVANESE digits
+            s = re.sub(r'[\uA9F0-\uA9F9]', self.map_encoding_char, s)  # MYANMAR TAI LAING digits
+            s = re.sub(r'[\uAA50-\uAA59]', self.map_encoding_char, s)  # CHAM digits
+            s = re.sub(r'[\uABF0-\uABF9]', self.map_encoding_char, s)  # MEETEI MAYEK digits
+        if re.search(r'[\U000104A0-\U0001E959]', s):
+            s = re.sub(r'[\U000104A0-\U000104A9]', self.map_encoding_char, s)  # OSMANYA digits
+            s = re.sub(r'[\U00010D30-\U00010D39]', self.map_encoding_char, s)  # HANIFI ROHINGYA digits
+            s = re.sub(r'[\U00011066-\U0001106F]', self.map_encoding_char, s)  # BRAHMI digits
+            s = re.sub(r'[\U000110F0-\U000110F9]', self.map_encoding_char, s)  # SORA SOMPENG digits
+            s = re.sub(r'[\U00011136-\U0001113F]', self.map_encoding_char, s)  # CHAKMA digits
+            s = re.sub(r'[\U000111D0-\U000111D9]', self.map_encoding_char, s)  # SHARADA digits
+            s = re.sub(r'[\U000112F0-\U000112F9]', self.map_encoding_char, s)  # KHUDAWADI digits
+            s = re.sub(r'[\U00011450-\U00011459]', self.map_encoding_char, s)  # NEWA digits
+            s = re.sub(r'[\U000114D0-\U000114D9]', self.map_encoding_char, s)  # TIRHUTA digits
+            s = re.sub(r'[\U00011650-\U00011659]', self.map_encoding_char, s)  # MODI digits
+            s = re.sub(r'[\U000116C0-\U000116C9]', self.map_encoding_char, s)  # TAKRI digits
+            s = re.sub(r'[\U00011730-\U00011739]', self.map_encoding_char, s)  # AHOM digits
+            s = re.sub(r'[\U000118E0-\U000118E9]', self.map_encoding_char, s)  # WARANG CITI digits
+            s = re.sub(r'[\U00011C50-\U00011C59]', self.map_encoding_char, s)  # BHAIKSUKI digits
+            s = re.sub(r'[\U00011D50-\U00011D59]', self.map_encoding_char, s)  # MASARAM GONDI digits
+            s = re.sub(r'[\U00011DA0-\U00011DA9]', self.map_encoding_char, s)  # GUNJALA GONDI digits
+            s = re.sub(r'[\U00016A60-\U00016A69]', self.map_encoding_char, s)  # MRO digits
+            s = re.sub(r'[\U00016B50-\U00016B59]', self.map_encoding_char, s)  # PAHAWH HMONG digits
+            s = re.sub(r'[\U0001E950-\U0001E959]', self.map_encoding_char, s)  # ADLAM digits
         return s
 
     @staticmethod
