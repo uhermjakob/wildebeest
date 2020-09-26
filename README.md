@@ -27,15 +27,16 @@ errors:
 ### Other normalization modules
 * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
 * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
-* farsi-char-norm (e.g. maps Arabic yeh, kaf to Farsi versions)
-* pres-form-norm (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
+* farsi-char (e.g. maps Arabic yeh, kaf to Farsi versions)
+* pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
+* ligatures-symbols (e.g. maps (non-Arabic) ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ), symbols (e.g. kappa symbol ϰ), signs (e.g. micro sign µ), CJK square composites (e.g. ㋀㏾))
 * fullwidth (e.g. maps fullwidth characters to ASCII, e.g. Ａ to A)
-* ring-char-norm (e.g. maps ring-characters that are common in Pashto to non-ring characters)
+* ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
 * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
 * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
 * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
-* norm-punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
-* norm-space (e.g. maps non-zero spaces to normal space)
+* punct (e.g. maps Arabic exlamation mark etc. to ASCII equivalent)
+* space (e.g. maps non-zero spaces to normal space)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
 This script is still work in progress.
