@@ -84,6 +84,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
     supplementary_code = ''
     if codeblock in ('ArabicPresentationFormMapping',  # includes Arabic ligatures
                      'CJKCompatibilityMapping',        # includes IDEOGRAPHIC TELEGRAPH SYMBOL FOR months
+                     'CombiningModifierMapping',       # e.g. maps "é" (2 Unicode characters) to "é" (1 character)
                      'DigitMapping'):
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
@@ -116,6 +117,22 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         decomp_chars = decomp_elements[1:]
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         action = 'decomposition'
+                    elif ((codeblock == 'CombiningModifierMapping')
+                            and (len(decomp_elements) >= 2)
+                            and (not decomp_elements[0].startswith('<'))):
+                        decomp_char1 = chr(int(decomp_elements[1], 16))
+                        decomp_char1_name = ud.name(decomp_char1, '')
+                        if ((len(decomp_elements) == 2)
+                                and (('COMBINING' in decomp_char1_name)
+                                     or re.match(r'[\u0653-\u0655]', decomp_char1))):
+                            decomp_chars = decomp_elements
+                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            action = 'composition'
+                        else:
+                            char_name = ud.name(char, None)
+                            char_hex = 'U+' + ('%04x' % code_point).upper()
+                            log.info(f'{codeblock}: No entry added for {char_hex} ({char}: {char_name}): {decomp_ssv}'
+                                     f' ({decomp_char1_name})')
                 elif codeblock == 'DigitMapping':
                     digit = ud.digit(char, None)
                     char_name = ud.name(char, None)
@@ -152,12 +169,18 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     f.write(char + '\t' + decomp_str)
                     if verbose:
                         f.write(f'\t{char_hex}{char_name_clause} -> {decomp_hex}')
+                        ud_ref = ud.normalize('NFKC', char)
+                        if (ud_ref != decomp_str) and (codeblock not in ['DigitMapping']):
+                            f.write(f"   NFKC-ref: {ud_ref}{' (unchanged)' if ud_ref == char else ''}")
                     f.write('\n')
                     n_output_lines += 1
                 elif action == 'composition':
                     f.write(decomp_str + '\t' + char)
                     if verbose:
                         f.write(f'\t{decomp_hex} -> {char_hex}{char_name_clause}')
+                        ud_ref = ud.normalize('NFKC', decomp_str)
+                        if (ud_ref != char) and (codeblock not in ['DigitMapping']):
+                            f.write(f"   NFKC-ref: {ud_ref}{' (unchanged)' if ud_ref == decomp_str else ''}")
                     f.write('\n')
                     n_output_lines += 1
         log.info(f'Wrote {n_output_lines} entries to {output_tsv_filename}')

@@ -31,6 +31,7 @@ errors:
 * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
 * ligatures-symbols (e.g. maps (non-Arabic) ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ), symbols (e.g. kappa symbol ϰ), signs (e.g. micro sign µ), CJK square composites (e.g. ㋀㏾))
 * fullwidth (e.g. maps fullwidth characters to ASCII, e.g. Ａ to A)
+* combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
 * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
 * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
 * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)

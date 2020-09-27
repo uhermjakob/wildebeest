@@ -20,6 +20,7 @@ List of available normalization/cleaning-types (default: all are applied):
  * ligatures-symbols (e.g. maps ligatures, symbols (e.g. kappa symbol), signs (e.g. micro sign), CJK square composites)
  * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
  * fullwidth (e.g. maps fullwidth characters to ASCII, e.g. Ａ to A)
+ * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
  * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
@@ -40,8 +41,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.4'
-last_mod_date = 'September 24, 2020'
+__version__ = '0.4.5'
+last_mod_date = 'September 26, 2020'
 
 
 class Wildebeest:
@@ -145,6 +146,7 @@ class Wildebeest:
         data_dir_path = os.path.join(src_dir_path, "../data")
         for tsv_filename in ('ArabicPresentationFormMappingAnnotated.tsv',
                              'CJKCompatibilityMappingAnnotated.tsv',
+                             'CombiningModifierMappingAnnotated.tsv',
                              'DigitMappingAnnotated.tsv'):
             full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
             try:
@@ -303,6 +305,27 @@ class Wildebeest:
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
         if re.search(r"[\u32C0-\u33FF]", s):
             s = re.sub(r'[\u32C0-\u33FF]', self.map_encoding_char, s)  # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
+        return s
+
+    def apply_combining_modifiers(self, s: str) -> str:
+        """
+        Combines 2 Unicode characters (incl. combining modifier) into one Unicode character, e.g. ö (o +  ̈) -> ö
+        Must be applied after normalize_ligatures_and_symbols.
+        """
+        # if preceded by letter:
+        # s = s.replace('\u00A8', '\u0308')    # U+00A8 DIAERESIS -> U+0308 COMBINING DIAERESIS
+        # s = s.replace('\u1FBF', '\u0313')    # U+1FBF GREEK PSILI -> U+0313 COMBINING COMMA ABOVE
+        # s = s.replace('\u1FFE', '\u0314')    # U+1FFE GREEK DASIA -> U+0314 COMBINING REVERSED COMMA ABOVE
+        # U+0300 - U+036F general combining modifier block
+        # U+0653 - U+0655 Arabic modifiers: madda above, hamza above, hamza below
+        # U+3099 COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK  ゙(e.g. ka -> ga)
+        # U+309A COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK  ゚(e.g. ha -> pa)
+        # U+1D165 -U+1D172 MUSICAL SYMBOL COMBINING modifiers
+        if re.search(r"[\u0300-\u036F\u0653-\u0655\u3099\u309A]", s):
+            s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]', self.map_encoding_char, s)
+        if re.search(r"[\U0001D100-\U0001D1FF]", s):
+            s = re.sub(r'.[\U0001D165-\U0001D172]', self.map_encoding_char, s)  # recursively defined
+            s = re.sub(r'.[\U0001D165-\U0001D172]', self.map_encoding_char, s)  # therefore: second iteration
         return s
 
     # noinspection SpellCheckingInspection
@@ -491,6 +514,7 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'pres-form', self.normalize_arabic_pres_form_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'ligatures-symbols', self.normalize_ligatures_and_symbols, loc_id)
         s = self.norm_clean_string_group(s, ht, 'fullwidth', self.normalize_fullwidth_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'indic-diacr', self.normalize_indic_diacritics, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_arabic_punctuation, loc_id)
         s = self.norm_clean_string_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
@@ -518,8 +542,8 @@ def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'pres-form',
-                      'ligatures-symbols', 'fullwidth', 'indic-diacr', 'punct', 'space', 'digit', 'farsi-char',
-                      'ring-char', 'repair-xml', 'repair-token']
+                      'ligatures-symbols', 'fullwidth', 'combining', 'indic-diacr', 'punct', 'space', 'digit',
+                      'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
