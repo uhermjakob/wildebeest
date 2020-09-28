@@ -169,7 +169,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
         elif codeblock == 'CJKCompatibilityMapping':
-            code_points = range(0x32C0, 0x3400)
+            code_points = chain(range(0x32C0, 0x3400), range(0xFF01, 0xFF61), range(0xFFE0, 0xFFE7))
         else:
             code_points = chain(range(0x0000, 0x3400), range(0xA000, 0xAC00), range(0xF900, 0x18D00),
                                 range(0x1B000, 0x1B300), range(0x1BC00, 0x1BD00), range(0x1D000, 0x1FC00),
@@ -192,7 +192,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         action = 'decomposition'
                     elif ((codeblock == 'CJKCompatibilityMapping')
                             and (len(decomp_elements) >= 2)
-                            and (decomp_elements[0] in ['<compat>', '<square>'])):
+                            and (decomp_elements[0] in ['<compat>', '<square>', '<wide>'])):
                         decomp_chars = decomp_elements[1:]
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         decomp_str = decomp_str.replace('\u2113', 'l')  # map ℓ (script small l) to regular l (as in ml)
@@ -224,7 +224,6 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             and ('ETHIOPIC' not in char_name)    # digits don't map one-to-one to ASCII digits
                             and ('KHAROSHTHI' not in char_name)  # digits don't map one-to-one to ASCII digits
                             and ('RUMI' not in char_name)):      # digits don't map one-to-one to ASCII digits
-                        decomp_chars = [('%04x' % (digit + 0x0030)).upper()]
                         decomp_str = str(digit)
                         action = 'decomposition'
                         if (digit == 0) and supplementary_code_mode:
@@ -235,7 +234,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             unicode_range = f'[{unicode_from}-{unicode_to}]'
                             char_name_suffix = ' DIGIT ZERO'
                             supplementary_code += f"if re.search(r'{unicode_range}', s):\n"
-                            supplementary_code += f"    s = re.sub(r'{unicode_range}', self.map_encoding_char, s)"
+                            supplementary_code += f"    s = re.sub(r'{unicode_range}', self.apply_mapping_dict, s)"
                             if char_name.endswith(char_name_suffix):
                                 supplementary_code += f"    # {char_name[:-len(char_name_suffix)]} digits\n"
                             else:
@@ -330,7 +329,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         out_line += '\n'
                         output_lines.append(out_line)
                     if ((not source_strings)
-                            and not re.search(r'(?:self\.map_encoding_char|\\2\\1)', line)):
+                            and not re.search(r'(?:self\.apply_mapping_dict|\\2\\1)', line)):
                         log.info(f'Unprocessed replace/sub statement: {line.rstrip()}')
         with open(output_tsv_filename, 'w', encoding='utf-8') as f_out:
             f_out.write(head_info + '\n')

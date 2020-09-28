@@ -35,6 +35,7 @@ When using STDIN and/or STDOUT, if might be necessary, particularly for older ve
 import argparse
 import logging as log
 import os
+from pathlib import Path
 import re
 import sys
 from typing import Callable, Match, Optional, TextIO
@@ -47,7 +48,7 @@ last_mod_date = 'September 28, 2020'
 
 class Wildebeest:
     def __init__(self):
-        self.encoding_map_dict = {}
+        self.mapping_dict = {}
         # This dictionary captures the irregular mappings from Windows1252 to UTF8.
         # noinspection SpellCheckingInspection
         self.spec_windows1252_to_utf8_dict = {
@@ -84,7 +85,7 @@ class Wildebeest:
             '\x9E': '\u017E',  # Latin Small Letter Z With Caron
             '\x9F': '\u0178'  # Latin Capital Letter Y With Diaeresis
         }
-        self.init_encoding_map_dict()
+        self.init_mapping_dict()
 
     def windows1252_to_utf8_char(self, index: int) -> str:
         """ Typical input: 0x80       Typical output: '€' """
@@ -94,62 +95,43 @@ class Wildebeest:
         else:
             return s
 
-    def set_encoding_map_dict(self, key: str, value: str, index: int, byte_string: Optional[bytes], loc: str,
-                              verbose: bool = False) -> None:
-        self.encoding_map_dict[key] = value
+    def set_mapping_dict(self, key: str, value: str, index: int, byte_string: Optional[bytes], loc: str,
+                         verbose: bool = False) -> None:
+        self.mapping_dict[key] = value
         if verbose:
             log.info(f'map-{loc} {index} {key} -> {value}   byte_string:{byte_string}')
 
     # noinspection SpellCheckingInspection
-    def init_encoding_map_dict(self, undef_default: str = '') -> None:
-        """Initialize encoding_map_dict that maps from various misencodings to proper UTF8."""
+    def init_mapping_dict(self, undef_default: str = '') -> None:
+        """Initialize mapping_dict that maps from various misencodings to proper UTF8."""
         # Misencodings that resulted from missing conversion from Windows1252/Latin1 to UTF8.
         # Control characters section in surrogate code block
         for index in range(0x80, 0xA0):
             spec_windows1252_char = chr(index)
             surrogate_char = chr(index + 0xDC00)
             if spec_windows1252_char in self.spec_windows1252_to_utf8_dict:
-                self.set_encoding_map_dict(surrogate_char, self.spec_windows1252_to_utf8_dict[spec_windows1252_char],
-                                           index, None, 's1')
+                self.set_mapping_dict(surrogate_char, self.spec_windows1252_to_utf8_dict[spec_windows1252_char],
+                                      index, None, 's1')
             else:  # x81,x8D,x8F,x90,x9D
-                self.set_encoding_map_dict(surrogate_char, undef_default, index, None, 's2')
+                self.set_mapping_dict(surrogate_char, undef_default, index, None, 's2')
         # Other characters in surrogate code block
         for index in range(0xA0, 0x100):
             latin1_char = chr(index)
             surrogate_char = chr(index + 0xDC00)
-            self.set_encoding_map_dict(surrogate_char, latin1_char, index, None, 's3')
-        # Misencoding sections below now also covered by wildebeest_build.py / EncodingRepairMappingAnnotated.tsv
-        # Misencodings that resulted applying conversion from wrong or double Windows1252/Latin1-to-UTF8 conversion.
-        for index in range(0x80, 0x100):
-            latin1_char = chr(index)
-            windows1252_char = self.windows1252_to_utf8_char(index)
-            byte_string = latin1_char.encode('utf-8')
-            latin1_latin1_char = ''.join([chr(x) for x in byte_string])
-            repl_char = latin1_char if index >= 0xA0 else windows1252_char
-            # to repair Latin1-to-UTF8 plus Latin1-to-UTF8
-            self.set_encoding_map_dict(latin1_latin1_char, repl_char, index, byte_string, 'm1')
-            if byte_string[1] < 0xA0:
-                latin1_windows1252_char = ''.join([self.windows1252_to_utf8_char(x) for x in byte_string])
-                # to repair Latin1-to-UTF8 plus Windows1252-to-UTF8
-                self.set_encoding_map_dict(latin1_windows1252_char, repl_char, index, None, 'm2')
-            if index < 0xA0:
-                # to repair Latin1-to-UTF8 instead of Windows1252-to-UTF8
-                self.set_encoding_map_dict(latin1_char, windows1252_char, index, None, 'm3')
-                byte_string = windows1252_char.encode('utf-8')
-                windows1252_latin1_char = ''.join([chr(x) for x in byte_string])
-                # to repair Windows1252-to-UTF8 plus Latin1-to-UTF8
-                self.set_encoding_map_dict(windows1252_latin1_char, windows1252_char, index, byte_string, 'm4')
-        for index in range(0xFF01, 0xFF5F):
-            fullwidth_char = chr(index)
-            standard_char = chr(index - 0xFEE0)  # starting at code point \u0021
-            self.set_encoding_map_dict(fullwidth_char, standard_char, index, None, 'f1')
+            self.set_mapping_dict(surrogate_char, latin1_char, index, None, 's3')
         src_dir_path = os.path.dirname(os.path.realpath(__file__))
         data_dir_path = os.path.join(src_dir_path, "../data")
-        for tsv_filename in ('ArabicPresentationFormMappingAnnotated.tsv',
-                             'CJKCompatibilityMappingAnnotated.tsv',
-                             'CombiningModifierMappingAnnotated.tsv',
-                             'DigitMappingAnnotated.tsv'):
+        for tsv_filename in ('PythonWildebeestMapping.tsv',
+                             'ArabicPresentationFormMapping.tsv',
+                             'CJKCompatibilityMapping.tsv',
+                             'CombiningModifierMapping.tsv',
+                             'DigitMapping.tsv',
+                             'EncodingRepairMapping.tsv'):
             full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
+            filenames_considered = [full_tsv_filename]
+            if not Path(full_tsv_filename).is_file():
+                full_tsv_filename = os.path.join(data_dir_path, tsv_filename.replace('.tsv', 'Annotated.tsv'))
+                filenames_considered += [full_tsv_filename]
             try:
                 with open(full_tsv_filename, 'r', encoding='utf-8', errors='ignore') as f:
                     line_number = 0
@@ -157,15 +139,15 @@ class Wildebeest:
                         line_number += 1
                         tsv_list = re.split(r'\t', line.rstrip())
                         if (len(tsv_list) >= 2) and (line_number >= 2):
-                            self.encoding_map_dict[tsv_list[0]] = tsv_list[1]
+                            self.mapping_dict[tsv_list[0]] = tsv_list[1]
             except FileNotFoundError:
-                log.error(f'Could not open file {full_tsv_filename}')
+                log.error(f"Could not open {' or '.join(filenames_considered)}")
 
-    def map_encoding_char(self, match: Match[str]) -> str:
+    def apply_mapping_dict(self, match: Match[str]) -> str:
         """Maps substring resulting from misencoding to repaired UTF8."""
         s = match.group()
-        if s in self.encoding_map_dict:
-            return self.encoding_map_dict[s]
+        if s in self.mapping_dict:
+            return self.mapping_dict[s]
         else:
             return s
 
@@ -178,14 +160,14 @@ class Wildebeest:
         """
         # Correct missing conversion to UTF8
         if re.search(r"[\uDC80-\uDCFF]", s):
-            s = re.sub(r'[\uDC80-\uDCFF]', self.map_encoding_char, s)
+            s = re.sub(r'[\uDC80-\uDCFF]', self.apply_mapping_dict, s)
         # Correct UTF8 misencodings due to wrong or double application of Windows1252/Latin1-to-UTF converter
         if re.search(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', s):
-            s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', self.map_encoding_char, s)
-        if re.search(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', s):
-            s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u00BF]', self.map_encoding_char, s)
-        if re.search(r'[\u0080-\u00BF]', s):
-            s = re.sub(r'[\u0080-\u00BF]', self.map_encoding_char, s)
+            s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', self.apply_mapping_dict, s)
+        if re.search(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u02FF\u2000-\u21FF]', s):
+            s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u02FF\u2000-\u21FF]', self.apply_mapping_dict, s)
+        if re.search(r'[\u0080-\u009F]', s):
+            s = re.sub(r'[\u0080-\u009F]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
@@ -243,7 +225,7 @@ class Wildebeest:
     def normalize_arabic_pres_form_characters(self, s: str) -> str:
         """This includes some Arabic ligatures."""
         if re.search(r"[\uFB50-\uFEFC]", s):
-            s = re.sub(r'[\uFB50-\uFEFC]', self.map_encoding_char, s)
+            s = re.sub(r'[\uFB50-\uFEFC]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
@@ -307,7 +289,7 @@ class Wildebeest:
             s = s.replace('\u2137', '\u05D2')        # U+2137 GIMEL SYMBOL ℷ -> ג
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
         if re.search(r"[\u32C0-\u33FF]", s):
-            s = re.sub(r'[\u32C0-\u33FF]', self.map_encoding_char, s)  # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
+            s = re.sub(r'[\u32C0-\u33FF]', self.apply_mapping_dict, s)  # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
         return s
 
     def apply_combining_modifiers(self, s: str) -> str:
@@ -325,10 +307,10 @@ class Wildebeest:
         # U+309A COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK  ゚(e.g. ha -> pa)
         # U+1D165 -U+1D172 MUSICAL SYMBOL COMBINING modifiers
         if re.search(r"[\u0300-\u036F\u0653-\u0655\u3099\u309A]", s):
-            s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]', self.map_encoding_char, s)
+            s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]', self.apply_mapping_dict, s)
         if re.search(r"[\U0001D100-\U0001D1FF]", s):
-            s = re.sub(r'.[\U0001D165-\U0001D172]', self.map_encoding_char, s)  # recursively defined
-            s = re.sub(r'.[\U0001D165-\U0001D172]', self.map_encoding_char, s)  # therefore: second iteration
+            s = re.sub(r'.[\U0001D165-\U0001D172]', self.apply_mapping_dict, s)  # recursively defined
+            s = re.sub(r'.[\U0001D165-\U0001D172]', self.apply_mapping_dict, s)  # therefore: second iteration
         return s
 
     # noinspection SpellCheckingInspection
@@ -389,8 +371,8 @@ class Wildebeest:
 
     def normalize_fullwidth_characters(self, s: str) -> str:
         """Replace fullwidth characters such as Ａ with regular Latin letters such as A."""
-        if re.search(r'[\uFF01-\uFF5E]', s):
-            s = re.sub(r'[\uFF01-\uFF5E]', self.map_encoding_char, s)
+        if re.search(r'[\uFF01-\uFF60\uFFE0-\uFFE6]', s):
+            s = re.sub(r'[\uFF01-\uFF60\uFFE0-\uFFE6]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
@@ -408,63 +390,63 @@ class Wildebeest:
         if not re.search(r"[\u0660-\u1E959]", s):
             return s
         if re.search(r'[\u0660-\u07C9]', s):
-            s = re.sub(r'[\u0660-\u0669]', self.map_encoding_char, s)  # ARABIC-INDIC digits
-            s = re.sub(r'[\u06F0-\u06F9]', self.map_encoding_char, s)  # EXTENDED ARABIC-INDIC digits
-            s = re.sub(r'[\u07C0-\u07C9]', self.map_encoding_char, s)  # NKO digits
+            s = re.sub(r'[\u0660-\u0669]', self.apply_mapping_dict, s)  # ARABIC-INDIC digits
+            s = re.sub(r'[\u06F0-\u06F9]', self.apply_mapping_dict, s)  # EXTENDED ARABIC-INDIC digits
+            s = re.sub(r'[\u07C0-\u07C9]', self.apply_mapping_dict, s)  # NKO digits
         if re.search(r'[\u0966-\u0D6F]', s):
-            s = re.sub(r'[\u0966-\u096F]', self.map_encoding_char, s)  # DEVANAGARI digits
-            s = re.sub(r'[\u09E6-\u09EF]', self.map_encoding_char, s)  # BENGALI digits
-            s = re.sub(r'[\u0A66-\u0A6F]', self.map_encoding_char, s)  # GURMUKHI digits
-            s = re.sub(r'[\u0AE6-\u0AEF]', self.map_encoding_char, s)  # GUJARATI digits
-            s = re.sub(r'[\u0B66-\u0B6F]', self.map_encoding_char, s)  # ORIYA digits
-            s = re.sub(r'[\u0BE6-\u0BEF]', self.map_encoding_char, s)  # TAMIL digits
-            s = re.sub(r'[\u0C66-\u0C6F]', self.map_encoding_char, s)  # TELUGU digits
-            s = re.sub(r'[\u0CE6-\u0CEF]', self.map_encoding_char, s)  # KANNADA digits
-            s = re.sub(r'[\u0D66-\u0D6F]', self.map_encoding_char, s)  # MALAYALAM digits
+            s = re.sub(r'[\u0966-\u096F]', self.apply_mapping_dict, s)  # DEVANAGARI digits
+            s = re.sub(r'[\u09E6-\u09EF]', self.apply_mapping_dict, s)  # BENGALI digits
+            s = re.sub(r'[\u0A66-\u0A6F]', self.apply_mapping_dict, s)  # GURMUKHI digits
+            s = re.sub(r'[\u0AE6-\u0AEF]', self.apply_mapping_dict, s)  # GUJARATI digits
+            s = re.sub(r'[\u0B66-\u0B6F]', self.apply_mapping_dict, s)  # ORIYA digits
+            s = re.sub(r'[\u0BE6-\u0BEF]', self.apply_mapping_dict, s)  # TAMIL digits
+            s = re.sub(r'[\u0C66-\u0C6F]', self.apply_mapping_dict, s)  # TELUGU digits
+            s = re.sub(r'[\u0CE6-\u0CEF]', self.apply_mapping_dict, s)  # KANNADA digits
+            s = re.sub(r'[\u0D66-\u0D6F]', self.apply_mapping_dict, s)  # MALAYALAM digits
         if re.search(r'[\u0DE6-\uABF9]', s):
-            s = re.sub(r'[\u0DE6-\u0DEF]', self.map_encoding_char, s)  # SINHALA LITH digits
-            s = re.sub(r'[\u0E50-\u0E59]', self.map_encoding_char, s)  # THAI digits
-            s = re.sub(r'[\u0ED0-\u0ED9]', self.map_encoding_char, s)  # LAO digits
-            s = re.sub(r'[\u0F20-\u0F29]', self.map_encoding_char, s)  # TIBETAN digits
-            s = re.sub(r'[\u1040-\u1049]', self.map_encoding_char, s)  # MYANMAR digits
-            s = re.sub(r'[\u1090-\u1099]', self.map_encoding_char, s)  # MYANMAR SHAN digits
-            s = re.sub(r'[\u17E0-\u17E9]', self.map_encoding_char, s)  # KHMER digits
-            s = re.sub(r'[\u1810-\u1819]', self.map_encoding_char, s)  # MONGOLIAN digits
-            s = re.sub(r'[\u1946-\u194F]', self.map_encoding_char, s)  # LIMBU digits
-            s = re.sub(r'[\u19D0-\u19D9]', self.map_encoding_char, s)  # NEW TAI LUE digits
-            s = re.sub(r'[\u1A80-\u1A89]', self.map_encoding_char, s)  # TAI THAM HORA digits
-            s = re.sub(r'[\u1A90-\u1A99]', self.map_encoding_char, s)  # TAI THAM THAM digits
-            s = re.sub(r'[\u1B50-\u1B59]', self.map_encoding_char, s)  # BALINESE digits
-            s = re.sub(r'[\u1BB0-\u1BB9]', self.map_encoding_char, s)  # SUNDANESE digits
-            s = re.sub(r'[\u1C40-\u1C49]', self.map_encoding_char, s)  # LEPCHA digits
-            s = re.sub(r'[\u1C50-\u1C59]', self.map_encoding_char, s)  # OL CHIKI digits
-            s = re.sub(r'[\uA620-\uA629]', self.map_encoding_char, s)  # VAI digits
-            s = re.sub(r'[\uA8D0-\uA8D9]', self.map_encoding_char, s)  # SAURASHTRA digits
-            s = re.sub(r'[\uA900-\uA909]', self.map_encoding_char, s)  # KAYAH LI digits
-            s = re.sub(r'[\uA9D0-\uA9D9]', self.map_encoding_char, s)  # JAVANESE digits
-            s = re.sub(r'[\uA9F0-\uA9F9]', self.map_encoding_char, s)  # MYANMAR TAI LAING digits
-            s = re.sub(r'[\uAA50-\uAA59]', self.map_encoding_char, s)  # CHAM digits
-            s = re.sub(r'[\uABF0-\uABF9]', self.map_encoding_char, s)  # MEETEI MAYEK digits
+            s = re.sub(r'[\u0DE6-\u0DEF]', self.apply_mapping_dict, s)  # SINHALA LITH digits
+            s = re.sub(r'[\u0E50-\u0E59]', self.apply_mapping_dict, s)  # THAI digits
+            s = re.sub(r'[\u0ED0-\u0ED9]', self.apply_mapping_dict, s)  # LAO digits
+            s = re.sub(r'[\u0F20-\u0F29]', self.apply_mapping_dict, s)  # TIBETAN digits
+            s = re.sub(r'[\u1040-\u1049]', self.apply_mapping_dict, s)  # MYANMAR digits
+            s = re.sub(r'[\u1090-\u1099]', self.apply_mapping_dict, s)  # MYANMAR SHAN digits
+            s = re.sub(r'[\u17E0-\u17E9]', self.apply_mapping_dict, s)  # KHMER digits
+            s = re.sub(r'[\u1810-\u1819]', self.apply_mapping_dict, s)  # MONGOLIAN digits
+            s = re.sub(r'[\u1946-\u194F]', self.apply_mapping_dict, s)  # LIMBU digits
+            s = re.sub(r'[\u19D0-\u19D9]', self.apply_mapping_dict, s)  # NEW TAI LUE digits
+            s = re.sub(r'[\u1A80-\u1A89]', self.apply_mapping_dict, s)  # TAI THAM HORA digits
+            s = re.sub(r'[\u1A90-\u1A99]', self.apply_mapping_dict, s)  # TAI THAM THAM digits
+            s = re.sub(r'[\u1B50-\u1B59]', self.apply_mapping_dict, s)  # BALINESE digits
+            s = re.sub(r'[\u1BB0-\u1BB9]', self.apply_mapping_dict, s)  # SUNDANESE digits
+            s = re.sub(r'[\u1C40-\u1C49]', self.apply_mapping_dict, s)  # LEPCHA digits
+            s = re.sub(r'[\u1C50-\u1C59]', self.apply_mapping_dict, s)  # OL CHIKI digits
+            s = re.sub(r'[\uA620-\uA629]', self.apply_mapping_dict, s)  # VAI digits
+            s = re.sub(r'[\uA8D0-\uA8D9]', self.apply_mapping_dict, s)  # SAURASHTRA digits
+            s = re.sub(r'[\uA900-\uA909]', self.apply_mapping_dict, s)  # KAYAH LI digits
+            s = re.sub(r'[\uA9D0-\uA9D9]', self.apply_mapping_dict, s)  # JAVANESE digits
+            s = re.sub(r'[\uA9F0-\uA9F9]', self.apply_mapping_dict, s)  # MYANMAR TAI LAING digits
+            s = re.sub(r'[\uAA50-\uAA59]', self.apply_mapping_dict, s)  # CHAM digits
+            s = re.sub(r'[\uABF0-\uABF9]', self.apply_mapping_dict, s)  # MEETEI MAYEK digits
         if re.search(r'[\U000104A0-\U0001E959]', s):
-            s = re.sub(r'[\U000104A0-\U000104A9]', self.map_encoding_char, s)  # OSMANYA digits
-            s = re.sub(r'[\U00010D30-\U00010D39]', self.map_encoding_char, s)  # HANIFI ROHINGYA digits
-            s = re.sub(r'[\U00011066-\U0001106F]', self.map_encoding_char, s)  # BRAHMI digits
-            s = re.sub(r'[\U000110F0-\U000110F9]', self.map_encoding_char, s)  # SORA SOMPENG digits
-            s = re.sub(r'[\U00011136-\U0001113F]', self.map_encoding_char, s)  # CHAKMA digits
-            s = re.sub(r'[\U000111D0-\U000111D9]', self.map_encoding_char, s)  # SHARADA digits
-            s = re.sub(r'[\U000112F0-\U000112F9]', self.map_encoding_char, s)  # KHUDAWADI digits
-            s = re.sub(r'[\U00011450-\U00011459]', self.map_encoding_char, s)  # NEWA digits
-            s = re.sub(r'[\U000114D0-\U000114D9]', self.map_encoding_char, s)  # TIRHUTA digits
-            s = re.sub(r'[\U00011650-\U00011659]', self.map_encoding_char, s)  # MODI digits
-            s = re.sub(r'[\U000116C0-\U000116C9]', self.map_encoding_char, s)  # TAKRI digits
-            s = re.sub(r'[\U00011730-\U00011739]', self.map_encoding_char, s)  # AHOM digits
-            s = re.sub(r'[\U000118E0-\U000118E9]', self.map_encoding_char, s)  # WARANG CITI digits
-            s = re.sub(r'[\U00011C50-\U00011C59]', self.map_encoding_char, s)  # BHAIKSUKI digits
-            s = re.sub(r'[\U00011D50-\U00011D59]', self.map_encoding_char, s)  # MASARAM GONDI digits
-            s = re.sub(r'[\U00011DA0-\U00011DA9]', self.map_encoding_char, s)  # GUNJALA GONDI digits
-            s = re.sub(r'[\U00016A60-\U00016A69]', self.map_encoding_char, s)  # MRO digits
-            s = re.sub(r'[\U00016B50-\U00016B59]', self.map_encoding_char, s)  # PAHAWH HMONG digits
-            s = re.sub(r'[\U0001E950-\U0001E959]', self.map_encoding_char, s)  # ADLAM digits
+            s = re.sub(r'[\U000104A0-\U000104A9]', self.apply_mapping_dict, s)  # OSMANYA digits
+            s = re.sub(r'[\U00010D30-\U00010D39]', self.apply_mapping_dict, s)  # HANIFI ROHINGYA digits
+            s = re.sub(r'[\U00011066-\U0001106F]', self.apply_mapping_dict, s)  # BRAHMI digits
+            s = re.sub(r'[\U000110F0-\U000110F9]', self.apply_mapping_dict, s)  # SORA SOMPENG digits
+            s = re.sub(r'[\U00011136-\U0001113F]', self.apply_mapping_dict, s)  # CHAKMA digits
+            s = re.sub(r'[\U000111D0-\U000111D9]', self.apply_mapping_dict, s)  # SHARADA digits
+            s = re.sub(r'[\U000112F0-\U000112F9]', self.apply_mapping_dict, s)  # KHUDAWADI digits
+            s = re.sub(r'[\U00011450-\U00011459]', self.apply_mapping_dict, s)  # NEWA digits
+            s = re.sub(r'[\U000114D0-\U000114D9]', self.apply_mapping_dict, s)  # TIRHUTA digits
+            s = re.sub(r'[\U00011650-\U00011659]', self.apply_mapping_dict, s)  # MODI digits
+            s = re.sub(r'[\U000116C0-\U000116C9]', self.apply_mapping_dict, s)  # TAKRI digits
+            s = re.sub(r'[\U00011730-\U00011739]', self.apply_mapping_dict, s)  # AHOM digits
+            s = re.sub(r'[\U000118E0-\U000118E9]', self.apply_mapping_dict, s)  # WARANG CITI digits
+            s = re.sub(r'[\U00011C50-\U00011C59]', self.apply_mapping_dict, s)  # BHAIKSUKI digits
+            s = re.sub(r'[\U00011D50-\U00011D59]', self.apply_mapping_dict, s)  # MASARAM GONDI digits
+            s = re.sub(r'[\U00011DA0-\U00011DA9]', self.apply_mapping_dict, s)  # GUNJALA GONDI digits
+            s = re.sub(r'[\U00016A60-\U00016A69]', self.apply_mapping_dict, s)  # MRO digits
+            s = re.sub(r'[\U00016B50-\U00016B59]', self.apply_mapping_dict, s)  # PAHAWH HMONG digits
+            s = re.sub(r'[\U0001E950-\U0001E959]', self.apply_mapping_dict, s)  # ADLAM digits
         return s
 
     # noinspection SpellCheckingInspection
