@@ -41,8 +41,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.5'
-last_mod_date = 'September 26, 2020'
+__version__ = '0.4.6'
+last_mod_date = 'September 28, 2020'
 
 
 class Wildebeest:
@@ -118,6 +118,7 @@ class Wildebeest:
             latin1_char = chr(index)
             surrogate_char = chr(index + 0xDC00)
             self.set_encoding_map_dict(surrogate_char, latin1_char, index, None, 's3')
+        # Misencoding sections below now also covered by wildebeest_build.py / EncodingRepairMappingAnnotated.tsv
         # Misencodings that resulted applying conversion from wrong or double Windows1252/Latin1-to-UTF8 conversion.
         for index in range(0x80, 0x100):
             latin1_char = chr(index)
@@ -197,8 +198,10 @@ class Wildebeest:
     def delete_control_characters(s: str) -> str:
         """Deletes control characters (except tab and linefeed), zero-width characters, byte order mark,
            directional marks, join marks, variation selectors, Arabic tatweel"""
-        s = re.sub(r'[\u0000-\u0008\u000B-\u001F\u007F-\u009F]', '',
-                   s)  # control characters (except tab x9, linefeed xA)
+        s = re.sub(r'[\u0000-\u0008]', '', s)  # control characters C0 code block (except tab \x09, linefeed \x0A)
+        s = re.sub(r'[\u000B-\u000C]', '', s)  # control characters C0 code block (continued, except CR \x0D)
+        s = re.sub(r'[\u000E-\u001F]', '', s)  # control characters C0 code block (continued)
+        s = re.sub(r'[\u007F-\u009F]', '', s)  # control characters 'DELETE' and C1 code block
         s = s.replace('\u0640', '')  # Arabic tatweel
         s = re.sub(r'[\u200B-\u200F]', '', s)  # zero width space/non-joiner/joiner, direction marks
         s = re.sub(r'[\uFE00-\uFE0F]', '', s)  # variation selectors 1-16
