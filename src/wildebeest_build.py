@@ -165,12 +165,15 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
     if codeblock in ('ArabicPresentationFormMapping',  # includes Arabic ligatures
                      'CJKCompatibilityMapping',        # includes IDEOGRAPHIC TELEGRAPH SYMBOL FOR months
                      'CombiningModifierMapping',       # e.g. maps "é" (2 Unicode characters) to "é" (1 character)
+                     'CoreCompatibilityMapping',       # includes Hangul compatibility (KS X 1001)
                      'DigitMapping',
                      'FontSmallVerticalMapping'):      # for Unicode keywords <font>, <small>, <vertical>
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
         elif codeblock == 'CJKCompatibilityMapping':
             code_points = chain(range(0x32C0, 0x3400), range(0xFF01, 0xFFEF))
+        elif codeblock == 'CoreCompatibilityMapping':
+            code_points = chain(range(0x3130, 0x3190))
         elif codeblock == 'FontSmallVerticalMapping':
             code_points = chain(range(0x2100, 0x2150), range(0x309F, 0x30A0), range(0x30FF, 0x3100),
                                 range(0xFB20, 0xFB2A), range(0xFE10, 0xFE70),
@@ -218,6 +221,12 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             decomp_descr = string_to_character_unicode_descriptions(decomp_str)
                             log.info(f'{codeblock}: No entry added for {char} {char_descr}'
                                      f' -> {decomp_str} {decomp_descr}')
+                    elif ((codeblock == 'CoreCompatibilityMapping')
+                            and (len(decomp_elements) >= 2)
+                            and (decomp_elements[0] == '<compat>')):
+                        decomp_chars = decomp_elements[1:]
+                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                        action = 'decomposition'
                     elif ((codeblock == 'FontSmallVerticalMapping')
                             and (len(decomp_elements) >= 2)
                             and (decomp_elements[0] in ['<font>', '<small>', '<vertical>'])):
@@ -287,8 +296,10 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                 mf = re.match(r'.*def\s+([_a-zA-Z0-9]+)', line)
                 if mf:
                     current_function_name = mf.group(1)
-                elif current_function_name in ['delete_surrogates', 'normalize_farsi_characters',
-                                               'normalize_ring_characters', 'repair_tokenization', 'repair_xml']:
+                elif current_function_name in ['normalize_farsi_characters', 'normalize_ring_characters',
+                                               'normalize_arabic_punctuation', 'normalize_font_characters',
+                                               'repair_tokenization', 'repair_xml', 'delete_surrogates',
+                                               'init_mapping_dict']:
                     continue  # because replacements are language-specific
                 elif re.search(r'(?:\.replace|re\.sub)\(', line):
                     mr = re.match(r".*\.replace\('([^']+)',\s*'([^']*)'\)", line)

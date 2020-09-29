@@ -27,6 +27,7 @@ errors:
 ### Other normalization modules
 * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
 * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
+* core-compat (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
 * farsi-char (e.g. maps Arabic yeh, kaf to Farsi versions)
 * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
 * ligatures-symbols (e.g. maps (non-Arabic) ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ), symbols (e.g. kappa symbol ϰ), signs (e.g. micro sign µ), CJK square composites (e.g. ㋀㏾))

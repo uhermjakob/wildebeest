@@ -15,6 +15,7 @@ List of available normalization/cleaning-types (default: all are applied):
         alternative/backup to windows-1252)
  * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark,
         directional marks, join marks, variation selectors, Arabic tatweel)
+ * core-compat (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
  * farsi-char (e.g. maps Arabic yeh, kaf to Farsi versions)
  * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ligatures-symbols (e.g. maps ligatures, symbols (e.g. kappa symbol), signs (e.g. micro sign), CJK square composites)
@@ -129,6 +130,7 @@ class Wildebeest:
                              'ArabicPresentationFormMapping.tsv',
                              'CJKCompatibilityMapping.tsv',
                              'CombiningModifierMapping.tsv',
+                             'CoreCompatibility',
                              'DigitMapping.tsv',
                              'EncodingRepairMapping.tsv',
                              'FontSmallVerticalMapping.tsv'):
@@ -402,6 +404,14 @@ class Wildebeest:
             s = re.sub(r'[\uFF01-\uFFEE]', self.apply_mapping_dict, s)
         return s
 
+
+    def normalize_core_compat_characters(self, s: str) -> str:
+        """Replace Hangul Compatibility characters with Unicode standard Hangul versions, e.g. ㄱ to ᄀ."""
+        if re.search(r'[\u3131-\u318E]', s):
+            s = re.sub(r'[\u3131-\u318E]', self.apply_mapping_dict, s)
+        return s
+
+
     # noinspection SpellCheckingInspection
     def map_digits_to_ascii(self, s: str) -> str:
         """
@@ -523,6 +533,7 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id)
         s = self.norm_clean_string_group(s, ht, 'del-ctrl-char', self.delete_control_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'del-diacr', self.delete_arabic_diacritics, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'core-compat', self.normalize_core_compat_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'pres-form', self.normalize_arabic_pres_form_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'ligatures-symbols', self.normalize_ligatures_and_symbols, loc_id)
         s = self.norm_clean_string_group(s, ht, 'width', self.normalize_half_and_full_width_characters, loc_id)
@@ -556,9 +567,10 @@ class Wildebeest:
 def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
-    all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'pres-form',
-                      'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'combining', 'indic-diacr', 'punct',
-                      'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
+    all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
+                      'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'combining',
+                      'indic-diacr', 'punct', 'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml',
+                      'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
