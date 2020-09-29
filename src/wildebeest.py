@@ -19,7 +19,11 @@ List of available normalization/cleaning-types (default: all are applied):
  * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ligatures-symbols (e.g. maps ligatures, symbols (e.g. kappa symbol), signs (e.g. micro sign), CJK square composites)
  * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
- * fullwidth (e.g. maps fullwidth characters to ASCII, e.g. Ａ to A)
+ * width (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
+ * font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters)
+ * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
+ * vertical (maps vertical versions of punctuation characters with normal horizontal version,
+        such as vertical em-dash ︱ to horizontal em-dash —)
  * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
  * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
@@ -126,7 +130,8 @@ class Wildebeest:
                              'CJKCompatibilityMapping.tsv',
                              'CombiningModifierMapping.tsv',
                              'DigitMapping.tsv',
-                             'EncodingRepairMapping.tsv'):
+                             'EncodingRepairMapping.tsv',
+                             'FontSmallVerticalMapping.tsv'):
             full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
             filenames_considered = [full_tsv_filename]
             if not Path(full_tsv_filename).is_file():
@@ -369,10 +374,32 @@ class Wildebeest:
         s = s.replace('\u3000', ' ')  # U+3000 IDEOGRAPHIC SPACE
         return s
 
-    def normalize_fullwidth_characters(self, s: str) -> str:
-        """Replace fullwidth characters such as Ａ with regular Latin letters such as A."""
-        if re.search(r'[\uFF01-\uFF60\uFFE0-\uFFE6]', s):
-            s = re.sub(r'[\uFF01-\uFF60\uFFE0-\uFFE6]', self.apply_mapping_dict, s)
+    def normalize_half_and_full_width_characters(self, s: str) -> str:
+        """Replace fullwidth and halfwidth characters such as Ａ with regular Latin letters such as A."""
+        if re.search(r'[\uFF01-\uFFEE]', s):
+            s = re.sub(r'[\uFF01-\uFFEE]', self.apply_mapping_dict, s)
+        return s
+
+    def normalize_font_characters(self, s: str) -> str:
+        """Replace font-variation characters such as ℂℹ𝒜 to CiA."""
+        if re.search(r'[\u2102-\u2149\uFB20-\uFB29\U0001D400-\U0001D7FF\U0001EE00-\U0001EEBB\U0001FBF0-\U0001FBF9]', s):
+            s = re.sub(r'[\u2102-\u2149\uFB20-\uFB29\U0001D400-\U0001D7FF\U0001EE00-\U0001EEBB\U0001FBF0-\U0001FBF9]',
+                       self.apply_mapping_dict, s)
+        return s
+
+    def normalize_small_characters(self, s: str) -> str:
+        """Replace small version of characters with normal version, such as small ampersand ﹠ to regular &"""
+        if re.search(r'[\u309F\u30FF\uFF10-\uFF48]', s):
+            s = re.sub(r'[\u309F\u30FF\uFF10-\uFF48]', self.apply_mapping_dict, s)
+        return s
+
+    def normalize_vertical_characters(self, s: str) -> str:
+        """
+        Replace vertical version of punctuation characters with normal horizontal version,
+        such as vertical em-dash ︱ to horizontal em-dash —
+        """
+        if re.search(r'[\uFF01-\uFFEE]', s):
+            s = re.sub(r'[\uFF01-\uFFEE]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
@@ -498,7 +525,10 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'del-diacr', self.delete_arabic_diacritics, loc_id)
         s = self.norm_clean_string_group(s, ht, 'pres-form', self.normalize_arabic_pres_form_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'ligatures-symbols', self.normalize_ligatures_and_symbols, loc_id)
-        s = self.norm_clean_string_group(s, ht, 'fullwidth', self.normalize_fullwidth_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'width', self.normalize_half_and_full_width_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'font', self.normalize_font_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'small', self.normalize_small_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'indic-diacr', self.normalize_indic_diacritics, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_arabic_punctuation, loc_id)
@@ -527,8 +557,8 @@ def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'pres-form',
-                      'ligatures-symbols', 'fullwidth', 'combining', 'indic-diacr', 'punct', 'space', 'digit',
-                      'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
+                      'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'combining', 'indic-diacr', 'punct',
+                      'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')

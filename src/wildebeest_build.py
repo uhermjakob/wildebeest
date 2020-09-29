@@ -165,11 +165,16 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
     if codeblock in ('ArabicPresentationFormMapping',  # includes Arabic ligatures
                      'CJKCompatibilityMapping',        # includes IDEOGRAPHIC TELEGRAPH SYMBOL FOR months
                      'CombiningModifierMapping',       # e.g. maps "é" (2 Unicode characters) to "é" (1 character)
-                     'DigitMapping'):
+                     'DigitMapping',
+                     'FontSmallVerticalMapping'):      # for Unicode keywords <font>, <small>, <vertical>
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
         elif codeblock == 'CJKCompatibilityMapping':
-            code_points = chain(range(0x32C0, 0x3400), range(0xFF01, 0xFF61), range(0xFFE0, 0xFFE7))
+            code_points = chain(range(0x32C0, 0x3400), range(0xFF01, 0xFFEF))
+        elif codeblock == 'FontSmallVerticalMapping':
+            code_points = chain(range(0x2100, 0x2150), range(0x309F, 0x30A0), range(0x30FF, 0x3100),
+                                range(0xFB20, 0xFB2A), range(0xFE10, 0xFE70),
+                                range(0x1D400, 0x1D800), range(0x1EE00, 0x1EEC0), range(0x1FBF0, 0x1FBFA))
         else:
             code_points = chain(range(0x0000, 0x3400), range(0xA000, 0xAC00), range(0xF900, 0x18D00),
                                 range(0x1B000, 0x1B300), range(0x1BC00, 0x1BD00), range(0x1D000, 0x1FC00),
@@ -192,7 +197,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         action = 'decomposition'
                     elif ((codeblock == 'CJKCompatibilityMapping')
                             and (len(decomp_elements) >= 2)
-                            and (decomp_elements[0] in ['<compat>', '<square>', '<wide>'])):
+                            and (decomp_elements[0] in ['<compat>', '<square>', '<wide>', '<narrow>'])):
                         decomp_chars = decomp_elements[1:]
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         decomp_str = decomp_str.replace('\u2113', 'l')  # map ℓ (script small l) to regular l (as in ml)
@@ -213,6 +218,12 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             decomp_descr = string_to_character_unicode_descriptions(decomp_str)
                             log.info(f'{codeblock}: No entry added for {char} {char_descr}'
                                      f' -> {decomp_str} {decomp_descr}')
+                    elif ((codeblock == 'FontSmallVerticalMapping')
+                            and (len(decomp_elements) >= 2)
+                            and (decomp_elements[0] in ['<font>', '<small>', '<vertical>'])):
+                        decomp_chars = decomp_elements[1:]
+                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                        action = 'decomposition'
                 elif codeblock == 'DigitMapping':
                     digit = ud.digit(char, None)
                     char_name = ud.name(char, None)
