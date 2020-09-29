@@ -351,22 +351,26 @@ class Wildebeest:
 
     @staticmethod
     def normalize_arabic_punctuation(s: str) -> str:
-        s = s.replace('\u0640', '')     # U+0640 Arabic tatweel
-        s = s.replace('\u060C', ',')    # U+060C Arabic comma
-        s = s.replace('\u060D', ',')    # U+060C Arabic date separator
-        s = s.replace('\u061B', ';')    # U+061B Arabic semicolon
-        s = s.replace('\u061F', '?')    # U+061F Arabic question mark
-        s = s.replace('\u066A', '%')    # U+066A Arabic percent sign
-        s = s.replace('\u066B', '.')    # U+066B Arabic decimal separator
-        s = s.replace('\u066C', ',')    # U+066C Arabic thousands separator
-        s = s.replace('\u066D', '*')    # U+066D Arabic five pointed star
-        s = s.replace('\u06D4', '.')    # U+06D4 Arabic full stop
+        # Arabic
+        s = s.replace('\u0640', '')         # U+0640 Arabic tatweel
+        s = s.replace('\u060C', ',')        # U+060C Arabic comma
+        s = s.replace('\u060D', ',')        # U+060C Arabic date separator
+        s = s.replace('\u061B', ';')        # U+061B Arabic semicolon
+        s = s.replace('\u061F', '?')        # U+061F Arabic question mark
+        s = s.replace('\u066A', '%')        # U+066A Arabic percent sign
+        s = s.replace('\u066B', '.')        # U+066B Arabic decimal separator
+        s = s.replace('\u066C', ',')        # U+066C Arabic thousands separator
+        s = s.replace('\u066D', '*')        # U+066D Arabic five pointed star
+        s = s.replace('\u06D4', '.')        # U+06D4 Arabic full stop
+        # Tibetan
+        s = s.replace('\u0F0C', '\u0F0B')   # U+0F0C Tibetan no-break morpheme delimiter
         return s
 
     @staticmethod
     def normalize_punctuation(s: str) -> str:
-        s = s.replace('\u2025', '..')   # U+2025 two dot leader
-        s = s.replace('\u2026', '...')  # U+2026 horizontal ellipsis
+        s = s.replace('\u2011', '\u2010')   # U+2011 non-breaking hyphen -> hyphen
+        s = s.replace('\u2025', '..')       # U+2025 two dot leader
+        s = s.replace('\u2026', '...')      # U+2026 horizontal ellipsis
         return s
 
     @staticmethod

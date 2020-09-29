@@ -17,6 +17,7 @@ log.basicConfig(level=log.INFO)
 
 mapping_dict = {}        # general dict used to build Mapping.tsv files
 core_mapping_dict = {}   # special dict for PythonWildebeest and CoreCompatibility mappings
+unicode_composition_exclusion_dict = {}  # for characters that should be decomposed, such as Devanagari फ़
 
 spec_windows1252_to_utf8_dict = {
     '\x80': '\u20AC',  # Euro Sign
@@ -446,7 +447,23 @@ def init_core_mapping_dict() -> None:
                 log.info(f'Loaded {n_entries} entries from {full_tsv_filename}')
         except FileNotFoundError:
             log.error(f"Could not open {' or '.join(filenames_considered)}")
-
+    unicode_composition_exclusion_filename = 'UnicodeCompositionExclusions.txt'
+    full_unicode_composition_exclusion_filename = os.path.join(data_dir_path, unicode_composition_exclusion_filename)
+    try:
+        with open(full_unicode_composition_exclusion_filename, 'r', encoding='utf-8', errors='ignore') as f:
+            line_number = 0
+            n_entries = 0
+            for line in f:
+                line_number += 1
+                m = re.match(r'([0-9A-F]{4})\s+#\s*(\S.*\S|\S)', line, flags=re.IGNORECASE)
+                if m:
+                    char = chr(int(m.group(1), 16))
+                    unicode_composition_exclusion_dict[char] = m.group(2)
+                    n_entries += 1
+                    # log.info(f'    unicode_composition_exclusion {char} {m.group(1)} {m.group(2)}')
+            log.info(f'Loaded {n_entries} entries from {full_unicode_composition_exclusion_filename}')
+    except FileNotFoundError:
+        log.error(f"Could not open {full_unicode_composition_exclusion_filename}")
 
 def main(argv):
     init_core_mapping_dict()

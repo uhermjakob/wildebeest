@@ -8,7 +8,7 @@ Spaces: In this sentence, there are many	different　spaces.
 Control characters: ABC​‌‍‎‏︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿DE󠄀󠇯F
 Double conversion: Donât tell your âfiancÃ©â â SchÃ¶ne GrÃ¼Ãe aus MÃ¤hrenâ¦ â Ma sÅur trouve Ã§a Â«bÃªteÂ». Â¡CoÃ±o! â¬50 â¢ 25kmÂ² â¢ Â½Âµm
 Wrong conversion: Dont tell your fiancé  Schöne Grüße aus Mähren  Ma sur trouve ça «bête». ¡Coño! 50  25km²  ½µm
-Font, small, vertical, more encoding: ℂℳℹ ﬡ 𝐀 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀  ﹐﹠﹫  ︐︱﹇﹈   ÂŒ Â™
+Font, small, vertical, punctuation, more encoding: ℂℳℹ ﬡ 𝐀 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀  ﹐﹠﹫  ︐︱﹇﹈   ‑༌ ‐་  ÂŒ Â™
 Replacement character: China�s flag isn�t green. Espa�a.
 Typos: The Phillippine offical was embarassed about the kidnaping in Sao Paolo.
 XML, URL escapes: &amp;quot; &amp;amp;#8204; &amp;amp;amp;#x200C;  Jo%25C3%25ABlle_Aubron
