@@ -7,13 +7,17 @@ import codecs
 from datetime import datetime
 from itertools import chain
 import logging as log
+import os
+from pathlib import Path
 import re
 import unicodedata as ud
 import sys
 
 log.basicConfig(level=log.INFO)
 
-mapping_dict = {}
+mapping_dict = {}        # general dict used to build Mapping.tsv files
+core_mapping_dict = {}   # special dict for PythonWildebeest and CoreCompatibility mappings
+
 spec_windows1252_to_utf8_dict = {
     '\x80': '\u20AC',  # Euro Sign
     #  81 is unassigned in Windows-1252
@@ -263,6 +267,10 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     char_name = ud.name(char, None)
                     char_name_clause = f' ({char_name})' if char_name else ''
                     char_hex = 'U+' + ('%04x' % code_point).upper()
+                    if action == 'decomposition':
+                        decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict)
+                    elif action == 'composition':
+                        char = norm_string_by_mapping_dict(char, core_mapping_dict)
                     decomp_descr = string_to_character_unicode_descriptions(decomp_str)
                 if action == 'decomposition':
                     f.write(char + '\t' + decomp_str)
@@ -319,6 +327,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                                 code_points = range(ord(source_string_from), ord(source_string_to)+1)
                                 source_strings = [chr(x) for x in code_points]
                     if target_string is not None:
+                        target_string = norm_string_by_mapping_dict(target_string, core_mapping_dict)
                         target_string = norm_string_by_mapping_dict(target_string, mapping_dict)
                     for source_string in source_strings:
                         out_line = ''
@@ -413,7 +422,34 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
             f.write(supplementary_code)
 
 
+def init_core_mapping_dict() -> None:
+    """Loads entries from core mapping files for recursive mapping."""
+    src_dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_dir_path = os.path.join(src_dir_path, "../data")
+    for tsv_filename in ('PythonWildebeestMapping.tsv', 'CoreCompatibilityMapping.tsv'):
+        full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
+        filenames_considered = [full_tsv_filename]
+        if not Path(full_tsv_filename).is_file():
+            full_tsv_filename = os.path.join(data_dir_path, tsv_filename.replace('.tsv', 'Annotated.tsv'))
+            filenames_considered += [full_tsv_filename]
+        try:
+            with open(full_tsv_filename, 'r', encoding='utf-8', errors='ignore') as f:
+                line_number = 0
+                n_entries = 0
+                for line in f:
+                    line_number += 1
+                    tsv_list = re.split(r'\t', line.rstrip())
+                    if (len(tsv_list) >= 2) and (line_number >= 2):
+                        core_mapping_dict[tsv_list[0]] = tsv_list[1]
+                        # log.info(f'  core_mapping_dict[{tsv_list[0]}] = {tsv_list[1]}')
+                        n_entries += 1
+                log.info(f'Loaded {n_entries} entries from {full_tsv_filename}')
+        except FileNotFoundError:
+            log.error(f"Could not open {' or '.join(filenames_considered)}")
+
+
 def main(argv):
+    init_core_mapping_dict()
     if (len(argv) >= 2) and (argv[0] == 'python-code'):
         codeblock = argv[1]  # e.g. 'Devanagari', 'Indic', 'Arabic'
         build_python_code_from_unicode(codeblock)

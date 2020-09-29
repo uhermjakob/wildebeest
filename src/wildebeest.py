@@ -29,7 +29,8 @@ List of available normalization/cleaning-types (default: all are applied):
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
  * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
- * punct (e.g. maps Arabic exclamation mark etc. to ASCII equivalent)
+ * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..)
+ * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
  * space (e.g. normalizes non-zero spaces to normal space)
  * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
  * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
@@ -130,7 +131,7 @@ class Wildebeest:
                              'ArabicPresentationFormMapping.tsv',
                              'CJKCompatibilityMapping.tsv',
                              'CombiningModifierMapping.tsv',
-                             'CoreCompatibility',
+                             'CoreCompatibilityMapping.tsv',
                              'DigitMapping.tsv',
                              'EncodingRepairMapping.tsv',
                              'FontSmallVerticalMapping.tsv'):
@@ -239,7 +240,7 @@ class Wildebeest:
     def normalize_ligatures_and_symbols(self, s: str) -> str:
         """Arabic ligatures are already covered by function normalize_arabic_pres_form_characters."""
         s = s.replace('\u00B5', '\u03BC')            # U+00B5 MICRO SIGN µ -> μ (GREEK SMALL LETTER MU)
-        if re.search(r"[\u0132-\u01F3]", s):
+        if re.search(r"[\u0132-\u01F3\u1E9B]", s):
             s = s.replace('\u0132', '\u0049\u004A')  # U+0132 LATIN CAPITAL LIGATURE IJ Ĳ -> IJ
             s = s.replace('\u0133', '\u0069\u006A')  # U+0133 LATIN SMALL LIGATURE IJ ĳ -> ij
             s = s.replace('\u013F', '\u004C\u00B7')  # U+013F LATIN CAPITAL LETTER L WITH MIDDLE DOT Ŀ -> L·
@@ -258,6 +259,7 @@ class Wildebeest:
             s = s.replace('\u01F1', '\u0044\u005A')  # U+01F1 LATIN CAPITAL LETTER DZ Ǳ -> DZ
             s = s.replace('\u01F2', '\u0044\u007A')  # U+01F2 LATIN CAPITAL LETTER D WITH SMALL LETTER Z ǲ -> Dz
             s = s.replace('\u01F3', '\u0064\u007A')  # U+01F3 LATIN SMALL LETTER DZ ǳ -> dz
+            s = s.replace('\u1E9B', '\u1E61')        # U+1E9B LATIN SMALL LETTER LONG S WITH DOT ABOV ẛ -> ṡ
         # U+0587 ARMENIAN SMALL LIGATURE ECH YIWN և is considered a single letter, not to be split into եւ U+0565 U+0582
         if re.search(r"[\uFB00-\uFB4F]", s):
             s = s.replace('\uFB00', '\u0066\u0066')  # U+FB00 LATIN SMALL LIGATURE FF ﬀ -> ff
@@ -277,8 +279,8 @@ class Wildebeest:
             s = s.replace('\u03D0', '\u03B2')        # U+03D0 GREEK BETA SYMBOL ϐ -> β
             s = s.replace('\u03D1', '\u03B8')        # U+03D1 GREEK THETA SYMBOL ϑ -> θ
             s = s.replace('\u03D2', '\u03A5')        # U+03D2 GREEK UPSILON WITH HOOK SYMBOL ϒ -> Υ
-            s = s.replace('\u03D3', '\u03D2\u0301')  # U+03D3 GREEK UPSILON WITH ACUTE AND HOOK SYMBOL ϓ -> ϓ
-            s = s.replace('\u03D4', '\u03D2\u0308')  # U+03D4 GREEK UPSILON WITH DIAERESIS AND HOOK SYMBOL ϔ -> ϔ
+            s = s.replace('\u03D3', '\u038E')        # U+03D3 GREEK UPSILON WITH ACUTE AND HOOK SYMBOL ϓ -> Ύ
+            s = s.replace('\u03D4', '\u03AB')        # U+03D4 GREEK UPSILON WITH DIAERESIS AND HOOK SYMBOL ϔ -> Ϋ
             s = s.replace('\u03D5', '\u03C6')        # U+03D5 GREEK PHI SYMBOL ϕ -> φ
             s = s.replace('\u03D6', '\u03C0')        # U+03D6 GREEK PI SYMBOL ϖ -> π
             s = s.replace('\u03F0', '\u03BA')        # U+03F0 GREEK KAPPA SYMBOL ϰ -> κ
@@ -349,16 +351,22 @@ class Wildebeest:
 
     @staticmethod
     def normalize_arabic_punctuation(s: str) -> str:
-        s = s.replace('\u0640', '')  # U+0640 Arabic tatweel
-        s = s.replace('\u060C', ',')  # U+060C Arabic comma
-        s = s.replace('\u060D', ',')  # U+060C Arabic date separator
-        s = s.replace('\u061B', ';')  # U+061B Arabic semicolon
-        s = s.replace('\u061F', '?')  # U+061F Arabic question mark
-        s = s.replace('\u066A', '%')  # U+066A Arabic percent sign
-        s = s.replace('\u066B', '.')  # U+066B Arabic decimal separator
-        s = s.replace('\u066C', ',')  # U+066C Arabic thousands separator
-        s = s.replace('\u066D', '*')  # U+066D Arabic five pointed star
-        s = s.replace('\u06D4', '.')  # U+06D4 Arabic full stop
+        s = s.replace('\u0640', '')     # U+0640 Arabic tatweel
+        s = s.replace('\u060C', ',')    # U+060C Arabic comma
+        s = s.replace('\u060D', ',')    # U+060C Arabic date separator
+        s = s.replace('\u061B', ';')    # U+061B Arabic semicolon
+        s = s.replace('\u061F', '?')    # U+061F Arabic question mark
+        s = s.replace('\u066A', '%')    # U+066A Arabic percent sign
+        s = s.replace('\u066B', '.')    # U+066B Arabic decimal separator
+        s = s.replace('\u066C', ',')    # U+066C Arabic thousands separator
+        s = s.replace('\u066D', '*')    # U+066D Arabic five pointed star
+        s = s.replace('\u06D4', '.')    # U+06D4 Arabic full stop
+        return s
+
+    @staticmethod
+    def normalize_punctuation(s: str) -> str:
+        s = s.replace('\u2025', '..')   # U+2025 two dot leader
+        s = s.replace('\u2026', '...')  # U+2026 horizontal ellipsis
         return s
 
     @staticmethod
@@ -404,13 +412,11 @@ class Wildebeest:
             s = re.sub(r'[\uFF01-\uFFEE]', self.apply_mapping_dict, s)
         return s
 
-
     def normalize_core_compat_characters(self, s: str) -> str:
         """Replace Hangul Compatibility characters with Unicode standard Hangul versions, e.g. ㄱ to ᄀ."""
         if re.search(r'[\u3131-\u318E]', s):
             s = re.sub(r'[\u3131-\u318E]', self.apply_mapping_dict, s)
         return s
-
 
     # noinspection SpellCheckingInspection
     def map_digits_to_ascii(self, s: str) -> str:
@@ -542,7 +548,8 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'indic-diacr', self.normalize_indic_diacritics, loc_id)
-        s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_arabic_punctuation, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'punct-f', self.normalize_arabic_punctuation, loc_id)
         s = self.norm_clean_string_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
         s = self.norm_clean_string_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id)
         if lang_code == 'fas':
@@ -569,7 +576,7 @@ def main(argv):
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
                       'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'combining',
-                      'indic-diacr', 'punct', 'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml',
+                      'indic-diacr', 'punct', 'punct-f', 'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml',
                       'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
