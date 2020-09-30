@@ -25,9 +25,9 @@ List of available normalization/cleaning-types (default: all are applied):
  * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
  * vertical (maps vertical versions of punctuation characters with normal horizontal version,
         such as vertical em-dash ︱ to horizontal em-dash —)
+ * repair-combining (e.g. order of nukta/vowel-sign)
  * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
- * indic-diacr (e.g. canonical form of composed/decomposed Indic characters; order nukta/vowel-sign)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
  * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..)
  * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
@@ -311,23 +311,40 @@ class Wildebeest:
         # s = s.replace('\u00A8', '\u0308')    # U+00A8 DIAERESIS -> U+0308 COMBINING DIAERESIS
         # s = s.replace('\u1FBF', '\u0313')    # U+1FBF GREEK PSILI -> U+0313 COMBINING COMMA ABOVE
         # s = s.replace('\u1FFE', '\u0314')    # U+1FFE GREEK DASIA -> U+0314 COMBINING REVERSED COMMA ABOVE
+        # COMPOSITION
         # U+0300 - U+036F general combining modifier block
         # U+0653 - U+0655 Arabic modifiers: madda above, hamza above, hamza below
         # U+3099 COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK  ゙(e.g. ka -> ga)
         # U+309A COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK  ゚(e.g. ha -> pa)
-        # U+1D165 -U+1D172 MUSICAL SYMBOL COMBINING modifiers
-        if re.search(r"[\u0300-\u036F\u0653-\u0655\u3099\u309A]", s):
+        if re.search(r'[\u0300-\u036F\u0653-\u0655\u3099\u309A]', s):
             s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]', self.apply_mapping_dict, s)
-        # MUSICAL SYMBOLS
-        if re.search(r"[\U0001D100-\U0001D1FF]", s):
+        # U+093C Devanagari sign nukta, other South Asian
+        if re.search(r'[\u093C\u09BE-\u102E\u1B35\U00011000-\U000115FF]', s):
+            s = re.sub(r'.[\u093C\u09BE-\u102E\u1B35\U00011000-\U000115FF]', self.apply_mapping_dict, s)
+        # DECOMPOSITION
+        # Indic, Tibetan, Hebrew, 'forking'
+        if re.search(r'[\u0344\u0958-\u095F\u09DC-\u0B5D\u0F43-\u0FB9\u2ADC\uFB1D-\uFB4E]', s):
+            s = re.sub(r'[\u0344\u0958-\u095F\u09DC-\u0B5D\u0F43-\u0FB9\u2ADC\uFB1D-\uFB4E]',
+                       self.apply_mapping_dict, s)
+        # Musical symbols
+        if re.search(r'[\U0001D100-\U0001D1FF]', s):
             s = re.sub(r'[\U0001D100-\U0001D1FF]', self.apply_mapping_dict, s)
+        return s
+
+    @staticmethod
+    def repair_combining_modifiers(s: str) -> str:
+        """This function repairs the order of combining modifiers."""
+        # If a Devanagari vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
+        s = re.sub(r"([\u093E-\u094D])(\u093C)", r"\2\1", s)
         return s
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def normalize_indic_diacritics(s: str) -> str:
+    def normalize_devanagari_diacritics(s: str) -> str:
         """
-        This function normalizes Indic (so far only Devanagari) strings by
+        NOTE: This function is no longer used in wildebeest.
+        It has been subsumed by functions repair_combining_modifiers and the more general apply_combining_modifiers.
+        This function normalizes strings in the Devanagari script (used in Hindi etc.) by
          - mapping letters to the canonical composed or decomposed form and
          - putting diacritics in the canonical order (nukta before vowel sign).
         """
@@ -555,8 +572,8 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'font', self.normalize_font_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'small', self.normalize_small_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
-        s = self.norm_clean_string_group(s, ht, 'indic-diacr', self.normalize_indic_diacritics, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct-f', self.normalize_arabic_punctuation, loc_id)
         s = self.norm_clean_string_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
@@ -584,8 +601,8 @@ def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
-                      'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'combining',
-                      'indic-diacr', 'punct', 'punct-f', 'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml',
+                      'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'repair-combining',
+                      'combining', 'punct', 'punct-f', 'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml',
                       'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
