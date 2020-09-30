@@ -119,7 +119,7 @@ def norm_string_by_mapping_dict(s: str, m_dict: dict, verbose: bool = True) -> s
     while i < n:
         for l in (3, 2, 1):
             sub_map = m_dict.get(s[i:i+l])
-            if sub_map:
+            if sub_map is not None:
                 result += sub_map
                 i += l
                 break
@@ -176,7 +176,8 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
         elif codeblock == 'CJKCompatibilityMapping':
-            code_points = chain(range(0x32C0, 0x3400), range(0xFF01, 0xFFEF))
+            code_points = chain(range(0x3250, 0x3251), range(0x32C0, 0x3400),
+                                range(0xFF01, 0xFFEF), range(0x1F200, 0x1F201))
         elif codeblock == 'CoreCompatibilityMapping':
             code_points = chain(range(0x3130, 0x3190))
         elif codeblock == 'FontSmallVerticalMapping':
@@ -213,19 +214,12 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     elif ((codeblock == 'CombiningModifierMapping')
                             and (len(decomp_elements) >= 2)
                             and (not decomp_elements[0].startswith('<'))):
-                        decomp_char1 = chr(int(decomp_elements[1], 16))
-                        decomp_char1_name = ud.name(decomp_char1, '')
                         decomp_chars = decomp_elements
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
-                        if ((len(decomp_elements) == 2)
-                                and (('COMBINING' in decomp_char1_name)
-                                     or re.match(r'[\u0653-\u0655]', decomp_char1))):
-                            action = 'composition'
+                        if char in unicode_composition_exclusion_dict:
+                            action = 'decomposition'
                         else:
-                            char_descr = string_to_character_unicode_descriptions(char)
-                            decomp_descr = string_to_character_unicode_descriptions(decomp_str)
-                            log.info(f'{codeblock}: No entry added for {char} {char_descr}'
-                                     f' -> {decomp_str} {decomp_descr}')
+                            action = 'composition'
                     elif ((codeblock == 'CoreCompatibilityMapping')
                             and (len(decomp_elements) >= 2)
                             and (decomp_elements[0] == '<compat>')):
@@ -270,11 +264,16 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     char_hex = 'U+' + ('%04x' % code_point).upper()
                     if action == 'decomposition':
                         decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict)
+                        decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict)
+                        if (' ' in decomp_str) and ('ISOLATED FORM' in char_name):
+                            decomp_str = decomp_str.replace(' ', '')
                     elif action == 'composition':
                         char = norm_string_by_mapping_dict(char, core_mapping_dict)
+                        char = norm_string_by_mapping_dict(char, mapping_dict)
                     decomp_descr = string_to_character_unicode_descriptions(decomp_str)
                 if action == 'decomposition':
                     f.write(char + '\t' + decomp_str)
+                    mapping_dict[char] = decomp_str
                     if verbose:
                         f.write(f'\t{char_hex}{char_name_clause} -> {decomp_descr}')
                         ud_ref = ud.normalize('NFKC', char)
@@ -455,15 +454,33 @@ def init_core_mapping_dict() -> None:
             n_entries = 0
             for line in f:
                 line_number += 1
-                m = re.match(r'([0-9A-F]{4})\s+#\s*(\S.*\S|\S)', line, flags=re.IGNORECASE)
+                m = re.match(r'([0-9A-F]{4,5})\s+#\s*(\S.*\S|\S)', line, flags=re.IGNORECASE)
                 if m:
                     char = chr(int(m.group(1), 16))
                     unicode_composition_exclusion_dict[char] = m.group(2)
                     n_entries += 1
-                    # log.info(f'    unicode_composition_exclusion {char} {m.group(1)} {m.group(2)}')
+                    # log.info(f'    unicode_composition_exclusion (explicit) {char} {m.group(1)} {m.group(2)}')
+                    continue
+                m = re.match(r'#\s*([0-9A-F]{4,5})\.\.([0-9A-F]{4,5})\s', line, flags=re.IGNORECASE)
+                if m:
+                    for code_point in range(int(m.group(1), 16), int(m.group(2), 16)+1):
+                        char = chr(code_point)
+                        unicode_composition_exclusion_dict[char] = safe_unicode_name(char)
+                        n_entries += 1
+                        # log.info(f'    unicode_composition_exclusion (range, derived) {char} {m.group(1)}'
+                        #          f' {m.group(2)}')
+                        continue
+                m = re.match(r'#\s*([0-9A-F]{4,5})\s+(\S.*\S|\S)', line, flags=re.IGNORECASE)
+                if m:
+                    char = chr(int(m.group(1), 16))
+                    unicode_composition_exclusion_dict[char] = m.group(2)
+                    n_entries += 1
+                    # log.info(f'    unicode_composition_exclusion (derived) {char} {m.group(1)} {m.group(2)}')
+                    continue
             log.info(f'Loaded {n_entries} entries from {full_unicode_composition_exclusion_filename}')
     except FileNotFoundError:
         log.error(f"Could not open {full_unicode_composition_exclusion_filename}")
+
 
 def main(argv):
     init_core_mapping_dict()

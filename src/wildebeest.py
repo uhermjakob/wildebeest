@@ -48,8 +48,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.6'
-last_mod_date = 'September 28, 2020'
+__version__ = '0.4.7'
+last_mod_date = 'September 29, 2020'
 
 
 class Wildebeest:
@@ -274,6 +274,7 @@ class Wildebeest:
             s = s.replace('\uFB15', '\u0574\u056B')  # U+FB15 ARMENIAN SMALL LIGATURE MEN INI ﬕ -> մի
             s = s.replace('\uFB16', '\u057E\u0576')  # U+FB16 ARMENIAN SMALL LIGATURE VEW NOW ﬖ -> վն
             s = s.replace('\uFB17', '\u0574\u056D')  # U+FB17 ARMENIAN SMALL LIGATURE MEN XEH ﬗ -> մխ
+            s = s.replace('\uFB49', '\u05E9\u05BC')  # U+FB49 HEBREW LETTER SHIN WITH DAGESH שּ -> שּ
             s = s.replace('\uFB4F', '\u05D0\u05DC')  # U+FB4F HEBREW LIGATURE ALEF LAMED ﭏ -> אל
         if re.search(r"[\u03D0-\u03F9]", s):
             s = s.replace('\u03D0', '\u03B2')        # U+03D0 GREEK BETA SYMBOL ϐ -> β
@@ -297,8 +298,8 @@ class Wildebeest:
             s = s.replace('\u2136', '\u05D1')        # U+2136 BET SYMBOL ℶ -> ב
             s = s.replace('\u2137', '\u05D2')        # U+2137 GIMEL SYMBOL ℷ -> ג
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
-        if re.search(r"[\u32C0-\u33FF]", s):
-            s = re.sub(r'[\u32C0-\u33FF]', self.apply_mapping_dict, s)  # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
+        if re.search(r"[\u3250\u32C0-\u33FF\U0001F200]", s): # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
+            s = re.sub(r'[\u3250\u32C0-\u33FF\U0001F200]', self.apply_mapping_dict, s)
         return s
 
     def apply_combining_modifiers(self, s: str) -> str:
@@ -330,7 +331,7 @@ class Wildebeest:
          - mapping letters to the canonical composed or decomposed form and
          - putting diacritics in the canonical order (nukta before vowel sign).
         """
-        if s.find('\u093C'):  # Devanagari nukta
+        if '\u093C' in s:  # Devanagari nukta
             # If a vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
             s = re.sub(r"([\u093E-\u094D])(\u093C)", r"\2\1", s)
             # For the following 3 Devanagari letters, used to transcribe Dravidian letters, use the composed form.
