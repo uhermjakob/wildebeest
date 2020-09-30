@@ -11,7 +11,7 @@ Wrong conversion: Dont tell your fiancé  Schöne Grüße aus Mähren 
 Font, small, vertical, punctuation, more encoding: ℂℳℹ ﬡ 𝐀 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀  ﹐﹠﹫  ︐︱﹇﹈   ‑༌ ‐་  ÂŒ Â™
 Replacement character: China�s flag isn�t green. Espa�a.
 Typos: The Phillippine offical was embarassed about the kidnaping in Sao Paolo.
-XML, URL escapes: &amp;quot; &amp;amp;#8204; &amp;amp;amp;#x200C;  Jo%25C3%25ABlle_Aubron
+XML, URL escapes: &amp;quot; &amp;amp;#8204; &amp;amp;amp;#x200C;  Jo%25C3%25ABlle_Aubron %25E2%2582%25AC%25E2%2582%25AC
 Ligatures, symbols, signs, CJK: sœur bær bĳ ǈubljana Luſt   2µm 2Å 2kΩ 273.15K   ㎢ km² ㍻31年㋀㏾  ㉐🈀
 Combining modifiers: schön schön José José  ΥΎΫ ϒϓϔ   𝅘𝅥𝅮 𝅘𝅥𝅮 𝅘𝅥𝅮   آ آ
 Superscripts, subscripts: 2³² aⁿ aₙ O₂-detector O²⁻detector

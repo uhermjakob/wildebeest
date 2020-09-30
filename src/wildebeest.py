@@ -298,7 +298,7 @@ class Wildebeest:
             s = s.replace('\u2136', '\u05D1')        # U+2136 BET SYMBOL ℶ -> ב
             s = s.replace('\u2137', '\u05D2')        # U+2137 GIMEL SYMBOL ℷ -> ג
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
-        if re.search(r"[\u3250\u32C0-\u33FF\U0001F200]", s): # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
+        if re.search(r"[\u3250\u32C0-\u33FF\U0001F200]", s):    # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
             s = re.sub(r'[\u3250\u32C0-\u33FF\U0001F200]', self.apply_mapping_dict, s)
         return s
 
@@ -318,9 +318,9 @@ class Wildebeest:
         # U+1D165 -U+1D172 MUSICAL SYMBOL COMBINING modifiers
         if re.search(r"[\u0300-\u036F\u0653-\u0655\u3099\u309A]", s):
             s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]', self.apply_mapping_dict, s)
+        # MUSICAL SYMBOLS
         if re.search(r"[\U0001D100-\U0001D1FF]", s):
-            s = re.sub(r'.[\U0001D165-\U0001D172]', self.apply_mapping_dict, s)  # recursively defined
-            s = re.sub(r'.[\U0001D165-\U0001D172]', self.apply_mapping_dict, s)  # therefore: second iteration
+            s = re.sub(r'[\U0001D100-\U0001D1FF]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
@@ -500,9 +500,13 @@ class Wildebeest:
     # noinspection SpellCheckingInspection
     @staticmethod
     def repair_xml(s: str) -> str:
-        """Repair multi-level xml-escapes such as &amp;amp;quot; to &quot;"""
+        """Repair multi-level XML and URL escapes"""
+        # Repair multi-level xml-escapes such as &amp;amp;quot; to &quot;
         s = re.sub(r'(?<=&)(?:amp;)+(?=(?:amp|apos|gt|lt|nbsp|quot|#\d{1,6}|#x[0-9A-F]{1,5});)',
                    '', s, flags=re.IGNORECASE)
+        # Repair double url-escapes such as https://en.wikipedia.org/wiki/Jo%25C3%25ABlle_Aubron
+        s = re.sub(r"(%)25([CD][0-9A-F]%)25([89AB][0-9A-F])", r"\1\2\3", s)
+        s = re.sub(r'(%)25(E[0-9A-F]%)25([89AB][0-9A-F]%)25([89AB][0-9A-F])', r"\1\2\3\4", s)
         return s
 
     @staticmethod
