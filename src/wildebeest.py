@@ -267,7 +267,7 @@ class Wildebeest:
             s = s.replace('\uFB02', '\u0066\u006C')  # U+FB02 LATIN SMALL LIGATURE FL ﬂ -> fl
             s = s.replace('\uFB03', '\u0066\u0066\u0069')  # U+FB03 LATIN SMALL LIGATURE FFI ﬃ -> ffi
             s = s.replace('\uFB04', '\u0066\u0066\u006C')  # U+FB04 LATIN SMALL LIGATURE FFL ﬄ -> ffl
-            s = s.replace('\uFB05', '\u017F\u0074')  # U+FB05 LATIN SMALL LIGATURE LONG S T ﬅ -> ſt
+            s = s.replace('\uFB05', '\u0073\u0074')  # U+FB05 LATIN SMALL LIGATURE LONG S T ﬅ -> ſt
             s = s.replace('\uFB06', '\u0073\u0074')  # U+FB06 LATIN SMALL LIGATURE ST ﬆ -> st
             s = s.replace('\uFB13', '\u0574\u0576')  # U+FB13 ARMENIAN SMALL LIGATURE MEN NOW ﬓ -> մն
             s = s.replace('\uFB14', '\u0574\u0565')  # U+FB14 ARMENIAN SMALL LIGATURE MEN ECH ﬔ -> մե
@@ -324,8 +324,8 @@ class Wildebeest:
         # DECOMPOSITION
         # Indic, Tibetan, Hebrew, 'forking'
         if re.search(r'[\u0344\u0958-\u095F\u09DC-\u0B5D\u0F43-\u0FB9\u2ADC\uFB1D-\uFB4E]', s):
-            s = re.sub(r'[\u0344\u0958-\u095F\u09DC-\u0B5D\u0F43-\u0FB9\u2ADC\uFB1D-\uFB4E]',
-                       self.apply_mapping_dict, s)
+            s = re.sub(r'[\u0344\u0958-\u095F\u09DC-\u0B5D\u0F43-\u0FB9\u2ADC\uFB1D-\uFB4E]', self.apply_mapping_dict,
+                       s)
         # Musical symbols
         if re.search(r'[\U0001D100-\U0001D1FF]', s):
             s = re.sub(r'[\U0001D100-\U0001D1FF]', self.apply_mapping_dict, s)
@@ -452,7 +452,7 @@ class Wildebeest:
             Ethiopic languages (፱፻ = 900),
         as the characters of those numbers do not match one-to-one onto ASCII digits.
         """
-        if not re.search(r"[\u0660-\u1E959]", s):
+        if not re.search(r"[\u0660-\U0001E959]", s):
             return s
         if re.search(r'[\u0660-\u07C9]', s):
             s = re.sub(r'[\u0660-\u0669]', self.apply_mapping_dict, s)  # ARABIC-INDIC digits
@@ -468,7 +468,7 @@ class Wildebeest:
             s = re.sub(r'[\u0C66-\u0C6F]', self.apply_mapping_dict, s)  # TELUGU digits
             s = re.sub(r'[\u0CE6-\u0CEF]', self.apply_mapping_dict, s)  # KANNADA digits
             s = re.sub(r'[\u0D66-\u0D6F]', self.apply_mapping_dict, s)  # MALAYALAM digits
-        if re.search(r'[\u0DE6-\uABF9]', s):
+        if re.search(r'[\u0DE6-\u1C59]', s):
             s = re.sub(r'[\u0DE6-\u0DEF]', self.apply_mapping_dict, s)  # SINHALA LITH digits
             s = re.sub(r'[\u0E50-\u0E59]', self.apply_mapping_dict, s)  # THAI digits
             s = re.sub(r'[\u0ED0-\u0ED9]', self.apply_mapping_dict, s)  # LAO digits
@@ -478,13 +478,14 @@ class Wildebeest:
             s = re.sub(r'[\u17E0-\u17E9]', self.apply_mapping_dict, s)  # KHMER digits
             s = re.sub(r'[\u1810-\u1819]', self.apply_mapping_dict, s)  # MONGOLIAN digits
             s = re.sub(r'[\u1946-\u194F]', self.apply_mapping_dict, s)  # LIMBU digits
-            s = re.sub(r'[\u19D0-\u19D9]', self.apply_mapping_dict, s)  # NEW TAI LUE digits
+            s = re.sub(r'[\u19D0-\u19DA]', self.apply_mapping_dict, s)  # NEW TAI LUE digits
             s = re.sub(r'[\u1A80-\u1A89]', self.apply_mapping_dict, s)  # TAI THAM HORA digits
             s = re.sub(r'[\u1A90-\u1A99]', self.apply_mapping_dict, s)  # TAI THAM THAM digits
             s = re.sub(r'[\u1B50-\u1B59]', self.apply_mapping_dict, s)  # BALINESE digits
             s = re.sub(r'[\u1BB0-\u1BB9]', self.apply_mapping_dict, s)  # SUNDANESE digits
             s = re.sub(r'[\u1C40-\u1C49]', self.apply_mapping_dict, s)  # LEPCHA digits
             s = re.sub(r'[\u1C50-\u1C59]', self.apply_mapping_dict, s)  # OL CHIKI digits
+        if re.search(r'[\uA620-\uABF9]', s):
             s = re.sub(r'[\uA620-\uA629]', self.apply_mapping_dict, s)  # VAI digits
             s = re.sub(r'[\uA8D0-\uA8D9]', self.apply_mapping_dict, s)  # SAURASHTRA digits
             s = re.sub(r'[\uA900-\uA909]', self.apply_mapping_dict, s)  # KAYAH LI digits

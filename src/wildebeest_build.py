@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import unicodedata as ud
 import sys
+import wildebeest
 
 log.basicConfig(level=log.INFO)
 
@@ -112,7 +113,7 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
             print(f"{indent}s = s.replace('{us}', '{digit}')    # {uplus} {char_name} {char} -> {digit}")
 
 
-def norm_string_by_mapping_dict(s: str, m_dict: dict, verbose: bool = True) -> str:
+def norm_string_by_mapping_dict(s: str, m_dict: dict, verbose: bool = False) -> str:
     """Function greedily applies character-based mapping-dictionary to string."""
     result = ''
     i, n = 0, len(s)
@@ -306,6 +307,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     current_function_name = mf.group(1)
                 elif current_function_name in ['normalize_farsi_characters', 'normalize_ring_characters',
                                                'normalize_arabic_punctuation', 'normalize_font_characters',
+                                               'normalize_devanagari_diacritics',
                                                'repair_tokenization', 'repair_xml', 'delete_surrogates',
                                                'init_mapping_dict']:
                     continue  # because replacements are language-specific
@@ -482,6 +484,132 @@ def init_core_mapping_dict() -> None:
         log.error(f"Could not open {full_unicode_composition_exclusion_filename}")
 
 
+def compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files() -> None:
+    src_dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_dir_path = os.path.join(src_dir_path, "../data")
+    log_filename = os.path.join(data_dir_path, 'log-diff-wb-nfkc-mf.txt')
+    n_files = 0
+    total_n_diffs = 0
+    total_n_tests = 0
+    with open(log_filename, 'w', encoding='utf-8') as f_out:
+        for filename in sorted(os.listdir(data_dir_path)):
+            if re.match(r'.*MappingAnnotated\.tsv$', filename):
+                full_filename = os.path.join(data_dir_path, filename)
+                with open(full_filename, 'r', encoding='utf-8') as f_in:
+                    log.info(filename)
+                    f_out.write(filename + '\n')
+                    n_files += 1
+                    n_tests = 0
+                    n_diffs = 0
+                    line_number = 0
+                    reverse_dict = {}
+                    for line in f_in:
+                        line_number += 1
+                        tsv_list = re.split(r'\t', line.rstrip())
+                        if (len(tsv_list) >= 2) and (line_number >= 2):
+                            wb = wildebeest.Wildebeest()
+                            ht = {}
+                            source = tsv_list[0]
+                            target = tsv_list[1]
+                            reverse_dict[target] = True
+                            source_wb = wb.norm_clean_string(source, ht, loc_id=str(f'{filename}.S.{line_number}'))
+                            source_nfkc = ud.normalize('NFKC', source)
+                            source_descr = string_to_character_unicode_descriptions(source)
+                            n_tests += 1
+                            total_n_tests += 1
+                            if source_wb != source_nfkc:
+                                if (source_wb == '') and (source_nfkc == source):
+                                    annotation = 'DEL-SAME'
+                                else:
+                                    annotation = ''
+                                n_diffs += 1
+                                total_n_diffs += 1
+                                f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tud:{source_nfkc}"
+                                            f"\t{source_descr}\t{filename}\n")
+                            elif ('Digit' in filename) or ('Python' in filename):
+                                f_out.write(f"IDENTICAL\ts:{source}\twb:{source_wb}\tud:{source_nfkc}"
+                                            f"\t{source_descr}\t{filename}\n")
+                    for target in sorted(reverse_dict.keys()):
+                        if target != '':
+                            target_wb = wb.norm_clean_string(target, ht, loc_id=str(f'{filename}.T.{line_number}'))
+                            target_nfkc = ud.normalize('NFKC', target)
+                            target_descr = string_to_character_unicode_descriptions(target)
+                            n_tests += 1
+                            total_n_tests += 1
+                            if target_wb != target_nfkc:
+                                annotation = 'REV'
+                                n_diffs += 1
+                                total_n_diffs += 1
+                                f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tud:{target_nfkc}"
+                                            f"\t{target_descr}\t{filename}\n")
+                    log.info(f'    {n_diffs}/{n_tests} diffs in {filename}')
+        log.info(f'{total_n_diffs}/{total_n_tests} total diffs in {n_files} files')
+
+
+def compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data() -> None:
+    src_dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_dir_path = os.path.join(src_dir_path, "../data")
+    unicode_filename = os.path.join(data_dir_path, 'UnicodeData.txt')
+    log_filename = os.path.join(data_dir_path, 'log-diff-wb-nfkc-uc.txt')
+    n_diffs, n_tests, line_number = 0, 0, 0
+    ht, reverse_dict = {}, {}
+    wb = wildebeest.Wildebeest()
+    with open(log_filename, 'w', encoding='utf-8') as f_out:
+        with open(unicode_filename, 'r', encoding='utf-8') as f_in:
+            for line in f_in:
+                line_number += 1
+                unicode_record = re.split(r';', line.rstrip())
+                if len(unicode_record) >= 2:
+                    # 00D4;LATIN CAPITAL LETTER O WITH CIRCUMFLEX;Lu;0;L;004F 0302;;;;N;LATIN...CIRCUMFLEX;;;00F4;
+                    hex_string = unicode_record[0]     # e.g. 095F
+                    source = chr(int(hex_string, 16))
+                    decomp_ssv = unicode_record[5]     # e.g. '092F 093C'
+                    decomp_codes = decomp_ssv.split()  # e.g. ['092F', '093C']
+                    if (len(decomp_codes) >= 1) and (decomp_codes[0].startswith('<')):
+                        decomp_codes = decomp_codes[1:]
+                    decomp_chars = [chr(int(x, 16)) for x in decomp_codes]  # e.g. ['य', '़']
+                    target = ''.join(decomp_chars)  # e.g. 'य़' (2 characters)
+                    reverse_dict[target] = True
+                    source_wb = wb.norm_clean_string(source, ht, loc_id=str(f'S.{line_number}'))
+                    source_ud = ud.normalize('NFKC', source)
+                    source_descr = string_to_character_unicode_descriptions(source)
+                    n_tests += 1
+                    if source_wb != source_ud:
+                        if (source_wb == '') and (source_ud == source):
+                            annotation = 'DEL-SAME'
+                        else:
+                            annotation = ''
+                        n_diffs += 1
+                        f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tud:{source_ud}\t{source_descr}\n")
+            for target in sorted(reverse_dict.keys()):
+                if target != '':
+                    target_wb = wb.norm_clean_string(target, ht, loc_id=str(f'T.{line_number}'))
+                    target_nfkc = ud.normalize('NFKC', target)
+                    target_descr = string_to_character_unicode_descriptions(target)
+                    n_tests += 1
+                    if target_wb != target_nfkc:
+                        if (target_wb == '') and (target_nfkc == target):
+                            annotation = "REV DEL-SAME"
+                        else:
+                            annotation = 'REV'
+                        n_diffs += 1
+                        f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tud:{target_nfkc}\t{target_descr}\n")
+        log.info(f'{n_diffs}/{n_tests} total diffs in {line_number} lines')
+
+
+def rebuild_all_mapping_files() -> None:
+    src_dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_dir_path = os.path.join(src_dir_path, "../data")
+    n_files = 0
+    for filename in sorted(os.listdir(data_dir_path)):
+        if re.match(r'.*MappingAnnotated\.tsv$', filename):
+            codeblock = filename.replace('Annotated.tsv', '')
+            log.info(f'Rebuilding {codeblock}')
+            build_wildebeest_tsv_file(codeblock)
+            n_files += 1
+    log.info(f'Rebuilt {n_files} mapping files')
+
+
 def main(argv):
     init_core_mapping_dict()
     if (len(argv) >= 2) and (argv[0] == 'python-code'):
@@ -490,6 +618,12 @@ def main(argv):
     elif (len(argv) >= 2) and (argv[0] == 'tsv-file'):
         codeblock = argv[1]  # e.g. 'ArabicPresentationFormMapping'
         build_wildebeest_tsv_file(codeblock)
+    elif (len(argv) >= 1) and (argv[0] == 'rebuild-all-mapping-files'):
+        rebuild_all_mapping_files()
+    elif (len(argv) >= 1) and (argv[0] == 'compare-wb-nfkc-mf'):
+        compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files()
+    elif (len(argv) >= 1) and (argv[0] == 'compare-wb-nfkc-uc'):
+        compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data()
 
 
 if __name__ == "__main__":
