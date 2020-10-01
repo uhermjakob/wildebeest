@@ -19,6 +19,8 @@ log.basicConfig(level=log.INFO)
 mapping_dict = {}        # general dict used to build Mapping.tsv files
 core_mapping_dict = {}   # special dict for PythonWildebeest and CoreCompatibility mappings
 unicode_composition_exclusion_dict = {}  # for characters that should be decomposed, such as Devanagari फ़
+assert_wb_dict = {}      # store previously asserted wildebeest reference mappings
+assert_nfkc_dict = {}    # store NFKC reference mappings
 
 spec_windows1252_to_utf8_dict = {
     '\x80': '\u20AC',  # Euro Sign
@@ -571,16 +573,19 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data() -> None:
                     target = ''.join(decomp_chars)  # e.g. 'य़' (2 characters)
                     reverse_dict[target] = True
                     source_wb = wb.norm_clean_string(source, ht, loc_id=str(f'S.{line_number}'))
-                    source_ud = ud.normalize('NFKC', source)
+                    source_nfkc = ud.normalize('NFKC', source)
                     source_descr = string_to_character_unicode_descriptions(source)
                     n_tests += 1
-                    if source_wb != source_ud:
-                        if (source_wb == '') and (source_ud == source):
+                    if ((assert_wb_dict.get(source, None) == source_wb)
+                            and (assert_nfkc_dict.get(source, None) == source_nfkc)):
+                        continue
+                    elif source_wb != source_nfkc:
+                        if (source_wb == '') and (source_nfkc == source):
                             annotation = 'DEL-SAME'
                         else:
                             annotation = ''
                         n_diffs += 1
-                        f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tud:{source_ud}\t{source_descr}\n")
+                        f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tud:{source_nfkc}\t{source_descr}\n")
             for target in sorted(reverse_dict.keys()):
                 if target != '':
                     target_wb = wb.norm_clean_string(target, ht, loc_id=str(f'T.{line_number}'))
@@ -595,6 +600,42 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data() -> None:
                         n_diffs += 1
                         f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tud:{target_nfkc}\t{target_descr}\n")
         log.info(f'{n_diffs}/{n_tests} total diffs in {line_number} lines')
+
+
+def mapping_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str) -> None:
+    log.info(f'assert {filename_i} -> {filename_o}')
+    line_number, n_output_lines = 0, 0
+    with open(filename_o, 'w', encoding='utf-8') as f_out:
+        with open(filename_i, 'r', encoding='utf-8') as f_in:
+            for line in f_in:
+                line_number += 1
+                record = re.split(r'\t', line.rstrip())
+                if len(record) >= 3:
+                    orig = record[0]
+                    wb = record[1]
+                    comment = re.sub(r'\s*NFKC-ref.*$', '', record[2])
+                    nfkc = ud.normalize('NFKC', orig)
+                    f_out.write(f'{orig}\t{wb}\t{nfkc}\t{comment}\n')
+                    n_output_lines += 1
+    log.info(f'    {line_number} input lines, {n_output_lines} output lines')
+
+
+def load_assert_file() -> None:
+    src_dir_path = os.path.dirname(os.path.realpath(__file__))
+    data_dir_path = os.path.join(src_dir_path, "../data")
+    filename = os.path.join(data_dir_path, 'assert.tsv')
+    line_number = 0
+    with open(filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            line_number += 1
+            record = re.split(r'\t', line.rstrip())
+            if (line_number >= 2) and (len(record) >= 4):
+                orig = record[0]
+                wb = record[1]
+                nfkc = record[2]
+                assert_wb_dict[orig] = wb
+                assert_nfkc_dict[orig] = nfkc
+    log.info(f'Loaded {line_number} entries from {filename}')
 
 
 def rebuild_all_mapping_files() -> None:
@@ -612,6 +653,7 @@ def rebuild_all_mapping_files() -> None:
 
 def main(argv):
     init_core_mapping_dict()
+    load_assert_file()
     if (len(argv) >= 2) and (argv[0] == 'python-code'):
         codeblock = argv[1]  # e.g. 'Devanagari', 'Indic', 'Arabic'
         build_python_code_from_unicode(codeblock)
@@ -624,6 +666,8 @@ def main(argv):
         compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files()
     elif (len(argv) >= 1) and (argv[0] == 'compare-wb-nfkc-uc'):
         compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data()
+    elif (len(argv) >= 3) and (argv[0] == 'mapping-to-assert-orig-wb-nfkc'):
+        mapping_to_assert_orig_wb_nfkc(argv[1], argv[2])
 
 
 if __name__ == "__main__":
