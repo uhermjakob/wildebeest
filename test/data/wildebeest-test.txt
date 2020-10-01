@@ -15,3 +15,4 @@ XML, URL escapes: &amp;quot; &amp;amp;#8204; &amp;amp;amp;#x200C;  Jo%25C3%25ABl
 Ligatures, symbols, signs, CJK: sœur bær bĳ ǈubljana Luſt   2µm 2Å 2kΩ 273.15K   ㎢ km² ㍻31年㋀㏾  ㉐🈀
 Combining modifiers: schön schön José José  ΥΎΫ ϒϓϔ   𝅘𝅥𝅮 𝅘𝅥𝅮 𝅘𝅥𝅮   آ آ
 Superscripts, subscripts: 2³² aⁿ aₙ O₂-detector O²⁻detector
+Non-decimal numerals: 二百五十, ⅭⅭⅬ, ፪፻፶
