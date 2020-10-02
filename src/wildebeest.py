@@ -21,15 +21,16 @@ List of available normalization/cleaning-types (default: all are applied):
  * ligatures-symbols (e.g. maps ligatures, symbols (e.g. kappa symbol), signs (e.g. micro sign), CJK square composites)
  * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
  * width (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
- * font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters)
+ * font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters; Roman numerals to ASCII)
  * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
  * vertical (maps vertical versions of punctuation characters with normal horizontal version,
         such as vertical em-dash ︱ to horizontal em-dash —)
+ * enclosure (decomposes circled, squared and parenthesized characters)
  * repair-combining (e.g. order of nukta/vowel-sign)
  * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
- * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..)
+ * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
  * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
  * space (e.g. normalizes non-zero spaces to normal space)
  * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
@@ -133,6 +134,7 @@ class Wildebeest:
                              'CombiningModifierMapping.tsv',
                              'CoreCompatibilityMapping.tsv',
                              'DigitMapping.tsv',
+                             'EnclosureMapping.tsv',
                              'EncodingRepairMapping.tsv',
                              'FontSmallVerticalMapping.tsv'):
             full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
@@ -290,7 +292,10 @@ class Wildebeest:
             s = s.replace('\u03F4', '\u0398')        # U+03F4 GREEK CAPITAL THETA SYMBOL ϴ -> Θ
             s = s.replace('\u03F5', '\u03B5')        # U+03F5 GREEK LUNATE EPSILON SYMBOL ϵ -> ε
             s = s.replace('\u03F9', '\u03A3')        # U+03F9 GREEK CAPITAL LUNATE SIGMA SYMBOL Ϲ -> Σ
-        if re.search(r"[\u2126-\u2138]", s):
+        if re.search(r"[\u20A8-\u2138]", s):
+            s = s.replace('\u20A8', 'Rs')            # U+20A8 RUPEE SIGN ₨ -> Rs
+            s = s.replace('\u2103', '\u00B0C')       # U+2103 DEGREE CELIUS ℃ -> °C
+            s = s.replace('\u2109', '\u00B0F')       # U+2109 DEGREE FAHRENHEIT ℉ -> °F
             s = s.replace('\u2126', '\u03A9')        # U+2126 OHM SIGN Ω -> Ω (GREEK CAPITAL LETTER OMEGA)
             s = s.replace('\u212A', '\u004B')        # U+212A KELVIN SIGN K -> K (LATIN CAPITAL LETTER K)
             s = s.replace('\u212B', '\u00C5')        # U+212B ANGSTROM SIGN Å -> Å (LATIN CAP. LETTER A WITH RING ABOVE)
@@ -298,8 +303,11 @@ class Wildebeest:
             s = s.replace('\u2136', '\u05D1')        # U+2136 BET SYMBOL ℶ -> ב
             s = s.replace('\u2137', '\u05D2')        # U+2137 GIMEL SYMBOL ℷ -> ג
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
-        if re.search(r"[\u3250\u32C0-\u33FF\U0001F200]", s):    # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
-            s = re.sub(r'[\u3250\u32C0-\u33FF\U0001F200]', self.apply_mapping_dict, s)
+        # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
+        if re.search(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', s):
+            s = re.sub(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', self.apply_mapping_dict, s)
+        if re.search(r"[\U0001F200\U0002F800-\U0002FA1F]", s):
+            s = re.sub(r'[\U0001F200\U0002F800-\U0002FA1F]', self.apply_mapping_dict, s)
         return s
 
     def apply_combining_modifiers(self, s: str) -> str:
@@ -384,11 +392,19 @@ class Wildebeest:
         s = s.replace('\u0F0C', '\u0F0B')   # U+0F0C Tibetan no-break morpheme delimiter
         return s
 
-    @staticmethod
-    def normalize_punctuation(s: str) -> str:
+    def normalize_punctuation(self, s: str) -> str:
         s = s.replace('\u2011', '\u2010')   # U+2011 non-breaking hyphen -> hyphen
         s = s.replace('\u2025', '..')       # U+2025 two dot leader
         s = s.replace('\u2026', '...')      # U+2026 horizontal ellipsis
+        # a few math symbols ∭
+        if re.search(r'[\u222C-\u2230]', s):
+            s = re.sub(r'[\u222C-\u2230]', self.apply_mapping_dict, s)
+        # punctuation 〈〉
+        if re.search(r'[\u2329-\u232A]', s):
+            s = re.sub(r'[\u2329-\u232A]', self.apply_mapping_dict, s)
+        # integer plus period or comma ⒛ 🄆
+        if re.search(r'[\u2488-\u249B\U0001F100-\U0001F10A]', s):
+            s = re.sub(r'[\u2488-\u249B\U0001F100-\U0001F10A]', self.apply_mapping_dict, s)
         return s
 
     @staticmethod
@@ -413,7 +429,10 @@ class Wildebeest:
         return s
 
     def normalize_font_characters(self, s: str) -> str:
-        """Replace font-variation characters such as ℂℹ𝒜 to CiA."""
+        # Replace Roman numeral characters to ASCII.
+        if re.search(r'[\u2160-\u217F]', s):
+            s = re.sub(r'[\u2160-\u217F]', self.apply_mapping_dict, s)
+        # Replace font-variation characters such as ℂℹ𝒜 to CiA.
         if re.search(r'[\u2102-\u2149\uFB20-\uFB29\U0001D400-\U0001D7FF\U0001EE00-\U0001EEBB\U0001FBF0-\U0001FBF9]', s):
             s = re.sub(r'[\u2102-\u2149\uFB20-\uFB29\U0001D400-\U0001D7FF\U0001EE00-\U0001EEBB\U0001FBF0-\U0001FBF9]',
                        self.apply_mapping_dict, s)
@@ -432,6 +451,17 @@ class Wildebeest:
         """
         if re.search(r'[\uFF01-\uFFEE]', s):
             s = re.sub(r'[\uFF01-\uFFEE]', self.apply_mapping_dict, s)
+        return s
+
+    def normalize_enclosure_characters(self, s: str) -> str:
+        """
+        Decompose enclosed (circled, squared, parenthesized) characters, e.g. 🄐 to (A).
+        """
+        if re.search(r'[\u2460-\u2488\u249C-\u2500\u3036\u3200-\u3250\u3251-\u32C0\u32D0-\u32FF]', s):
+            s = re.sub(r'[\u2460-\u2488\u249C-\u2500\u3036\u3200-\u3250\u3251-\u32C0\u32D0-\u32FF]',
+                       self.apply_mapping_dict, s)
+        if re.search(r'[\U0001F110-\U0001F16A\U0001F201-\U0001F260]', s):
+            s = re.sub(r'[\U0001F110-\U0001F16A\U0001F201-\U0001F260]', self.apply_mapping_dict, s)
         return s
 
     def normalize_core_compat_characters(self, s: str) -> str:
@@ -573,6 +603,7 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'font', self.normalize_font_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'small', self.normalize_small_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'enclosure', self.normalize_enclosure_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
@@ -602,9 +633,9 @@ def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
-                      'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'repair-combining',
-                      'combining', 'punct', 'punct-f', 'space', 'digit', 'farsi-char', 'ring-char', 'repair-xml',
-                      'repair-token']
+                      'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'enclosure',
+                      'repair-combining', 'combining', 'punct', 'punct-f', 'space', 'digit',
+                      'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')

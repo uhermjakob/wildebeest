@@ -175,14 +175,25 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                      'CombiningModifierMapping',       # e.g. maps "é" (2 Unicode characters) to "é" (1 character)
                      'CoreCompatibilityMapping',       # includes Hangul compatibility (KS X 1001)
                      'DigitMapping',
+                     'EnclosureMapping',               # characters enclosed in circles, parantheses, squares
                      'FontSmallVerticalMapping'):      # for Unicode keywords <font>, <small>, <vertical>
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
         elif codeblock == 'CJKCompatibilityMapping':
-            code_points = chain(range(0x3250, 0x3251), range(0x32C0, 0x3400),
-                                range(0xFF01, 0xFFEF), range(0x1F200, 0x1F201))
+            code_points = chain(range(0x2F00, 0x2FE0), range(0x3038, 0x303B),
+                                range(0x3250, 0x3251), range(0x32C0, 0x3400),
+                                range(0xF900, 0xFB00), range(0xFF01, 0xFFEF),
+                                range(0x1F200, 0x1F201), range(0x2F800, 0x2FA20))
         elif codeblock == 'CoreCompatibilityMapping':
-            code_points = chain(range(0x3130, 0x3190))
+            code_points = chain(range(0x2160, 0x2180), range(0x222C, 0x2231),
+                                range(0x2329, 0x232B), range(0x2488, 0x249C),
+                                range(0x3130, 0x3190),
+                                range(0x1F100, 0x1F10B))
+        elif codeblock == 'EnclosureMapping':
+            code_points = chain(range(0x2460, 0x2488), range(0x249C, 0x2500), range(0x3036, 0x3037),
+                                range(0x3200, 0x3250),
+                                range(0x3251, 0x32C0), range(0x32D0, 0x32FF), range(0x1F110, 0x1F16A),
+                                range(0x1F201, 0x1F260))
         elif codeblock == 'FontSmallVerticalMapping':
             code_points = chain(range(0x2100, 0x2150), range(0x309F, 0x30A0), range(0x30FF, 0x3100),
                                 range(0xFB20, 0xFB2A), range(0xFE10, 0xFE70),
@@ -208,12 +219,18 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         action = 'decomposition'
                     elif ((codeblock == 'CJKCompatibilityMapping')
-                            and (len(decomp_elements) >= 2)
-                            and (decomp_elements[0] in ['<compat>', '<square>', '<wide>', '<narrow>'])):
-                        decomp_chars = decomp_elements[1:]
-                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
-                        decomp_str = decomp_str.replace('\u2113', 'l')  # map ℓ (script small l) to regular l (as in ml)
-                        action = 'decomposition'
+                            and (len(decomp_elements) >= 1)):
+                        decomp_chars = None
+                        if ((decomp_elements[0] in ['<compat>', '<square>', '<wide>', '<narrow>'])
+                                and (len(decomp_elements) >= 2)):
+                            decomp_chars = decomp_elements[1:]
+                        elif not (decomp_elements[0]).startswith('<'):
+                            decomp_chars = decomp_elements
+                        if decomp_chars:
+                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            # map ℓ (U+2113, script small l) to regular l (as in ml)
+                            decomp_str = decomp_str.replace('\u2113', 'l')
+                            action = 'decomposition'
                     elif ((codeblock == 'CombiningModifierMapping')
                             and (len(decomp_elements) >= 2)
                             and (not decomp_elements[0].startswith('<'))):
@@ -223,12 +240,47 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             action = 'decomposition'
                         else:
                             action = 'composition'
-                    elif ((codeblock == 'CoreCompatibilityMapping')
-                            and (len(decomp_elements) >= 2)
-                            and (decomp_elements[0] == '<compat>')):
-                        decomp_chars = decomp_elements[1:]
-                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
-                        action = 'decomposition'
+                    elif codeblock == 'CoreCompatibilityMapping':
+                        decomp_chars = None
+                        if (len(decomp_elements) >= 2) and (decomp_elements[0] == '<compat>'):
+                            decomp_chars = decomp_elements[1:]
+                        elif (len(decomp_elements) >= 1) and not decomp_elements[0].startswith('<'):
+                            decomp_chars = decomp_elements
+                        if decomp_chars:
+                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            action = 'decomposition'
+                    elif codeblock == 'EnclosureMapping':
+                        char_name = ud.name(char, None)
+                        decomp_chars = None
+                        left_enclosure = ''
+                        right_enclosure = ''
+                        if (len(decomp_elements) >= 2) and (decomp_elements[0] == '<circle>'):
+                            decomp_chars = decomp_elements[1:]
+                            left_enclosure, right_enclosure = '(', ')'
+                        elif (len(decomp_elements) >= 2) and (decomp_elements[0] == '<square>'):
+                            decomp_chars = decomp_elements[1:]
+                            left_enclosure, right_enclosure = '[', ']'
+                        elif ((len(decomp_elements) >= 2)
+                              and (decomp_elements[0] == '<compat>')
+                              and ('CIRCLED' in char_name)):
+                            decomp_chars = decomp_elements[1:]
+                            left_enclosure, right_enclosure = '(', ')'
+                        elif ((len(decomp_elements) >= 2)
+                              and (decomp_elements[0] == '<compat>')
+                              and ('PARENTHESIZED' in char_name)):
+                            decomp_chars = decomp_elements[1:]
+                            left_enclosure, right_enclosure = '(', ')'
+                        elif ((len(decomp_elements) >= 2)
+                              and (decomp_elements[0] == '<compat>')
+                              and ('TORTOISE SHELL BRACKETED' in char_name)):
+                            decomp_chars = decomp_elements[1:]
+                            left_enclosure, right_enclosure = '〔', '〕'
+                        if decomp_chars:
+                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            if ((not decomp_str.startswith(left_enclosure))
+                                    and (not decomp_str.endswith(right_enclosure))):
+                                decomp_str = left_enclosure + decomp_str + right_enclosure
+                            action = 'decomposition'
                     elif ((codeblock == 'FontSmallVerticalMapping')
                             and (len(decomp_elements) >= 2)
                             and (decomp_elements[0] in ['<font>', '<small>', '<vertical>'])):
@@ -430,7 +482,7 @@ def init_core_mapping_dict() -> None:
     """Loads entries from core mapping files for recursive mapping."""
     src_dir_path = os.path.dirname(os.path.realpath(__file__))
     data_dir_path = os.path.join(src_dir_path, "../data")
-    for tsv_filename in ('PythonWildebeestMapping.tsv', 'CoreCompatibilityMapping.tsv'):
+    for tsv_filename in ('PythonWildebeestMapping.tsv', 'PythonUtilityMapping.tsv', 'CoreCompatibilityMapping.tsv'):
         full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
         filenames_considered = [full_tsv_filename]
         if not Path(full_tsv_filename).is_file():
@@ -526,10 +578,10 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files() -> None:
                                     annotation = ''
                                 n_diffs += 1
                                 total_n_diffs += 1
-                                f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tud:{source_nfkc}"
+                                f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tnfkc:{source_nfkc}"
                                             f"\t{source_descr}\t{filename}\n")
                             elif ('Digit' in filename) or ('Python' in filename):
-                                f_out.write(f"IDENTICAL\ts:{source}\twb:{source_wb}\tud:{source_nfkc}"
+                                f_out.write(f"IDENTICAL\ts:{source}\twb:{source_wb}\tnfkc:{source_nfkc}"
                                             f"\t{source_descr}\t{filename}\n")
                     for target in sorted(reverse_dict.keys()):
                         if target != '':
@@ -542,7 +594,7 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files() -> None:
                                 annotation = 'REV'
                                 n_diffs += 1
                                 total_n_diffs += 1
-                                f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tud:{target_nfkc}"
+                                f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tnfkc:{target_nfkc}"
                                             f"\t{target_descr}\t{filename}\n")
                     log.info(f'    {n_diffs}/{n_tests} diffs in {filename}')
         log.info(f'{total_n_diffs}/{total_n_tests} total diffs in {n_files} files')
@@ -585,7 +637,7 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data() -> None:
                         else:
                             annotation = ''
                         n_diffs += 1
-                        f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tud:{source_nfkc}\t{source_descr}\n")
+                        f_out.write(f"{annotation}\ts:{source}\twb:{source_wb}\tnfkc:{source_nfkc}\t{source_descr}\n")
             for target in sorted(reverse_dict.keys()):
                 if target != '':
                     target_wb = wb.norm_clean_string(target, ht, loc_id=str(f'T.{line_number}'))
@@ -598,7 +650,7 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data() -> None:
                         else:
                             annotation = 'REV'
                         n_diffs += 1
-                        f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tud:{target_nfkc}\t{target_descr}\n")
+                        f_out.write(f"{annotation}\ts:{target}\twb:{target_wb}\tnfkc:{target_nfkc}\t{target_descr}\n")
         log.info(f'{n_diffs}/{n_tests} total diffs in {line_number} lines')
 
 
@@ -615,8 +667,9 @@ def mapping_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str) -> None:
                     wb = record[1]
                     comment = re.sub(r'\s*NFKC-ref.*$', '', record[2])
                     nfkc = ud.normalize('NFKC', orig)
-                    f_out.write(f'{orig}\t{wb}\t{nfkc}\t{comment}\n')
-                    n_output_lines += 1
+                    if wb != nfkc:
+                        f_out.write(f'{orig}\t{wb}\t{nfkc}\t{comment}\n')
+                        n_output_lines += 1
     log.info(f'    {line_number} input lines, {n_output_lines} output lines')
 
 
