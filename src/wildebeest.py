@@ -26,6 +26,7 @@ List of available normalization/cleaning-types (default: all are applied):
  * vertical (maps vertical versions of punctuation characters with normal horizontal version,
         such as vertical em-dash ︱ to horizontal em-dash —)
  * enclosure (decomposes circled, squared and parenthesized characters)
+ * hangul (combine Hangul jamos onto Hangul syllables)
  * repair-combining (e.g. order of nukta/vowel-sign)
  * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
  * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
@@ -49,8 +50,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.7'
-last_mod_date = 'September 29, 2020'
+__version__ = '0.4.8'
+last_mod_date = 'October 2, 2020'
 
 
 class Wildebeest:
@@ -340,6 +341,34 @@ class Wildebeest:
         return s
 
     @staticmethod
+    def hangul_jamo_triple_to_syllable(leading_jamo: str, vowel_jamo: str, trailing_jamo: str) -> str:
+        """
+        Convert triple of Hangul jamos to Hangul syllable
+        (1) one of U+1100-U+1112: the 19 modern Hangul leading consonant jamos           (19 alternatives)
+        (2) one of U+1161-U+1175: the 21 modern Hangul vowel jamos                       (21 alternatives)
+        (3) none, or one of U+11A8-U+11C2: the 27 modern Hangul trailing consonant jamos (28 alternatives)
+        """
+        assert len(leading_jamo) == 1 and ord(leading_jamo) in range(0x1100, 0x1113)
+        assert len(vowel_jamo) == 1 and ord(vowel_jamo) in range(0x1161, 0x1176)
+        assert (trailing_jamo == '') or (len(trailing_jamo) == 1 and ord(trailing_jamo) in range(0x11A8, 0x11C3))
+        leading_index = ord(leading_jamo) - 0x1100
+        vowel_index = ord(vowel_jamo) - 0x1161
+        trailing_index = 0 if trailing_jamo == '' else ord(trailing_jamo) - 0x11A7   # first trailing jamo maps to 1
+        # Notes for below:  (1) 588 = 21 * 28  (2) 0xAC00 is the start of standard Hangul syllable code block
+        result = chr((leading_index * 588) + (vowel_index * 28) + trailing_index + 0xAC00)
+        return result
+
+    def hangul_jamo_triple_match_to_syllable(self, m: Match[str]) -> str:
+        return self.hangul_jamo_triple_to_syllable(m.group(1), m.group(2), m.group(3))
+
+    def normalize_hangul(self, s: str) -> str:
+        """Convert all Hangul jamo triples/doubles in string to Hangul syllables."""
+        if re.search(r'[\u1161-\u1175]', s):  # string includes a Hangul vowel jamo
+            s = re.sub(r'([\u1100-\u1112])([\u1161-\u1175])([\u11A8-\u11C2]|)',  # trailing jamo can be ''
+                       self.hangul_jamo_triple_match_to_syllable, s)
+        return s
+
+    @staticmethod
     def repair_combining_modifiers(s: str) -> str:
         """This function repairs the order of combining modifiers."""
         # If a Devanagari vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
@@ -604,6 +633,7 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'small', self.normalize_small_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'enclosure', self.normalize_enclosure_characters, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'hangul', self.normalize_hangul, loc_id)
         s = self.norm_clean_string_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
@@ -634,7 +664,7 @@ def main(argv):
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
                       'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'enclosure',
-                      'repair-combining', 'combining', 'punct', 'punct-f', 'space', 'digit',
+                      'hangul', 'repair-combining', 'combining', 'punct', 'punct-f', 'space', 'digit',
                       'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
