@@ -676,6 +676,55 @@ def mapping_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str) -> None:
     log.info(f'    {line_number} input lines, {n_output_lines} output lines')
 
 
+def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_ref: str) -> None:
+    log.info(f'assert {filename_i} -> {filename_o}')
+    if filename_i == 'STDIN':
+        f_in = sys.stdin
+        sys.stderr.write('Enter you hex codepoints:\n')
+    else:
+        f_in = open(filename_i, 'r', encoding='utf-8')
+    wb = wildebeest.Wildebeest()
+    ht = {}
+    pre_existing_dict = {}
+    line_number = 0
+    with open(filename_ref, 'r', encoding='utf-8') as f_ref:
+        for line in f_ref:
+            line_number += 1
+            if line_number >= 2:
+                record = re.split(r'\t', line.rstrip())
+                pre_existing_dict[record[0]] = record[1]
+    line_number, n_output_lines = 0, 0
+    with open(filename_o, 'w', encoding='utf-8') as f_out:
+        for line in f_in:
+            line = line.rstrip()
+            if line == '':
+                break
+            line_number += 1
+            cp_elem_list = re.split(r'(?:,\s*|\s+)', line.rstrip())
+            for cp_elem in cp_elem_list:
+                if '-' in cp_elem:
+                    cp_elem_from_to = re.split('-', cp_elem)
+                    cp_elem_from = cp_elem_from_to[0].lstrip('\\uU+0x')
+                    cp_elem_to = cp_elem_from_to[1].lstrip('\\uU+0x')
+                    cp_list = range(int(cp_elem_from, 16), int(cp_elem_to, 16) + 1)
+                else:
+                    cp_list = [cp_elem_from_to[0].lstrip('\\uU+0x')]
+                for code_point in cp_list:
+                    char = chr(code_point)
+                    decomp_wb = wb.norm_clean_string(char, ht)
+                    decomp_nfkc = ud.normalize('NFKC', char)
+                    if (char not in pre_existing_dict) and (decomp_wb != decomp_nfkc):
+                        char_descr = string_to_character_unicode_descriptions(char)
+                        decomp_descr = string_to_character_unicode_descriptions(decomp_wb)
+                        comment = char_descr + (f' -> {decomp_descr}' if decomp_wb else ' deleted')
+                        sys.stderr.write(f'{char}\t{decomp_wb}\t{decomp_nfkc}\t{comment}\n')
+                        f_out.write(f'{char}\t{decomp_wb}\t{decomp_nfkc}\t{comment}\n')
+                        n_output_lines += 1
+    if filename_i:
+        f_in.close()
+    log.info(f'    {line_number} input lines, {n_output_lines} output lines')
+
+
 def load_assert_file() -> None:
     src_dir_path = os.path.dirname(os.path.realpath(__file__))
     data_dir_path = os.path.join(src_dir_path, "../data")
@@ -724,7 +773,8 @@ def main(argv):
         compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data()
     elif (len(argv) >= 3) and (argv[0] == 'mapping-to-assert-orig-wb-nfkc'):
         mapping_to_assert_orig_wb_nfkc(argv[1], argv[2])
-
+    elif (len(argv) >= 2) and (argv[0] == 'addenda-to-assert-orig-wb-nfkc'):
+        addenda_to_assert_orig_wb_nfkc(argv[1], argv[2], argv[3])
 
 if __name__ == "__main__":
     main(sys.argv[1:])
