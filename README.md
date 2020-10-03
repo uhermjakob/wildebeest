@@ -36,6 +36,7 @@ errors:
 * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
 * vertical (maps vertical versions of punctuation characters with normal horizontal version, such as vertical em-dash ︱ to horizontal em-dash —)
 * enclosure (decomposes circled, squared and parenthesized characters, e.g. 🄐 to (A))
+* hangul (combine Hangul jamos onto Hangul syllables)
 * repair-combining (e.g. order of nukta/vowel-sign)
 * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
 * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
