@@ -17,4 +17,4 @@ Combining modifiers: schön schön José José  ΥΎΫ ϒϓϔ   𝅘𝅥𝅮 𝅘𝅥𝅮 
 Superscripts, subscripts: 2³² aⁿ aₙ O₂-detector O²⁻detector
 Enclosed characters: ①⒇㉑⒜Ⓐ🄰🄐㈀㉰㈤㊄㈷㊗㉄㋐🅏🉀🉐 ㉼㈎ 〶🈁🈩🈯
 Non-decimal numerals: 二百五十, ⅭⅭⅬ, ፪፻፶ 〹
-Punct: ∭ 〈〉 ⒈⒛🄆
+Punct: ∭ 〈〉 ⒈⒛🄆 ‼
