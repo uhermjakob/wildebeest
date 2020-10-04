@@ -154,9 +154,15 @@ def safe_unicode_name(char: str) -> str:
     return char_name
 
 
-def string_to_character_unicode_descriptions(s: str) -> str:
+def string_to_character_unicode_descriptions(s: str, ref: str = None) -> str:
     """Map"""
-    return " ".join([f"U+{('%04x' % ord(char)).upper()} ({safe_unicode_name(char)})" for char in s])
+    if ref and s == '':
+        return 'deleted'
+    elif ref and s == ref:
+        return 'preserved'
+    else:
+        return ('-> ' if ref else '') + \
+                " ".join([f"U+{('%04x' % ord(char)).upper()} ({safe_unicode_name(char)})" for char in s])
 
 
 def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementary_code_mode: str = 'w') -> None:
@@ -187,9 +193,10 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                                 range(0xF900, 0xFB00), range(0xFF01, 0xFFEF),
                                 range(0x1F200, 0x1F201), range(0x2F800, 0x2FA20))
         elif codeblock == 'CoreCompatibilityMapping':
-            code_points = chain(range(0x2160, 0x2180), range(0x222C, 0x2231),
+            code_points = chain(range(0x2011, 0x2012), range(0x2024, 0x2027), range(0x2033, 0x203D),
+                                range(0x2047, 0x2058), range(0x2160, 0x2180), range(0x222C, 0x2231),
                                 range(0x2329, 0x232B), range(0x2488, 0x249C),
-                                range(0x3130, 0x3190),
+                                range(0x2A0C, 0x2A0D), range(0x2A74, 0x2A77), range(0x3130, 0x3190),
                                 range(0x1F100, 0x1F10B))
         elif codeblock == 'EnclosureMapping':
             code_points = chain(range(0x2460, 0x2488), range(0x249C, 0x2500), range(0x3036, 0x3037),
@@ -244,7 +251,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             action = 'composition'
                     elif codeblock == 'CoreCompatibilityMapping':
                         decomp_chars = None
-                        if (len(decomp_elements) >= 2) and (decomp_elements[0] == '<compat>'):
+                        if (len(decomp_elements) >= 2) and (decomp_elements[0] in ['<compat>', '<noBreak>']):
                             decomp_chars = decomp_elements[1:]
                         elif (len(decomp_elements) >= 1) and not decomp_elements[0].startswith('<'):
                             decomp_chars = decomp_elements
@@ -320,10 +327,12 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     char_name_clause = f' ({char_name})' if char_name else ''
                     char_hex = 'U+' + ('%04x' % code_point).upper()
                     if action == 'decomposition':
+                        # delete any space + deletable Arabic diacritics (fathatah .. sukrun):
+                        decomp_str = re.sub(r' [\u064B-\u0652]+', '', decomp_str)
                         decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict, wb)
                         decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
-                        if (' ' in decomp_str) and ('ISOLATED FORM' in char_name):
-                            decomp_str = decomp_str.replace(' ', '')
+                        # if (' ' in decomp_str) and ('ISOLATED FORM' in char_name):
+                        #     decomp_str = decomp_str.replace(' ', '')
                     elif action == 'composition':
                         char = norm_string_by_mapping_dict(char, core_mapping_dict, wb)
                         char = norm_string_by_mapping_dict(char, mapping_dict, wb)
@@ -364,7 +373,8 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     current_function_name = mf.group(1)
                 elif current_function_name in ['normalize_farsi_characters', 'normalize_ring_characters',
                                                'normalize_arabic_punctuation', 'normalize_font_characters',
-                                               'normalize_devanagari_diacritics',
+                                               'normalize_devanagari_diacritics', 'normalize_hangul',
+                                               'normalize_enclosure_characters', 'normalize_punctuation',
                                                'repair_tokenization', 'repair_xml', 'delete_surrogates',
                                                'init_mapping_dict']:
                     continue  # because replacements are language-specific
@@ -466,11 +476,8 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                 target_string = encoding_repair_mapping_dict[source_string]
                 output_line = f'{source_string}\t{target_string}'
                 if verbose:
-                    output_line += '\t' + string_to_character_unicode_descriptions(source_string)
-                    if target_string == '':
-                        output_line += ' deleted'
-                    else:
-                        output_line += ' -> ' + string_to_character_unicode_descriptions(target_string)
+                    output_line += '\t' + string_to_character_unicode_descriptions(source_string) + \
+                                   ' ' + string_to_character_unicode_descriptions(target_string, ref=source_string)
                 output_line += '\n'
                 f_out.write(output_line)
                 n_output_lines += 1
@@ -676,13 +683,25 @@ def mapping_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str) -> None:
     log.info(f'    {line_number} input lines, {n_output_lines} output lines')
 
 
-def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_ref: str) -> None:
+def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_ref: str,
+                                   preservation_category: str = '') -> None:
+    """
+    Based on manual copde point input, build additional assert records for files assert.tsv or assert-preserve.tsv
+    filename_ref: with entries that have already been asserted, no need to duplicate
+    """
     log.info(f'assert {filename_i} -> {filename_o}')
+
+    valid_preservation_categories = ['SUPERSCRIPT', 'SUBSCRIPT', 'FRACTION', 'RADICAL']
     if filename_i == 'STDIN':
+        if preservation_category == 'PROMPT':
+            preservation_category = input("Enter preservation category ({' | '.join(valid_preservation_categories)}): ")
         f_in = sys.stdin
         sys.stderr.write('Enter you hex codepoints:\n')
     else:
         f_in = open(filename_i, 'r', encoding='utf-8')
+    if (preservation_category != '') and (preservation_category not in valid_preservation_categories):
+        log.error(f'Invalid perservation_category {preservation_category}')
+        return
     wb = wildebeest.Wildebeest()
     ht = {}
     pre_existing_dict = {}
@@ -708,15 +727,17 @@ def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_re
                     cp_elem_to = cp_elem_from_to[1].lstrip('\\uU+0x')
                     cp_list = range(int(cp_elem_from, 16), int(cp_elem_to, 16) + 1)
                 else:
-                    cp_list = [cp_elem_from_to[0].lstrip('\\uU+0x')]
+                    cp_list = [int(cp_elem.lstrip('\\uU+0x'), 16)]
                 for code_point in cp_list:
                     char = chr(code_point)
                     decomp_wb = wb.norm_clean_string(char, ht)
                     decomp_nfkc = ud.normalize('NFKC', char)
-                    if (char not in pre_existing_dict) and (decomp_wb != decomp_nfkc):
+                    if ((char not in pre_existing_dict)
+                            and (decomp_wb != decomp_nfkc)
+                            and ((preservation_category == '') or (char == decomp_wb))):
                         char_descr = string_to_character_unicode_descriptions(char)
-                        decomp_descr = string_to_character_unicode_descriptions(decomp_wb)
-                        comment = char_descr + (f' -> {decomp_descr}' if decomp_wb else ' deleted')
+                        decomp_descr = string_to_character_unicode_descriptions(decomp_wb, ref=char)
+                        comment = (char_descr + ' ' + decomp_descr + ' ' + preservation_category).rstrip()
                         sys.stderr.write(f'{char}\t{decomp_wb}\t{decomp_nfkc}\t{comment}\n')
                         f_out.write(f'{char}\t{decomp_wb}\t{decomp_nfkc}\t{comment}\n')
                         n_output_lines += 1
@@ -725,22 +746,24 @@ def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_re
     log.info(f'    {line_number} input lines, {n_output_lines} output lines')
 
 
-def load_assert_file() -> None:
+def load_assert_files() -> None:
     src_dir_path = os.path.dirname(os.path.realpath(__file__))
     data_dir_path = os.path.join(src_dir_path, "../data")
-    filename = os.path.join(data_dir_path, 'assert.tsv')
-    line_number = 0
-    with open(filename, 'r', encoding='utf-8') as f:
-        for line in f:
-            line_number += 1
-            record = re.split(r'\t', line.rstrip())
-            if (line_number >= 2) and (len(record) >= 4):
-                orig = record[0]
-                wb = record[1]
-                nfkc = record[2]
-                assert_wb_dict[orig] = wb
-                assert_nfkc_dict[orig] = nfkc
-    log.info(f'Loaded {line_number} entries from {filename}')
+    assert_filename = os.path.join(data_dir_path, 'assert.tsv')
+    assert_preserve_filename = os.path.join(data_dir_path, 'assert-preserve.tsv')
+    for filename in [assert_filename, assert_preserve_filename]:
+        line_number = 0
+        with open(filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                line_number += 1
+                record = re.split(r'\t', line.rstrip())
+                if (line_number >= 2) and (len(record) >= 4):
+                    orig = record[0]
+                    wb = record[1]
+                    nfkc = record[2]
+                    assert_wb_dict[orig] = wb
+                    assert_nfkc_dict[orig] = nfkc
+        log.info(f'Loaded {line_number} entries from {filename}')
 
 
 def rebuild_all_mapping_files() -> None:
@@ -758,7 +781,7 @@ def rebuild_all_mapping_files() -> None:
 
 def main(argv):
     init_core_mapping_dict()
-    load_assert_file()
+    load_assert_files()
     if (len(argv) >= 2) and (argv[0] == 'python-code'):
         codeblock = argv[1]  # e.g. 'Devanagari', 'Indic', 'Arabic'
         build_python_code_from_unicode(codeblock)
@@ -773,8 +796,11 @@ def main(argv):
         compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data()
     elif (len(argv) >= 3) and (argv[0] == 'mapping-to-assert-orig-wb-nfkc'):
         mapping_to_assert_orig_wb_nfkc(argv[1], argv[2])
-    elif (len(argv) >= 2) and (argv[0] == 'addenda-to-assert-orig-wb-nfkc'):
+    elif (len(argv) >= 4) and (argv[0] == 'addenda-to-assert-orig-wb-nfkc'):
         addenda_to_assert_orig_wb_nfkc(argv[1], argv[2], argv[3])
+    elif (len(argv) >= 4) and (argv[0] == 'addenda-to-assert-preserve-orig-wb-nfkc'):
+        addenda_to_assert_orig_wb_nfkc(argv[1], argv[2], argv[3], preservation_category='PROMPT')
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
