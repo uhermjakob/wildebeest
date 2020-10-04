@@ -12,19 +12,21 @@ Examples:
 List of available normalization/cleaning-types (default: all are applied):
  * repair-encodings-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
-        alternative/backup to windows-1252)
+                  alternative/backup to windows-1252)
  * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark,
-        directional marks, join marks, variation selectors, Arabic tatweel)
+                          directional marks, join marks, variation selectors, Arabic tatweel)
  * core-compat (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
- * farsi-char (e.g. maps Arabic yeh, kaf to Farsi versions)
+ * arabic-char (e.g. maps Farsi yeh, kaf to Arabic versions; Kazakh high hamza alef to Arabic alef with hamza above)
+ * farsi-char (e.g. maps Arabic yeh, kaf to Farsi versions; exclusive alternative to arabic-char)
  * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ligatures-symbols (e.g. maps ligatures, symbols (e.g. kappa symbol), signs (e.g. micro sign), CJK square composites)
- * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
+ * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters;
+                   exclusive alternative to arabic-char)
  * width (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
  * font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters; Roman numerals to ASCII)
  * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
  * vertical (maps vertical versions of punctuation characters with normal horizontal version,
-        such as vertical em-dash ︱ to horizontal em-dash —)
+                  such as vertical em-dash ︱ to horizontal em-dash —)
  * enclosure (decomposes circled, squared and parenthesized characters)
  * hangul (combine Hangul jamos onto Hangul syllables)
  * repair-combining (e.g. order of nukta/vowel-sign)
@@ -50,8 +52,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.8'
-last_mod_date = 'October 2, 2020'
+__version__ = '0.4.9'
+last_mod_date = 'October 3, 2020'
 
 
 class Wildebeest:
@@ -205,14 +207,35 @@ class Wildebeest:
 
     @staticmethod
     def delete_arabic_diacritics(s: str) -> str:
+        s = s.replace('\u064B', '')  # delete Arabic fathatan
+        s = s.replace('\u064C', '')  # delete Arabic dammatan
+        s = s.replace('\u064D', '')  # delete Arabic kasratan
         s = s.replace('\u064E', '')  # delete Arabic fatha
         s = s.replace('\u064F', '')  # delete Arabic damma
         s = s.replace('\u0650', '')  # delete Arabic kasra
         s = s.replace('\u0651', '')  # delete Arabic shadda
         s = s.replace('\u0652', '')  # delete Arabic sukun
-        s = s.replace('\u064B', '')  # delete Arabic fathatan
-        s = s.replace('\u064C', '')  # delete Arabic dammatan
-        s = s.replace('\u064D', '')  # delete Arabic kasratan
+        return s
+
+    # noinspection SpellCheckingInspection
+    @staticmethod
+    def normalize_arabic_characters(s: str) -> str:
+        if re.search(r"[\u0600-\u06FF]", s):
+            # Some of the below, particularly the alef maksura, might be too aggressive. Too be verified.
+            #    More conservative: keep alef maksura and map final/isolated Farsi yeh to alef maksura.
+          # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
+            s = s.replace('\u0675', '\u0623')  # (Kazakh) high hamza alef to alef with hamza above
+            s = s.replace('\u0676', '\u0624')  # (Kazakh) high hamza waw to waw with hamza above
+            s = s.replace('\u0678', '\u0626')  # (Kazakh) high hamza yeh to yeh with hamza above
+            s = s.replace('\u067C', '\u062A')  # (Pashto) teh with ring to teh
+            s = s.replace('\u0689', '\u062F')  # (Pashto) dal with ring to dal
+            s = s.replace('\u0693', '\u0631')  # (Pashto) reh with ring to reh
+            s = s.replace('\u06A9', '\u0643')  # Farsi kaf/keheh to (Arabic) kaf
+            s = s.replace('\u06AB', '\u06AF')  # (Pashto) kaf with ring to gaf
+            s = s.replace('\u06BC', '\u0646')  # (Pashto) noon with ring to noon
+            s = s.replace('\u06CC', '\u064A')  # Farsi yeh to (Arabic) yeh
+            s = s.replace('\u06CD', '\u064A')  # (Pashto) yeh with tail to yeh
+            # Not necessarily complete.
         return s
 
     # noinspection SpellCheckingInspection
@@ -293,7 +316,7 @@ class Wildebeest:
             s = s.replace('\u03F4', '\u0398')        # U+03F4 GREEK CAPITAL THETA SYMBOL ϴ -> Θ
             s = s.replace('\u03F5', '\u03B5')        # U+03F5 GREEK LUNATE EPSILON SYMBOL ϵ -> ε
             s = s.replace('\u03F9', '\u03A3')        # U+03F9 GREEK CAPITAL LUNATE SIGMA SYMBOL Ϲ -> Σ
-        if re.search(r"[\u20A8-\u2138]", s):
+        if re.search(r"[\u20A8-\u213B]", s):
             s = s.replace('\u20A8', 'Rs')            # U+20A8 RUPEE SIGN ₨ -> Rs
             s = s.replace('\u2103', '\u00B0C')       # U+2103 DEGREE CELIUS ℃ -> °C
             s = s.replace('\u2109', '\u00B0F')       # U+2109 DEGREE FAHRENHEIT ℉ -> °F
@@ -304,6 +327,7 @@ class Wildebeest:
             s = s.replace('\u2136', '\u05D1')        # U+2136 BET SYMBOL ℶ -> ב
             s = s.replace('\u2137', '\u05D2')        # U+2137 GIMEL SYMBOL ℷ -> ג
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
+            s = s.replace('\u213B', 'FAX')           # U+213B FACSIMILE SIGN ℻ -> FAX
         # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
         if re.search(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', s):
             s = re.sub(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', self.apply_mapping_dict, s)
@@ -409,7 +433,7 @@ class Wildebeest:
         # Arabic
         s = s.replace('\u0640', '')         # U+0640 Arabic tatweel
         s = s.replace('\u060C', ',')        # U+060C Arabic comma
-        s = s.replace('\u060D', ',')        # U+060C Arabic date separator
+        s = s.replace('\u060D', '/')        # U+060C Arabic date separator
         s = s.replace('\u061B', ';')        # U+061B Arabic semicolon
         s = s.replace('\u061F', '?')        # U+061F Arabic question mark
         s = s.replace('\u066A', '%')        # U+066A Arabic percent sign
@@ -422,15 +446,16 @@ class Wildebeest:
         return s
 
     def normalize_punctuation(self, s: str) -> str:
-        s = s.replace('\u2011', '\u2010')   # U+2011 non-breaking hyphen -> hyphen
-        s = s.replace('\u2025', '..')       # U+2025 two dot leader
-        s = s.replace('\u2026', '...')      # U+2026 horizontal ellipsis
-        # a few math symbols ∭
-        if re.search(r'[\u222C-\u2230]', s):
-            s = re.sub(r'[\u222C-\u2230]', self.apply_mapping_dict, s)
+        # s = s.replace('\u2011', '\u2010')   # U+2011 non-breaking hyphen -> hyphen
+        # s = s.replace('\u2025', '..')       # U+2025 two dot leader
+        # s = s.replace('\u2026', '...')      # U+2026 horizontal ellipsis
         # punctuation 〈〉
-        if re.search(r'[\u2329-\u232A]', s):
-            s = re.sub(r'[\u2329-\u232A]', self.apply_mapping_dict, s)
+        if re.search(r'[\u2011-\u2A76]', s):
+            s = re.sub(r'[\u2011\u2024-\u2026\u2033-\u203C\u2047-\u2057\u2329-\u232A\u2A74-\u2A76]',
+                       self.apply_mapping_dict, s)
+        # a few math symbols ∭
+        if re.search(r'[\u222C-\u2230\u2A0C]', s):
+            s = re.sub(r'[\u222C-\u2230\u2A0C]', self.apply_mapping_dict, s)
         # integer plus period or comma ⒛ 🄆
         if re.search(r'[\u2488-\u249B\U0001F100-\U0001F10A]', s):
             s = re.sub(r'[\u2488-\u249B\U0001F100-\U0001F10A]', self.apply_mapping_dict, s)
@@ -439,13 +464,14 @@ class Wildebeest:
     @staticmethod
     def normalize_non_zero_spaces(s: str) -> str:
         """
-        Map NO-BREAK SPACE, EN SPACE, EM SPACE, THREE-PER-EM SPACE, FOUR-PER-EM SPACE, SIX-PER-EM SPACE, FIGURE SPACE,
-        PUNCTUATION SPACE, THIN SPACE, HAIR SPACE, NARROW NO-BREAK SPACE, MEDIUM MATHEMATICAL SPACE, IDEOGRAPHIC SPACE
+        Map NO-BREAK SPACE, EN QUAD, EM QUAD, EN SPACE, EM SPACE, THREE-PER-EM SPACE, FOUR-PER-EM SPACE,
+        SIX-PER-EM SPACE, FIGURE SPACE, PUNCTUATION SPACE, THIN SPACE, HAIR SPACE, NARROW NO-BREAK SPACE,
+        MEDIUM MATHEMATICAL SPACE, IDEOGRAPHIC SPACE
         to regular SPACE.
         **Not** included: tab (= horizontal tabulation/character tabulation)
         """
         s = s.replace('\u00A0', ' ')  # U+00A0 NO-BREAK SPACE
-        s = re.sub(r'[\u2002-\u200A]', ' ', s)
+        s = re.sub(r'[\u2000-\u200A]', ' ', s)
         s = s.replace('\u202F', ' ')  # U+00A0 NARROW NO-BREAK SPACE
         s = s.replace('\u205F', ' ')  # U+00A0 MEDIUM MATHEMATICAL SPACE
         s = s.replace('\u3000', ' ')  # U+3000 IDEOGRAPHIC SPACE
@@ -643,6 +669,8 @@ class Wildebeest:
         if lang_code == 'fas':
             s = self.norm_clean_string_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id)
             s = self.norm_clean_string_group(s, ht, 'ring-char', self.normalize_ring_characters, loc_id)
+        else:
+            s = self.norm_clean_string_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
         s = self.norm_clean_string_group(s, ht, 'repair-token', self.repair_tokenization, loc_id)
         if s != orig_s:
@@ -665,7 +693,7 @@ def main(argv):
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
                       'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'enclosure',
                       'hangul', 'repair-combining', 'combining', 'punct', 'punct-f', 'space', 'digit',
-                      'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
+                      'arabic-char', 'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
