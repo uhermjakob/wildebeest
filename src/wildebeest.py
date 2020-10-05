@@ -52,8 +52,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.9'
-last_mod_date = 'October 3, 2020'
+__version__ = '0.4.10'
+last_mod_date = 'October 5, 2020'
 
 
 class Wildebeest:
@@ -223,7 +223,7 @@ class Wildebeest:
         if re.search(r"[\u0600-\u06FF]", s):
             # Some of the below, particularly the alef maksura, might be too aggressive. Too be verified.
             #    More conservative: keep alef maksura and map final/isolated Farsi yeh to alef maksura.
-          # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
+            # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
             s = s.replace('\u0675', '\u0623')  # (Kazakh) high hamza alef to alef with hamza above
             s = s.replace('\u0676', '\u0624')  # (Kazakh) high hamza waw to waw with hamza above
             s = s.replace('\u0678', '\u0626')  # (Kazakh) high hamza yeh to yeh with hamza above
@@ -319,7 +319,9 @@ class Wildebeest:
         if re.search(r"[\u20A8-\u213B]", s):
             s = s.replace('\u20A8', 'Rs')            # U+20A8 RUPEE SIGN ₨ -> Rs
             s = s.replace('\u2103', '\u00B0C')       # U+2103 DEGREE CELIUS ℃ -> °C
+            s = s.replace('\u2107', '\u0190')        # U+2107 EULER CONSTANT ℇ -> Ɛ
             s = s.replace('\u2109', '\u00B0F')       # U+2109 DEGREE FAHRENHEIT ℉ -> °F
+            s = s.replace('\u2116', 'No.')           # U+2116 NUMERO SIGN № -> No.
             s = s.replace('\u2126', '\u03A9')        # U+2126 OHM SIGN Ω -> Ω (GREEK CAPITAL LETTER OMEGA)
             s = s.replace('\u212A', '\u004B')        # U+212A KELVIN SIGN K -> K (LATIN CAPITAL LETTER K)
             s = s.replace('\u212B', '\u00C5')        # U+212B ANGSTROM SIGN Å -> Å (LATIN CAP. LETTER A WITH RING ABOVE)
@@ -328,11 +330,15 @@ class Wildebeest:
             s = s.replace('\u2137', '\u05D2')        # U+2137 GIMEL SYMBOL ℷ -> ג
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
             s = s.replace('\u213B', 'FAX')           # U+213B FACSIMILE SIGN ℻ -> FAX
+        # Armenian
+        s = s.replace('\u0565\u0582', '\u0587')      # U+0587 ARMENIAN SMALL LIGATURE ECH YIWN եւ -> և
+        # Thai, Lao
+        s = re.sub(r'[\u0E33\u0EB3\u0EDC\u0EDD]', self.apply_mapping_dict, s);
         # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
         if re.search(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', s):
             s = re.sub(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', self.apply_mapping_dict, s)
-        if re.search(r"[\U0001F200\U0002F800-\U0002FA1F]", s):
-            s = re.sub(r'[\U0001F200\U0002F800-\U0002FA1F]', self.apply_mapping_dict, s)
+        if re.search(r"[\U0001F190\U0001F200\U0002F800-\U0002FA1F]", s):
+            s = re.sub(r'[\U0001F190\U0001F200\U0002F800-\U0002FA1F]', self.apply_mapping_dict, s)
         return s
 
     def apply_combining_modifiers(self, s: str) -> str:
@@ -340,10 +346,6 @@ class Wildebeest:
         Combines 2 Unicode characters (incl. combining modifier) into one Unicode character, e.g. ö (o +  ̈) -> ö
         Must be applied after normalize_ligatures_and_symbols.
         """
-        # if preceded by letter:
-        # s = s.replace('\u00A8', '\u0308')    # U+00A8 DIAERESIS -> U+0308 COMBINING DIAERESIS
-        # s = s.replace('\u1FBF', '\u0313')    # U+1FBF GREEK PSILI -> U+0313 COMBINING COMMA ABOVE
-        # s = s.replace('\u1FFE', '\u0314')    # U+1FFE GREEK DASIA -> U+0314 COMBINING REVERSED COMMA ABOVE
         # COMPOSITION
         # U+0300 - U+036F general combining modifier block
         # U+0653 - U+0655 Arabic modifiers: madda above, hamza above, hamza below
@@ -429,9 +431,9 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def normalize_arabic_punctuation(s: str) -> str:
+    def normalize_f_punctuation(s: str) -> str:
         # Arabic
-        s = s.replace('\u0640', '')         # U+0640 Arabic tatweel
+        s = s.replace('\u0640', '')         # U+0640 Arabic tatweel (always to be deleted)
         s = s.replace('\u060C', ',')        # U+060C Arabic comma
         s = s.replace('\u060D', '/')        # U+060C Arabic date separator
         s = s.replace('\u061B', ';')        # U+061B Arabic semicolon
@@ -441,14 +443,18 @@ class Wildebeest:
         s = s.replace('\u066C', ',')        # U+066C Arabic thousands separator
         s = s.replace('\u066D', '*')        # U+066D Arabic five pointed star
         s = s.replace('\u06D4', '.')        # U+06D4 Arabic full stop
+        # Greek
+        s = s.replace('\u0340', '\u0300')   # U+0340 combining grave tone mark -> combining grave accent
+        s = s.replace('\u0341', '\u0301')   # U+0341 combining acute tone mark -> combining acute accent
+        s = s.replace('\u0343', '\u0313')   # U+0342 combining Greek koronis -> combining comma above
+        s = s.replace('\u0374', '\u02B9')   # U+0374 Greek numeral sign -> modifier letter prime
+        s = s.replace('\u037E', ';')        # U+037E Greek question mark
+        s = s.replace('\u0387', '\u00B7')   # U+0387 Greek ano teleia -> middle dot
         # Tibetan
         s = s.replace('\u0F0C', '\u0F0B')   # U+0F0C Tibetan no-break morpheme delimiter
         return s
 
     def normalize_punctuation(self, s: str) -> str:
-        # s = s.replace('\u2011', '\u2010')   # U+2011 non-breaking hyphen -> hyphen
-        # s = s.replace('\u2025', '..')       # U+2025 two dot leader
-        # s = s.replace('\u2026', '...')      # U+2026 horizontal ellipsis
         # punctuation 〈〉
         if re.search(r'[\u2011-\u2A76]', s):
             s = re.sub(r'[\u2011\u2024-\u2026\u2033-\u203C\u2047-\u2057\u2329-\u232A\u2A74-\u2A76]',
@@ -663,7 +669,7 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'combining', self.apply_combining_modifiers, loc_id)
         s = self.norm_clean_string_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
-        s = self.norm_clean_string_group(s, ht, 'punct-f', self.normalize_arabic_punctuation, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'punct-f', self.normalize_f_punctuation, loc_id)
         s = self.norm_clean_string_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
         s = self.norm_clean_string_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id)
         if lang_code == 'fas':
