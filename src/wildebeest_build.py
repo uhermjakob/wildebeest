@@ -90,14 +90,10 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
         uplus = 'U+' + hex_str                   # e.g. U+095F
         us = '\\u' + hex_str                     # e.g. \u095F
         decomp_ssv = ud.decomposition(char)      # e.g. '092F 093C'
-        if ((codeblock == 'ligature')
-                and (  # (not decomp_ssv.startswith('<compat>'))
-                       # or
-                     (not ('SYMBOL' in char_name)))):
+        if (codeblock == 'ligature') and (not 'SYMBOL' in char_name):
             continue
         decomp_ssv = re.sub(r'<.*?>\s*', '', decomp_ssv)  # remove decomp type info, e.g. <compat>, <isolated>
         if decomp_ssv:
-            # log.info(f'{uplus} decomp_ssv: {decomp_ssv}')
             decomp_codes = decomp_ssv.split()   # e.g. ['092F', '093C']
             decomp_chars = [chr(int(x, 16)) for x in decomp_codes]   # e.g. ['य', '़']
             decomp_str = ''.join(decomp_chars)  # e.g. 'य़' (2 characters)
@@ -191,9 +187,11 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
             code_points = chain(range(0x2F00, 0x2FE0), range(0x3038, 0x303B),
                                 range(0x3250, 0x3251), range(0x32C0, 0x3400),
                                 range(0xF900, 0xFB00), range(0xFF01, 0xFFEF),
-                                range(0x1F200, 0x1F201), range(0x2F800, 0x2FA20))
+                                range(0x1F190, 0x1F191), range(0x1F200, 0x1F201), range(0x2F800, 0x2FA20))
         elif codeblock == 'CoreCompatibilityMapping':
-            code_points = chain(range(0x2011, 0x2012), range(0x2024, 0x2027), range(0x2033, 0x203D),
+            code_points = chain(range(0x0E33, 0x0E34), range(0x0EB3, 0x0EB4), range(0x0EDC, 0x0EDE),  # Thai, Lao
+                                range(0x0F71, 0x0F82),  # Tibetan
+                                range(0x2011, 0x2012), range(0x2024, 0x2027), range(0x2033, 0x203D),
                                 range(0x2047, 0x2058), range(0x2160, 0x2180), range(0x222C, 0x2231),
                                 range(0x2329, 0x232B), range(0x2488, 0x249C),
                                 range(0x2A0C, 0x2A0D), range(0x2A74, 0x2A77), range(0x3130, 0x3190),
@@ -331,8 +329,6 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         decomp_str = re.sub(r' [\u064B-\u0652]+', '', decomp_str)
                         decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict, wb)
                         decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
-                        # if (' ' in decomp_str) and ('ISOLATED FORM' in char_name):
-                        #     decomp_str = decomp_str.replace(' ', '')
                     elif action == 'composition':
                         char = norm_string_by_mapping_dict(char, core_mapping_dict, wb)
                         char = norm_string_by_mapping_dict(char, mapping_dict, wb)
@@ -533,15 +529,12 @@ def init_core_mapping_dict() -> None:
                         char = chr(code_point)
                         unicode_composition_exclusion_dict[char] = safe_unicode_name(char)
                         n_entries += 1
-                        # log.info(f'    unicode_composition_exclusion (range, derived) {char} {m.group(1)}'
-                        #          f' {m.group(2)}')
                         continue
                 m = re.match(r'#\s*([0-9A-F]{4,5})\s+(\S.*\S|\S)', line, flags=re.IGNORECASE)
                 if m:
                     char = chr(int(m.group(1), 16))
                     unicode_composition_exclusion_dict[char] = m.group(2)
                     n_entries += 1
-                    # log.info(f'    unicode_composition_exclusion (derived) {char} {m.group(1)} {m.group(2)}')
                     continue
             log.info(f'Loaded {n_entries} entries from {full_unicode_composition_exclusion_filename}')
     except FileNotFoundError:
@@ -691,10 +684,10 @@ def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_re
     """
     log.info(f'assert {filename_i} -> {filename_o}')
 
-    valid_preservation_categories = ['SUPERSCRIPT', 'SUBSCRIPT', 'FRACTION', 'RADICAL']
+    valid_preservation_categories = ['SUPERSCRIPT', 'SUBSCRIPT', 'FRACTION', 'RADICAL', 'DIACRITIC']
     if filename_i == 'STDIN':
         if preservation_category == 'PROMPT':
-            preservation_category = input("Enter preservation category ({' | '.join(valid_preservation_categories)}): ")
+            preservation_category = input(f"Enter preservation category ({'|'.join(valid_preservation_categories)}): ")
         f_in = sys.stdin
         sys.stderr.write('Enter you hex codepoints:\n')
     else:
