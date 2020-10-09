@@ -90,7 +90,7 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
         uplus = 'U+' + hex_str                   # e.g. U+095F
         us = '\\u' + hex_str                     # e.g. \u095F
         decomp_ssv = ud.decomposition(char)      # e.g. '092F 093C'
-        if (codeblock == 'ligature') and (not 'SYMBOL' in char_name):
+        if (codeblock == 'ligature') and ('SYMBOL' not in char_name):
             continue
         decomp_ssv = re.sub(r'<.*?>\s*', '', decomp_ssv)  # remove decomp type info, e.g. <compat>, <isolated>
         if decomp_ssv:
@@ -377,46 +377,51 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                 elif re.search(r'(?:\.replace|re\.sub)\(', line):
                     mr = re.match(r".*\.replace\('([^']+)',\s*'([^']*)'\)", line)
                     source_strings = []
-                    target_string = None
+                    source_string2 = ''
+                    target_string, ms, ms2 = None, None, None
                     if mr:
                         source_string = codecs.unicode_escape_decode(mr.group(1))[0]
                         source_strings = [source_string]
                         target_string = codecs.unicode_escape_decode(mr.group(2))[0]
                     else:
                         ms = re.match(r".*re\.sub\(r'\[([^-'\[\]]+)-([^-'\[\]]+)\]',\s*'([^']*)',", line)
+                        ms2 = \
+                            re.match(r".*re\.sub\(r'\(\[([^-'\[\]]+)-([^-'\[\]]+)\]\)\(([^-'\[\]]+)\)',\s*r'(\\2\\1)',",
+                                     line)
                         if ms:
                             source_string_from = codecs.unicode_escape_decode(ms.group(1))[0]
                             source_string_to = codecs.unicode_escape_decode(ms.group(2))[0]
                             target_string = codecs.unicode_escape_decode(ms.group(3))[0]
+                        elif ms2:
+                            source_string_from = codecs.unicode_escape_decode(ms2.group(1))[0]
+                            source_string_to = codecs.unicode_escape_decode(ms2.group(2))[0]
+                            source_string2 = codecs.unicode_escape_decode(ms2.group(3))[0]
+                            target_regex = ms2.group(4)
+                        if ms or ms2:
                             if (len(source_string_from) == 1) and (len(source_string_to) == 1):
                                 code_points = range(ord(source_string_from), ord(source_string_to)+1)
                                 source_strings = [chr(x) for x in code_points]
                     if target_string is not None:
                         target_string = norm_string_by_mapping_dict(target_string, core_mapping_dict, wb)
                         target_string = norm_string_by_mapping_dict(target_string, mapping_dict, wb)
-                    for source_string in source_strings:
+                    for source_string1 in source_strings:
                         out_line = ''
-                        if re.search(r'[\u0080-\u009F]', source_string) and (target_string == ''):
+                        if (len(source_string1) == 1) and (safe_unicode_name(source_string1) == 'NO_NAME'):
+                            continue
+                        if re.search(r'[\u0080-\u009F]', source_string1) and (target_string == ''):
                             continue  # control characters in C1 block will be handled by encoding repair
+                        if ms2:
+                            source_string = source_string1 + source_string2
+                            target_string = re.sub(r"\\1", source_string1, target_regex)
+                            target_string = re.sub(r"\\2", source_string2, target_string)
+                        else:
+                            source_string = source_string1
                         out_line += f'{source_string}\t{target_string}'
                         mapping_dict[source_string] = target_string
                         if verbose:
-                            source_comment = ''
-                            target_comment = ''
-                            if len(source_string) == 1:
-                                source_comment = string_to_character_unicode_descriptions(source_string)
-                            if len(target_string) == 1:
-                                target_comment = string_to_character_unicode_descriptions(target_string)
-                            out_line += '\t'
-                            if source_comment or target_comment:
-                                if source_comment:
-                                    out_line += source_comment + ' '
-                                if target_comment:
-                                    out_line += '-> ' + target_comment
-                                elif source_comment and (len(target_string) == 0):
-                                    out_line += 'deleted'
-                                elif source_comment and (len(target_string) >= 2):
-                                    out_line += 'decomposed'
+                            source_comment = string_to_character_unicode_descriptions(source_string)
+                            target_comment = string_to_character_unicode_descriptions(target_string, ref=source_string)
+                            out_line += '\t' + source_comment + ' ' + target_comment
                             ud_ref = ud.normalize('NFKC', source_string)
                             if (ud_ref != target_string) and (target_string != ''):
                                 out_line += f"   NFKC-ref: {ud_ref}"
