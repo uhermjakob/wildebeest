@@ -41,7 +41,7 @@ errors:
 * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
 * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters)
 * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
-* digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
+* digit (e.g. maps decimal-system digits of 54 scripts to ASCII digits)
 * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
 * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
 * space (e.g. maps non-zero spaces to normal space)
