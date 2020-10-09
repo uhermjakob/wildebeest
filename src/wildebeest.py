@@ -52,8 +52,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.10'
-last_mod_date = 'October 5, 2020'
+__version__ = '0.4.11'
+last_mod_date = 'October 8, 2020'
 
 
 class Wildebeest:
@@ -286,7 +286,6 @@ class Wildebeest:
             s = s.replace('\u01F2', '\u0044\u007A')  # U+01F2 LATIN CAPITAL LETTER D WITH SMALL LETTER Z ǲ -> Dz
             s = s.replace('\u01F3', '\u0064\u007A')  # U+01F3 LATIN SMALL LETTER DZ ǳ -> dz
             s = s.replace('\u1E9B', '\u1E61')        # U+1E9B LATIN SMALL LETTER LONG S WITH DOT ABOV ẛ -> ṡ
-        # U+0587 ARMENIAN SMALL LIGATURE ECH YIWN և is considered a single letter, not to be split into եւ U+0565 U+0582
         if re.search(r"[\uFB00-\uFB4F]", s):
             s = s.replace('\uFB00', '\u0066\u0066')  # U+FB00 LATIN SMALL LIGATURE FF ﬀ -> ff
             s = s.replace('\uFB01', '\u0066\u0069')  # U+FB01 LATIN SMALL LIGATURE FI ﬁ -> fi
@@ -331,6 +330,9 @@ class Wildebeest:
             s = s.replace('\u2138', '\u05D3')        # U+2138 DALET SYMBOL ℸ -> ד
             s = s.replace('\u213B', 'FAX')           # U+213B FACSIMILE SIGN ℻ -> FAX
         # Armenian
+        # Hrayr Harutyunyan confirmed that և U+0587 is (1) considered a single letter in the Armenian alphabet,
+        # (2) is included on Armenian keyboards and that (3) the decomposition եւ (U+0565 U+0582) should always
+        # be re-composed back to և. (This is at variance with NFKC).
         s = s.replace('\u0565\u0582', '\u0587')      # U+0587 ARMENIAN SMALL LIGATURE ECH YIWN եւ -> և
         # Thai, Lao
         s = re.sub(r'[\u0E33\u0EB3\u0EDC\u0EDD]', self.apply_mapping_dict, s);
@@ -397,8 +399,20 @@ class Wildebeest:
     @staticmethod
     def repair_combining_modifiers(s: str) -> str:
         """This function repairs the order of combining modifiers."""
-        # If a Devanagari vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
-        s = re.sub(r"([\u093E-\u094D])(\u093C)", r"\2\1", s)
+        # If an Indic vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
+        if re.search(r'[\u093C-\u1C37]', s):
+            s = re.sub(r'([\u093E-\u094D])(\u093C)', r'\2\1', s)  # Devanagari
+            s = re.sub(r'([\u09BE-\u09CD])(\u09BC)', r'\2\1', s)  # Bengali
+            s = re.sub(r'([\u0A3E-\u0A4D])(\u0A3C)', r'\2\1', s)  # Gurmukhi
+            s = re.sub(r'([\u0ABE-\u0ACD])(\u0ABC)', r'\2\1', s)  # Gujarati
+            s = re.sub(r'([\u0B3E-\u0B4D])(\u0B3C)', r'\2\1', s)  # Oriya
+            s = re.sub(r'([\u0CBE-\u0CCD])(\u0CBC)', r'\2\1', s)  # Kannada
+            s = re.sub(r'([\u1C26-\u1C2C])(\u1C37)', r'\2\1', s)  # Lepcha
+        if re.search(r'[\U000110B0-\U0001183A]', s):
+            s = re.sub(r'([\U000110B0-\U000110B8])(\U000110BA)', r'\2\1', s)  # Kaithi
+            s = re.sub(r'([\U0001133E-\U0001134D])(\U0001133C)', r'\2\1', s)  # Grantha
+            s = re.sub(r'([\U0001182C-\U00011839])(\U0001183A)', r'\2\1', s)  # Dogra
+            # ? Mahajani, Sharada, Khoji, Khudawadi, Newa, Tirhuta, Siddham, Takri, Dives, Masaram Gondi, Adlam
         return s
 
     # noinspection SpellCheckingInspection
