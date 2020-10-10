@@ -1,4 +1,4 @@
-Orig	Wildebeest	NFKC	Comment # File assert-preserve.tsv
+Orig	Wildebeest	NFKC	Comment # File assert-preserve.tsv lists human-verified entries where Wildebeest does not perform any normalization, but NFKC does. Mostly superscripts, subscripts, fractions, non-combining diacritics; 1 ligature and 2 CJK radicals.
 ¨	¨	 ̈	U+00A8 (DIAERESIS) preserved DIACRITIC
 ª	ª	a	U+00AA (FEMININE ORDINAL INDICATOR) preserved SUPERSCRIPT
 ¯	¯	 ̄	U+00AF (MACRON) preserved DIACRITIC
