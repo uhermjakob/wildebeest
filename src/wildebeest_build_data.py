@@ -81,6 +81,8 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
     elif codeblock == 'Devanagari':
         code_points = range(0x0900, 0x0980)
         decomposition_exclusions = range(0x0958, 0x0960)
+    elif codeblock == 'Hebrew':
+        code_points = range(0x0500, 0x0600)
     elif codeblock == 'Indic':
         code_points = range(0x0900, 0x0E00)
         decomposition_exclusions = range(0x0958, 0x0960)  # probably incomplete
@@ -112,6 +114,8 @@ def build_python_code_from_unicode(codeblock: str = 'Devanagari', indent_level: 
             else:
                 #    s = s.replace('\u0928\u093C', '\u0929')  # U+0929 DEVANAGARI LETTER NNNA ऩ -> ऩ
                 print(f"{indent}s = s.replace('{decomp_us}', '{us}')    # {uplus} {char_name} {decomp_str} -> {char}")
+        if 'HEBREW POINT' in char_name:
+            print(f"{indent}s = s.replace('{us}', '')  # {char_name}")
         digit = ud.digit(char, '')
         if digit != '':
             #   s = s.replace('\u0967', '1')    # U+0967 DEVANAGARI DIGIT ONE १ -> 1
@@ -391,7 +395,8 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                 mf = re.match(r'.*def\s+([_a-zA-Z0-9]+)', line)
                 if mf:
                     current_function_name = mf.group(1)
-                elif current_function_name in ['normalize_farsi_characters', 'normalize_ring_characters',
+                elif current_function_name in ['normalize_arabic_characters', 'normalize_farsi_characters',
+                                               'normalize_pashto_characters',
                                                'normalize_arabic_punctuation', 'normalize_font_characters',
                                                'normalize_devanagari_diacritics', 'normalize_hangul',
                                                'normalize_enclosure_characters', 'normalize_punctuation',

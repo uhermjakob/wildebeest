@@ -30,7 +30,8 @@ List of available normalization/cleaning-types (default: all are applied):
  * hangul (combine Hangul jamos onto Hangul syllables)
  * repair-combining (e.g. order of nukta/vowel-sign)
  * combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
- * del-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
+ * del-arabic-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
+ * del-hebrew-diacr (e.g. deletes Hebrew points)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
  * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
  * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
@@ -214,6 +215,28 @@ class Wildebeest:
         s = s.replace('\u0650', '')  # delete Arabic kasra
         s = s.replace('\u0651', '')  # delete Arabic shadda
         s = s.replace('\u0652', '')  # delete Arabic sukun
+        return s
+
+    @staticmethod
+    def delete_hebrew_diacritics(s: str) -> str:
+        s = s.replace('\u05B0', '')  # HEBREW POINT SHEVA
+        s = s.replace('\u05B1', '')  # HEBREW POINT HATAF SEGOL
+        s = s.replace('\u05B2', '')  # HEBREW POINT HATAF PATAH
+        s = s.replace('\u05B3', '')  # HEBREW POINT HATAF QAMATS
+        s = s.replace('\u05B4', '')  # HEBREW POINT HIRIQ
+        s = s.replace('\u05B5', '')  # HEBREW POINT TSERE
+        s = s.replace('\u05B6', '')  # HEBREW POINT SEGOL
+        s = s.replace('\u05B7', '')  # HEBREW POINT PATAH
+        s = s.replace('\u05B8', '')  # HEBREW POINT QAMATS
+        s = s.replace('\u05B9', '')  # HEBREW POINT HOLAM
+        s = s.replace('\u05BA', '')  # HEBREW POINT HOLAM HASER FOR VAV
+        s = s.replace('\u05BB', '')  # HEBREW POINT QUBUTS
+        s = s.replace('\u05BC', '')  # HEBREW POINT DAGESH OR MAPIQ
+        s = s.replace('\u05BD', '')  # HEBREW POINT METEG
+        s = s.replace('\u05BF', '')  # HEBREW POINT RAFE
+        s = s.replace('\u05C1', '')  # HEBREW POINT SHIN DOT
+        s = s.replace('\u05C2', '')  # HEBREW POINT SIN DOT
+        s = s.replace('\u05C7', '')  # HEBREW POINT QAMATS QATAN
         return s
 
     # noinspection SpellCheckingInspection
@@ -675,7 +698,8 @@ class Wildebeest:
         # It should not be skipped because surrogates are not printable.
         s = self.norm_clean_string_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id)
         s = self.norm_clean_string_group(s, ht, 'del-ctrl-char', self.delete_control_characters, loc_id)
-        s = self.norm_clean_string_group(s, ht, 'del-diacr', self.delete_arabic_diacritics, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'del-arabic-diacr', self.delete_arabic_diacritics, loc_id)
+        s = self.norm_clean_string_group(s, ht, 'del-hebrew-diacr', self.delete_hebrew_diacritics, loc_id)
         s = self.norm_clean_string_group(s, ht, 'core-compat', self.normalize_core_compat_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'pres-form', self.normalize_arabic_pres_form_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'ligatures-symbols', self.normalize_ligatures_and_symbols, loc_id)
@@ -716,7 +740,8 @@ class Wildebeest:
 def main(argv):
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
-    all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
+    all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-arabic-diacr',
+                      'del-hebrew-diacr', 'core-compat',
                       'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'enclosure',
                       'hangul', 'repair-combining', 'combining', 'punct', 'punct-f', 'space', 'digit',
                       'arabic-char', 'farsi-char', 'pashto-char', 'repair-xml', 'repair-token']
@@ -772,3 +797,4 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+
