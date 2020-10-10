@@ -335,7 +335,7 @@ class Wildebeest:
         # be re-composed back to և. (This is at variance with NFKC).
         s = s.replace('\u0565\u0582', '\u0587')      # U+0587 ARMENIAN SMALL LIGATURE ECH YIWN եւ -> և
         # Thai, Lao
-        s = re.sub(r'[\u0E33\u0EB3\u0EDC\u0EDD]', self.apply_mapping_dict, s);
+        s = re.sub(r'[\u0E33\u0EB3\u0EDC\u0EDD]', self.apply_mapping_dict, s)
         # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
         if re.search(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', s):
             s = re.sub(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', self.apply_mapping_dict, s)
@@ -497,6 +497,7 @@ class Wildebeest:
         s = s.replace('\u3000', ' ')  # U+3000 IDEOGRAPHIC SPACE
         return s
 
+    # noinspection SpellCheckingInspection
     def normalize_half_and_full_width_characters(self, s: str) -> str:
         """Replace fullwidth and halfwidth characters such as Ａ with regular Latin letters such as A."""
         if re.search(r'[\uFF01-\uFFEE]', s):

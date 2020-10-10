@@ -197,7 +197,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                      'CombiningModifierMapping',       # e.g. maps "é" (2 Unicode characters) to "é" (1 character)
                      'CoreCompatibilityMapping',       # includes Hangul compatibility (KS X 1001)
                      'DigitMapping',
-                     'EnclosureMapping',               # characters enclosed in circles, parantheses, squares
+                     'EnclosureMapping',               # characters enclosed in circles, parentheses, squares
                      'FontSmallVerticalMapping'):      # for Unicode keywords <font>, <small>, <vertical>
         if codeblock == 'ArabicPresentationFormMapping':
             code_points = chain(range(0xFB50, 0xFE00), range(0xFE70, 0xFF00))
@@ -310,9 +310,9 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                                 decomp_str = left_enclosure + decomp_str + right_enclosure
                             action = 'decomposition'
                     elif ((codeblock == 'FontSmallVerticalMapping')
-                        # build mapping for Unicode entries with '<font>', '<small>', or '<vertical>'
                             and (len(decomp_elements) >= 2)
                             and (decomp_elements[0] in ['<font>', '<small>', '<vertical>'])):
+                        # build mapping for Unicode entries with '<font>', '<small>', or '<vertical>'
                         decomp_chars = decomp_elements[1:]
                         decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         action = 'decomposition'
@@ -348,7 +348,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     char_name_clause = f' ({char_name})' if char_name else ''
                     char_hex = 'U+' + ('%04x' % code_point).upper()
                     if action == 'decomposition':
-                        # delete any space + deletable Arabic diacritics (fathatah .. sukrun):
+                        # delete any space + deletable Arabic diacritics (fathatan .. sukrun):
                         decomp_str = re.sub(r' [\u064B-\u0652]+', '', decomp_str)
                         decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict, wb)
                         decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
@@ -472,7 +472,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
     elif codeblock == 'EncodingRepairMapping':
         output_tsv_filename = f'../data/{output_file_basename}'
         encoding_repair_mapping_dict = {}
-        # For control characters section in surrogate code block, see wildbeest.py
+        # For control characters section in surrogate code block, see wildebeest_normalize.py
         # Misencodings that resulted applying conversion from wrong or double Windows1252/Latin1-to-UTF8 conversion.
         for index in range(0x80, 0x100):
             latin1_char = chr(index)
@@ -480,13 +480,13 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
             windows1252_char2 = re.sub(r'[\u0080-\u009F]', '', windows1252_char)
             byte_string = latin1_char.encode('utf-8')
             latin1_latin1_char = ''.join([chr(x) for x in byte_string])
-            repl_char = latin1_char if index >= 0xA0 else windows1252_char2
+            replacement_char = latin1_char if index >= 0xA0 else windows1252_char2
             # to repair Latin1-to-UTF8 plus Latin1-to-UTF8
-            encoding_repair_mapping_dict[latin1_latin1_char] = repl_char
+            encoding_repair_mapping_dict[latin1_latin1_char] = replacement_char
             if byte_string[1] < 0xA0:
                 latin1_windows1252_char = ''.join([windows1252_to_utf8_char(x) for x in byte_string])
                 # to repair Latin1-to-UTF8 plus Windows1252-to-UTF8
-                encoding_repair_mapping_dict[latin1_windows1252_char] = repl_char
+                encoding_repair_mapping_dict[latin1_windows1252_char] = replacement_char
             if index < 0xA0:
                 # to repair Latin1-to-UTF8 instead of Windows1252-to-UTF8
                 encoding_repair_mapping_dict[latin1_char] = windows1252_char2
@@ -570,7 +570,7 @@ def init_core_mapping_dict() -> None:
         log.error(f"Could not open {full_unicode_composition_exclusion_filename}")
 
 
-def compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files() -> None:
+def compare_mappings_with_unicodedata_normalize_nfkc_on_mapping_files() -> None:
     """For testing, compares the mappings in ../data/*MappingAnnotated files with standard NFKC normalization."""
     src_dir_path = os.path.dirname(os.path.realpath(__file__))
     data_dir_path = os.path.join(src_dir_path, "../data")
@@ -633,7 +633,7 @@ def compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files() -> None:
         log.info(f'{total_n_diffs}/{total_n_tests} total diffs in {n_files} files')
 
 
-def compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data() -> None:
+def compare_mappings_with_unicodedata_normalize_nfkc_on_unicode_data() -> None:
     """For testing, for all entries in UnicodeData.txt file, compare Wildebeest and NFKC."""
     src_dir_path = os.path.dirname(os.path.realpath(__file__))
     data_dir_path = os.path.join(src_dir_path, "../data")
@@ -715,7 +715,7 @@ def mapping_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str) -> None:
 def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_ref: str,
                                    preservation_category: str = '') -> None:
     """
-    Based on manual copde point input, build additional assert records for files assert.tsv or assert-preserve.tsv
+    Based on manual code point input, build additional assert records for files assert.tsv or assert-preserve.tsv
     filename_ref: with entries that have already been asserted, no need to duplicate
     """
     log.info(f'assert {filename_i} -> {filename_o}')
@@ -729,7 +729,7 @@ def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_re
     else:
         f_in = open(filename_i, 'r', encoding='utf-8')
     if (preservation_category != '') and (preservation_category not in valid_preservation_categories):
-        log.error(f'Invalid perservation_category {preservation_category}')
+        log.error(f'Invalid preservation_category {preservation_category}')
         return
     wb = wildebeest_normalize.Wildebeest()
     ht = {}
@@ -820,9 +820,9 @@ def main(argv):
     elif (len(argv) >= 1) and (argv[0] == 'rebuild-all-mapping-files'):
         rebuild_all_mapping_files()
     elif (len(argv) >= 1) and (argv[0] == 'compare-wb-nfkc-mf'):
-        compare_mappings_with_unicodedate_normalize_nfkc_on_mapping_files()
+        compare_mappings_with_unicodedata_normalize_nfkc_on_mapping_files()
     elif (len(argv) >= 1) and (argv[0] == 'compare-wb-nfkc-uc'):
-        compare_mappings_with_unicodedate_normalize_nfkc_on_unicode_data()
+        compare_mappings_with_unicodedata_normalize_nfkc_on_unicode_data()
     elif (len(argv) >= 3) and (argv[0] == 'mapping-to-assert-orig-wb-nfkc'):
         mapping_to_assert_orig_wb_nfkc(argv[1], argv[2])
     elif (len(argv) >= 4) and (argv[0] == 'addenda-to-assert-orig-wb-nfkc'):
