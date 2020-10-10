@@ -5,10 +5,10 @@ Ported Pashto and Farsi-specific normalization from Perl to Python in August 202
 Ported general normalization from Perl to Python in September 2020.
 This script normalizes and cleans text (details below).
 Examples:
-  wildebeest.py -h  # for full usage info
-  wildebeest.py --version
-  wildebeest.py --lc fas -i 3S-dev-ssplit.src.tok -o 3S-dev-ssplit.src.clean2.tok
-  wildebeest.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.src.tok > 3S-dev-ssplit.src.clean1.tok
+  wildebeest_normalize.py -h  # for full usage info
+  wildebeest_normalize.py --version
+  wildebeest_normalize.py --lc fas -i 3S-dev-ssplit.src.tok -o 3S-dev-ssplit.src.clean2.tok
+  wildebeest_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.src.tok > 3S-dev-ssplit.src.clean1.tok
 List of available normalization/cleaning-types (default: all are applied):
  * repair-encodings-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
