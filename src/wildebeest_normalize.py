@@ -16,12 +16,11 @@ List of available normalization/cleaning-types (default: all are applied):
  * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark,
                           directional marks, join marks, variation selectors, Arabic tatweel)
  * core-compat (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
- * arabic-char (e.g. maps Farsi yeh, kaf to Arabic versions; Kazakh high hamza alef to Arabic alef with hamza above)
- * farsi-char (e.g. maps Arabic yeh, kaf to Farsi versions; exclusive alternative to arabic-char)
+ * arabic-char (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
+ * farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
+ * pashto-char (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
  * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ligatures-symbols (e.g. maps ligatures, symbols (e.g. kappa symbol), signs (e.g. micro sign), CJK square composites)
- * ring-char (e.g. maps ring-characters that are common in Pashto to non-ring characters;
-                   exclusive alternative to arabic-char)
  * width (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
  * font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters; Roman numerals to ASCII)
  * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
@@ -224,16 +223,16 @@ class Wildebeest:
             # Some of the below, particularly the alef maksura, might be too aggressive. Too be verified.
             #    More conservative: keep alef maksura and map final/isolated Farsi yeh to alef maksura.
             # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
+            s = s.replace('\u06A9', '\u0643')  # Farsi kaf/keheh to (Arabic) kaf
+            s = s.replace('\u06CC', '\u064A')  # Farsi yeh to (Arabic) yeh
             s = s.replace('\u0675', '\u0623')  # (Kazakh) high hamza alef to alef with hamza above
             s = s.replace('\u0676', '\u0624')  # (Kazakh) high hamza waw to waw with hamza above
             s = s.replace('\u0678', '\u0626')  # (Kazakh) high hamza yeh to yeh with hamza above
             s = s.replace('\u067C', '\u062A')  # (Pashto) teh with ring to teh
             s = s.replace('\u0689', '\u062F')  # (Pashto) dal with ring to dal
             s = s.replace('\u0693', '\u0631')  # (Pashto) reh with ring to reh
-            s = s.replace('\u06A9', '\u0643')  # Farsi kaf/keheh to (Arabic) kaf
             s = s.replace('\u06AB', '\u06AF')  # (Pashto) kaf with ring to gaf
             s = s.replace('\u06BC', '\u0646')  # (Pashto) noon with ring to noon
-            s = s.replace('\u06CC', '\u064A')  # Farsi yeh to (Arabic) yeh
             s = s.replace('\u06CD', '\u064A')  # (Pashto) yeh with tail to yeh
             # Not necessarily complete.
         return s
@@ -245,14 +244,19 @@ class Wildebeest:
         s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
         s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
         s = s.replace('\u0643', '\u06A9')  # Arabic kaf to keheh
+        s = s.replace('\u06AB', '\u06AF')  # (Pashto) kaf with ring to gaf
+        s = s.replace('\u067C', '\u062A')  # (Pashto) teh with ring to Arabic teh
+        s = s.replace('\u0689', '\u062F')  # (Pashto) dal with ring to Arabic dal
+        s = s.replace('\u0693', '\u0631')  # (Pashto) reh with ring to Arabic reh
+        s = s.replace('\u06BC', '\u0646')  # (Pashto) noon with ring to noon
+        s = s.replace('\u06CD', '\u064A')  # (Pashto) yeh with tail to yeh
         return s
 
     @staticmethod
-    def normalize_ring_characters(s: str) -> str:
-        s = s.replace('\u06AB', '\u06AF')  # Arabic kaf with ring to gaf
-        s = s.replace('\u067C', '\u062A')  # Arabic teh with ring to Arabic teh
-        s = s.replace('\u0689', '\u062F')  # Arabic dal with ring to Arabic dal
-        s = s.replace('\u0693', '\u0631')  # Arabic reh with ring to Arabic reh
+    def normalize_pashto_characters(s: str) -> str:
+        s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
+        s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
+        s = s.replace('\u0643', '\u06A9')  # Arabic kaf to keheh
         return s
 
     # noinspection SpellCheckingInspection
@@ -689,7 +693,8 @@ class Wildebeest:
         s = self.norm_clean_string_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id)
         if lang_code == 'fas':
             s = self.norm_clean_string_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id)
-            s = self.norm_clean_string_group(s, ht, 'ring-char', self.normalize_ring_characters, loc_id)
+        elif lang_code == 'pas':
+            s = self.norm_clean_string_group(s, ht, 'pashto-char', self.normalize_pashto_characters, loc_id)
         else:
             s = self.norm_clean_string_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
         s = self.norm_clean_string_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
@@ -714,7 +719,7 @@ def main(argv):
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-diacr', 'core-compat',
                       'pres-form', 'ligatures-symbols', 'width', 'font', 'small', 'vertical', 'enclosure',
                       'hangul', 'repair-combining', 'combining', 'punct', 'punct-f', 'space', 'digit',
-                      'arabic-char', 'farsi-char', 'ring-char', 'repair-xml', 'repair-token']
+                      'arabic-char', 'farsi-char', 'pashto-char', 'repair-xml', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
