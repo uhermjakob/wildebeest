@@ -32,7 +32,9 @@ errors:
 * farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
 * pashto-char (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
 * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
-* ligatures-symbols (e.g. maps (non-Arabic) ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ), symbols (e.g. kappa symbol ϰ), signs (e.g. micro sign µ), CJK square composites (e.g. ㋀㏾))
+* ligatures (e.g. decomposes non-Arabic ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ))
+* signs-and-symbols (e.g. maps symbols (e.g. kappa symbol) and signs (e.g. micro sign µ))
+* cjk (e.g. CJK square composites (e.g. ㋀㏾))
 * width (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
 * font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters)
 * small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
@@ -40,7 +42,8 @@ errors:
 * enclosure (decomposes circled, squared and parenthesized characters, e.g. 🄐 to (A))
 * hangul (combine Hangul jamos onto Hangul syllables)
 * repair-combining (e.g. order of nukta/vowel-sign)
-* combining (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
+* combining-compose (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
+* combining-decompose (e.g. for some Indian characters, splits off Nukta)
 * del-arabic-diacr (e.g. deletes optional Arabic diacritics such as fatha, damma, kasra)
 * del-hebrew-diacr (e.g. deletes Hebrew points)
 * digit (e.g. maps decimal-system digits of 54 scripts to ASCII digits)
@@ -48,6 +51,7 @@ errors:
 * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
 * space (e.g. maps non-zero spaces to normal space)
 * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
+* repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
 This script is still work in progress.
