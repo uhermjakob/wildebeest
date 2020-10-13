@@ -137,7 +137,7 @@ def norm_string_by_mapping_dict(s: str, m_dict: dict, wb: wildebeest_normalize.W
         if sub_map is None:
             result += s[i:i+1]
             i += 1
-    result = wb.normalize_hangul(result)
+    result = wb.normalize_hangul(result, 0)
     if verbose and (result != s):
         log.info(f'Upgraded {s} to {result}')
     return result
@@ -261,14 +261,24 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             decomp_str = decomp_str.replace('\u2113', 'l')
                             action = 'decomposition'
                     elif ((codeblock == 'CombiningModifierMapping')
-                            and (len(decomp_elements) >= 2)
-                            and (not decomp_elements[0].startswith('<'))):
-                        decomp_chars = decomp_elements
-                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
-                        if char in unicode_composition_exclusion_dict:
+                            and (len(decomp_elements) >= 2)):
+                        if not decomp_elements[0].startswith('<'):
+                            decomp_chars = decomp_elements
+                        elif code_point == 0x0587:  # ARMENIAN SMALL LIGATURE ECH YIWN
+                            decomp_chars = decomp_elements[1:]
+                            action = 'composition'
+                        elif code_point in [0x0F77, 0x0F79]:  # TIBETAN VOWEL SIGN VOCALIC RR, LL
+                            decomp_chars = decomp_elements[1:]
                             action = 'decomposition'
                         else:
-                            action = 'composition'
+                            decomp_chars = None
+                        if decomp_chars:
+                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            if not action:
+                                if char in unicode_composition_exclusion_dict:
+                                    action = 'decomposition'
+                                else:
+                                    action = 'composition'
                     elif codeblock == 'CoreCompatibilityMapping':
                         # for mappings of Hangul compatibility characters, some punctuation and math symbols,
                         # Roman numerals, numerals with attached punctuation, some complex modifier characters
@@ -400,8 +410,8 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                                                'normalize_arabic_punctuation', 'normalize_font_characters',
                                                'normalize_devanagari_diacritics', 'normalize_hangul',
                                                'normalize_enclosure_characters', 'normalize_punctuation',
-                                               'repair_tokenization', 'repair_xml', 'delete_surrogates',
-                                               'init_mapping_dict']:
+                                               'repair_xml', 'repair_url_escapes',
+                                               'delete_surrogates', 'init_mapping_dict']:
                     continue  # because replacements are language-specific
                 elif re.search(r'(?:\.replace|re\.sub)\(', line):
                     mr = re.match(r".*\.replace\('([^']+)',\s*'([^']*)'\)", line)
