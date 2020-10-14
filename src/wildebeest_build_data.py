@@ -137,7 +137,7 @@ def norm_string_by_mapping_dict(s: str, m_dict: dict, wb: wildebeest_normalize.W
         if sub_map is None:
             result += s[i:i+1]
             i += 1
-    result = wb.normalize_hangul(result, 0)
+    result = wb.normalize_hangul(result)
     if verbose and (result != s):
         log.info(f'Upgraded {s} to {result}')
     return result
@@ -514,6 +514,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
             n_output_lines = 0
             for source_string in sorted(encoding_repair_mapping_dict.keys()):
                 target_string = encoding_repair_mapping_dict[source_string]
+                target_string = norm_string_by_mapping_dict(target_string, core_mapping_dict, wb)
                 output_line = f'{source_string}\t{target_string}'
                 if verbose:
                     output_line += '\t' + string_to_character_unicode_descriptions(source_string) + \
