@@ -1,4 +1,3 @@
-# noinspection SpellCheckingInspection,SpellCheckingInspection
 """
 Written by Ulf Hermjakob, USC/ISI
 Ported Pashto and Farsi-specific normalization from Perl to Python in August 2020.
@@ -57,11 +56,12 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.11'
-last_mod_date = 'October 8, 2020'
+__version__ = '0.4.12'
+last_mod_date = 'October 13, 2020'
 
 
 class Wildebeest:
+    # noinspection PyPep8
     def __init__(self):
         # The following dictionary captures the irregular mappings from Windows1252 to UTF8.
         # noinspection SpellCheckingInspection
@@ -102,6 +102,7 @@ class Wildebeest:
         self.char_type_vector_dict = {}
         # Initialize elementary bit vectors (integers each with a different bit set) will be used in bitwise operations.
         # To be expanded.
+        self.lv = 0
         bit_vector = 1
         self.char_is_deletable_control_character = bit_vector
         bit_vector = bit_vector << 1
@@ -114,6 +115,12 @@ class Wildebeest:
         self.char_is_composable_anchor_with_combining = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_composable_combining_diacritic = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_f_punctuation = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_enclosure = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_cjk = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_mappable_decimal_digit = bit_vector
         bit_vector = bit_vector << 1
@@ -129,6 +136,8 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_encoding_repair_anchor = bit_vector
         bit_vector = bit_vector << 1
+        self.char_is_100_plus_block_of_interest = bit_vector  # code_points >= 0x10000 and of interest (e.g. digit)
+        bit_vector = bit_vector << 1
         self.char_is_hebrew = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_deletable_hebrew_diacritic = bit_vector
@@ -143,27 +152,24 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_devanagari = bit_vector
         bit_vector = bit_vector << 1
-        self.char_is_bengali_plus = bit_vector  # Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada,
-        #                                       # Malayalam, Sinhala
+        # Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala
+        self.char_is_bengali_plus = bit_vector
         bit_vector = bit_vector << 1
-        self.char_is_thai_plus = bit_vector     # Thai, Lao, Tibetan, Myanmar, Georgian
+        self.char_is_thai_plus = bit_vector  # Thai, Lao, Tibetan, Myanmar, Georgian
         bit_vector = bit_vector << 1
-        self.char_is_khmer_plus = bit_vector    # Khmer, Mongolian, Canadian Syllabics, Limbu, Tai Le, New Tai Lue,
-        #                                       # Buginese, Tai Tham, Balinese, Sundanese, Batak, Lepcha, Ol Chiki
+        # Khmer, Mongolian, Canadian Syllabics, Limbu, Tai Le, New Tai Lue
+        # Buginese, Tai Tham, Balinese, Sundanese, Batak, Lepcha, Ol Chiki
+        self.char_is_khmer_plus = bit_vector
         bit_vector = bit_vector << 1
-        self.char_is_lisu_plus = bit_vector     # Lisu, Vai Syllable, Banum, Sloti Nagri, Phags-Pa, Saurashtra,
-        #                                       # Kayah Li, Rejang, Javanese, Cham, Tai Viet, Meetei Mayek
+        # Lisu, Vai Syllable, Banum, Sloti Nagri, Phags-Pa, Saurashtra,
+        # Kayah Li, Rejang, Javanese, Cham, Tai Viet, Meetei Mayek
+        self.char_is_lisu_plus = bit_vector
         # self.char_is_space = bit
-        # self.char_is_punctuation = bit
         # self.char_is_greek = bit
         # self.char_is_cyrillic = bit
         # self.char_is_armenian = bit
-        # self.char_is_cjk = bit
         # self.char_is_japanese_kana = bit
         # self.char_is_korean = bit
-        # self.char_is_block_03_0F = bit
-        # self.char_is_block_10_FF = bit
-        # self.char_is_block_100_plus = bit
         self.range_init_char_type_vector_dict()
         #
         # Initialize general mapping dictionary, which normalizes source strings (of length 1-3 characters)
@@ -270,12 +276,18 @@ class Wildebeest:
         if filename_core == 'Digit':
             self.char_type_vector_dict[source] \
                 = self.char_type_vector_dict.get(source, 0) | self.char_is_mappable_decimal_digit
+            if len(source) >= 1 and ord(source[0]) >= 0x10000:
+                self.char_type_vector_dict[source] \
+                    = self.char_type_vector_dict.get(source, 0) | self.char_is_100_plus_block_of_interest
         elif filename_core == 'FontSmallVertical':
             self.char_type_vector_dict[source] \
                 = self.char_type_vector_dict.get(source, 0) | self.char_is_font_small_vertical
         elif filename_core == 'CoreCompatibility':
             self.char_type_vector_dict[source] \
                 = self.char_type_vector_dict.get(source, 0) | self.char_is_core_compatibility
+        elif filename_core == 'CJKCompatibility':
+            self.char_type_vector_dict[source] \
+                = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_cjk
         elif filename_core == 'PythonWildebeest':
             if len(source) == 1:
                 code_point = ord(source)
@@ -285,6 +297,14 @@ class Wildebeest:
                 elif (code_point == 0x00B5) or (0x03D0 <= code_point <= 0x03F9) or (0x20A8 <= code_point <= 0x213B):
                     self.char_type_vector_dict[source] \
                         = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_sign_symbol
+                elif (0x0340 <= code_point <= 0x0387) or (0x060C <= code_point <= 0x06D4) or (code_point == 0x0F0C):
+                    self.char_type_vector_dict[source] \
+                        = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_f_punctuation
+        elif filename_core == 'Enclosure':
+            if len(source) >= 1:
+                char = source[0]
+                self.char_type_vector_dict[char] \
+                    = self.char_type_vector_dict.get(char, 0) | self.char_is_decomposable_enclosure
         elif filename_core == 'EncodingRepair':
             if len(source) >= 1:
                 char = source[0]
@@ -358,32 +378,28 @@ class Wildebeest:
             return s
 
     # noinspection SpellCheckingInspection
-    def repair_encoding_errors(self, s: str, _lv: int) -> str:
+    def repair_encoding_errors(self, s: str) -> str:
         """
         Interpret non-UTF8 characters (standalone \x80-\xFF, read in as surrogate characters \uDC80-\uDCFF])
         as one-byte Windows-1252/Latin-1 (ISO-8859-1) characters. Please note that ASCII characters (\u0000-\u007F)
         are encoded identically in UTF-8, Latin-1, and Windows-1252, so no conversion is necessary in that case.
         """
         # Correct missing conversion to UTF8
-        if re.search(r"[\uDC80-\uDCFF]", s):
-            s = re.sub(r'[\uDC80-\uDCFF]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\uDC80-\uDCFF]', self.apply_mapping_dict, s)
         # Correct UTF8 misencodings due to wrong or double application of Windows1252/Latin1-to-UTF converter
-        if re.search(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', s):
-            s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', self.apply_mapping_dict, s)
-        if re.search(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u02FF\u2000-\u21FF]', s):
-            s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u02FF\u2000-\u21FF]', self.apply_mapping_dict, s)
-        if re.search(r'[\u0080-\u009F]', s):
-            s = re.sub(r'[\u0080-\u009F]', self.apply_mapping_dict, s)
+        s = re.sub(r'\u00E2[\u0080-\u00BF][\u0080-\u00BF]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\u00C2-\u00C3\u00C5\u00C6\u00CB][\u0080-\u02FF\u2000-\u21FF]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\u0080-\u009F]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def delete_surrogates(s: str, _lv: int, default: str = '') -> str:
+    def delete_surrogates(s: str, default: str = '') -> str:
         """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters \uDC80-\uDCFF])."""
         return re.sub(r"[\uDC80-\uDCFF]", default, s)
 
     @staticmethod
-    def delete_control_characters(s: str, _lv: int) -> str:
+    def delete_control_characters(s: str) -> str:
         """Deletes control characters (except tab and linefeed), zero-width characters, byte order mark,
            directional marks, join marks, variation selectors, Arabic tatweel"""
         s = re.sub(r'[\u0000-\u0008]', '', s)  # control characters C0 code block (except tab \x09, linefeed \x0A)
@@ -399,7 +415,7 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def delete_arabic_diacritics(s: str, _lv: int) -> str:
+    def delete_arabic_diacritics(s: str) -> str:
         s = s.replace('\u064B', '')  # delete Arabic fathatan
         s = s.replace('\u064C', '')  # delete Arabic dammatan
         s = s.replace('\u064D', '')  # delete Arabic kasratan
@@ -411,7 +427,7 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def delete_hebrew_diacritics(s: str, _lv: int) -> str:
+    def delete_hebrew_diacritics(s: str) -> str:
         s = s.replace('\u05B0', '')  # HEBREW POINT SHEVA
         s = s.replace('\u05B1', '')  # HEBREW POINT HATAF SEGOL
         s = s.replace('\u05B2', '')  # HEBREW POINT HATAF PATAH
@@ -434,7 +450,7 @@ class Wildebeest:
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def normalize_arabic_characters(s: str, _lv: int) -> str:
+    def normalize_arabic_characters(s: str) -> str:
         # Some of the below, particularly the alef maksura, might be too aggressive. Too be verified.
         #    More conservative: keep alef maksura and map final/isolated Farsi yeh to alef maksura.
         # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
@@ -454,7 +470,7 @@ class Wildebeest:
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def normalize_farsi_characters(s: str, _lv: int) -> str:
+    def normalize_farsi_characters(s: str) -> str:
         s = s.replace('\u064A', '\u06CC')  # Arabic to Farsi yeh
         s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
         s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
@@ -468,21 +484,21 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def normalize_pashto_characters(s: str, _lv: int) -> str:
+    def normalize_pashto_characters(s: str) -> str:
         s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
         s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
         s = s.replace('\u0643', '\u06A9')  # Arabic kaf to keheh
         return s
 
     # noinspection SpellCheckingInspection
-    def normalize_arabic_pres_form_characters(self, s: str, _lv: int) -> str:
+    def normalize_arabic_pres_form_characters(self, s: str) -> str:
         """This includes some Arabic ligatures."""
         s = re.sub(r'[\uFB50-\uFDFF\uFE70-\uFEFC]', self.apply_mapping_dict, s)
         return s
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def normalize_ligatures(s: str, _lv: int) -> str:
+    def normalize_ligatures(s: str) -> str:
         """Arabic ligatures are already covered by function normalize_arabic_pres_form_characters."""
         s = s.replace('\u0132', '\u0049\u004A')  # U+0132 LATIN CAPITAL LIGATURE IJ Ĳ -> IJ
         s = s.replace('\u0133', '\u0069\u006A')  # U+0133 LATIN SMALL LIGATURE IJ ĳ -> ij
@@ -519,7 +535,8 @@ class Wildebeest:
         s = s.replace('\uFB4F', '\u05D0\u05DC')  # U+FB4F HEBREW LIGATURE ALEF LAMED ﭏ -> אל
         return s
 
-    def normalize_signs_and_symbols(self, s: str, _lv: int) -> str:
+    @staticmethod
+    def normalize_signs_and_symbols(s: str) -> str:
         s = s.replace('\u00B5', '\u03BC')        # U+00B5 MICRO SIGN µ -> μ (GREEK SMALL LETTER MU)
         s = s.replace('\u03D0', '\u03B2')        # U+03D0 GREEK BETA SYMBOL ϐ -> β
         s = s.replace('\u03D1', '\u03B8')        # U+03D1 GREEK THETA SYMBOL ϑ -> θ
@@ -549,15 +566,13 @@ class Wildebeest:
         s = s.replace('\u213B', 'FAX')           # U+213B FACSIMILE SIGN ℻ -> FAX
         return s
 
-    def normalize_cjk(self, s: str, _lv: int) -> str:
+    def normalize_cjk(self, s: str) -> str:
         # CJK Compatibility (e.g. ㋀ ㌀ ㍰ ㎢ ㏾ ㏿)
-        if re.search(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', s):
-            s = re.sub(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', self.apply_mapping_dict, s)
-        if re.search(r"[\U0001F190\U0001F200\U0002F800-\U0002FA1F]", s):
-            s = re.sub(r'[\U0001F190\U0001F200\U0002F800-\U0002FA1F]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\u2F00-\u2FDF\u3038-\u303A\u3250\u32C0-\u33FF\uF900-\uFAFF]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\U0001F190\U0001F200\U0002F800-\U0002FA1F]', self.apply_mapping_dict, s)
         return s
 
-    def apply_combining_modifiers_compose(self, s: str, _lv: int) -> str:
+    def apply_combining_modifiers_compose(self, s: str) -> str:
         """
         Combines 2 Unicode characters (incl. combining modifier) into one Unicode character, e.g. ö (o +  ̈) -> ö
         Must be applied after normalize_ligatures and normalize_signs_and_symbols.
@@ -578,7 +593,7 @@ class Wildebeest:
         s = s.replace('\u0565\u0582', '\u0587')  # U+0587 ARMENIAN SMALL LIGATURE ECH YIWN եւ -> և
         return s
 
-    def apply_combining_modifiers_decompose(self, s: str, _lv: int) -> str:
+    def apply_combining_modifiers_decompose(self, s: str) -> str:
         """Decompose character, splitting off combining/modifying character."""
         # Indic, Tibetan, Hebrew, 'forking'
         if re.search(r'[\u0344\u0958-\u095F\u09DC-\u0B5D\u0F43-\u0FB9\u2ADC\uFB1D-\uFB4E]', s):
@@ -610,7 +625,7 @@ class Wildebeest:
     def hangul_jamo_triple_match_to_syllable(self, m: Match[str]) -> str:
         return self.hangul_jamo_triple_to_syllable(m.group(1), m.group(2), m.group(3))
 
-    def normalize_hangul(self, s: str, _lv: int) -> str:
+    def normalize_hangul(self, s: str) -> str:
         """Convert all Hangul jamo triples/doubles in string to Hangul syllables."""
         if re.search(r'[\u1161-\u1175]', s):  # string includes a Hangul vowel jamo
             s = re.sub(r'([\u1100-\u1112])([\u1161-\u1175])([\u11A8-\u11C2]|)',  # trailing jamo can be ''
@@ -618,7 +633,7 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def repair_combining_modifiers(s: str, _lv: int) -> str:
+    def repair_combining_modifiers(s: str) -> str:
         """This function repairs the order of combining modifiers."""
         # If an Indic vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
         if re.search(r'[\u093C-\u1C37]', s):
@@ -666,7 +681,7 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def normalize_f_punctuation(s: str, _lv: int) -> str:
+    def normalize_f_punctuation(s: str) -> str:
         # Arabic
         s = s.replace('\u0640', '')         # U+0640 Arabic tatweel (always to be deleted)
         s = s.replace('\u060C', ',')        # U+060C Arabic comma
@@ -689,21 +704,18 @@ class Wildebeest:
         s = s.replace('\u0F0C', '\u0F0B')   # U+0F0C Tibetan no-break morpheme delimiter
         return s
 
-    def normalize_punctuation(self, s: str, _lv: int) -> str:
+    def normalize_punctuation(self, s: str) -> str:
         # punctuation 〈〉
-        if re.search(r'[\u2011-\u2A76]', s):
-            s = re.sub(r'[\u2011\u2024-\u2026\u2033-\u203C\u2047-\u2057\u2329-\u232A\u2A74-\u2A76]',
-                       self.apply_mapping_dict, s)
+        s = re.sub(r'[\u2011\u2024-\u2026\u2033-\u203C\u2047-\u2057\u2329-\u232A\u2A74-\u2A76]',
+                   self.apply_mapping_dict, s)
         # a few math symbols ∭
-        if re.search(r'[\u222C-\u2230\u2A0C]', s):
-            s = re.sub(r'[\u222C-\u2230\u2A0C]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\u222C-\u2230\u2A0C]', self.apply_mapping_dict, s)
         # integer plus period or comma ⒛ 🄆
-        if re.search(r'[\u2488-\u249B\U0001F100-\U0001F10A]', s):
-            s = re.sub(r'[\u2488-\u249B\U0001F100-\U0001F10A]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\u2488-\u249B\U0001F100-\U0001F10A]', self.apply_mapping_dict, s)
         return s
 
     @staticmethod
-    def normalize_non_zero_spaces(s: str, _lv: int) -> str:
+    def normalize_non_zero_spaces(s: str) -> str:
         """
         Map NO-BREAK SPACE, EN QUAD, EM QUAD, EN SPACE, EM SPACE, THREE-PER-EM SPACE, FOUR-PER-EM SPACE,
         SIX-PER-EM SPACE, FIGURE SPACE, PUNCTUATION SPACE, THIN SPACE, HAIR SPACE, NARROW NO-BREAK SPACE,
@@ -719,24 +731,24 @@ class Wildebeest:
         return s
 
     # noinspection SpellCheckingInspection
-    def normalize_half_and_full_width_characters(self, s: str, _lv: int) -> str:
+    def normalize_half_and_full_width_characters(self, s: str) -> str:
         """Replace fullwidth and halfwidth characters such as Ａ with regular Latin letters such as A."""
         if re.search(r'[\uFF01-\uFFEE]', s):
             s = re.sub(r'[\uFF01-\uFFEE]', self.apply_mapping_dict, s)
         return s
 
-    def normalize_font_characters(self, s: str, _lv: int) -> str:
+    def normalize_font_characters(self, s: str) -> str:
         # Replace font-variation characters such as ℂℹ𝒜 to CiA.
         s = re.sub(r'[\u2102-\u2149\uFB20-\uFB29\U0001D400-\U0001D7FF\U0001EE00-\U0001EEBB\U0001FBF0-\U0001FBF9]',
                    self.apply_mapping_dict, s)
         return s
 
-    def normalize_small_characters(self, s: str, _lv: int) -> str:
+    def normalize_small_characters(self, s: str) -> str:
         """Replace small version of characters with normal version, such as small ampersand ﹠ to regular &"""
         s = re.sub(r'[\uFE50-\uFE6F]', self.apply_mapping_dict, s)
         return s
 
-    def normalize_vertical_characters(self, s: str, _lv: int) -> str:
+    def normalize_vertical_characters(self, s: str) -> str:
         """
         Replace vertical version of punctuation characters with normal horizontal version,
         such as vertical em-dash ︱ to horizontal em-dash —
@@ -744,18 +756,16 @@ class Wildebeest:
         s = re.sub(r'[\u309F\u30FF\uFE10-\uFE19\uFE30-\uFE48]', self.apply_mapping_dict, s)
         return s
 
-    def normalize_enclosure_characters(self, s: str, _lv: int) -> str:
+    def normalize_enclosure_characters(self, s: str) -> str:
         """
         Decompose enclosed (circled, squared, parenthesized) characters, e.g. 🄐 to (A).
         """
-        if re.search(r'[\u2460-\u2488\u249C-\u2500\u3036\u3200-\u3250\u3251-\u32C0\u32D0-\u32FF]', s):
-            s = re.sub(r'[\u2460-\u2488\u249C-\u2500\u3036\u3200-\u3250\u3251-\u32C0\u32D0-\u32FF]',
-                       self.apply_mapping_dict, s)
-        if re.search(r'[\U0001F110-\U0001F16A\U0001F201-\U0001F260]', s):
-            s = re.sub(r'[\U0001F110-\U0001F16A\U0001F201-\U0001F260]', self.apply_mapping_dict, s)
+        s = re.sub(r'[\u2460-\u2488\u249C-\u2500\u3036\u3200-\u3250\u3251-\u32C0\u32D0-\u32FF]',
+                   self.apply_mapping_dict, s)
+        s = re.sub(r'[\U0001F110-\U0001F16A\U0001F201-\U0001F260]', self.apply_mapping_dict, s)
         return s
 
-    def normalize_core_compat_characters(self, s: str, _lv: int) -> str:
+    def normalize_core_compat_characters(self, s: str) -> str:
         # Replace Roman numeral characters to ASCII.
         s = re.sub(r'[\u2160-\u217F]', self.apply_mapping_dict, s)
         # Replace Hangul Compatibility characters with Unicode standard Hangul versions, e.g. ㄱ to ᄀ.
@@ -765,7 +775,7 @@ class Wildebeest:
         return s
 
     # noinspection SpellCheckingInspection
-    def map_digits_to_ascii(self, s: str, lv: int) -> str:
+    def map_digits_to_ascii(self, s: str) -> str:
         """
         This function replaces non-ASCII decimal digits by ASCII digits, e.g.
             ۱۲۳ (Arabic) -> 123
@@ -776,14 +786,14 @@ class Wildebeest:
             Ethiopic languages (፱፻ = 900),
         as the characters of those numbers do not match one-to-one onto ASCII digits.
         """
-        if lv & self.char_is_arabic:
+        if self.lv & self.char_is_arabic:
             s = re.sub(r'[\u0660-\u0669]', self.apply_mapping_dict, s)  # ARABIC-INDIC digits
             s = re.sub(r'[\u06F0-\u06F9]', self.apply_mapping_dict, s)  # EXTENDED ARABIC-INDIC digits
-        if lv & self.char_is_thaana_plus:
+        if self.lv & self.char_is_thaana_plus:
             s = re.sub(r'[\u07C0-\u07C9]', self.apply_mapping_dict, s)  # NKO digits
-        if lv & self.char_is_devanagari:
+        if self.lv & self.char_is_devanagari:
             s = re.sub(r'[\u0966-\u096F]', self.apply_mapping_dict, s)  # DEVANAGARI digits
-        if lv & self.char_is_bengali_plus:
+        if self.lv & self.char_is_bengali_plus:
             s = re.sub(r'[\u09E6-\u09EF]', self.apply_mapping_dict, s)  # BENGALI digits
             s = re.sub(r'[\u0A66-\u0A6F]', self.apply_mapping_dict, s)  # GURMUKHI digits
             s = re.sub(r'[\u0AE6-\u0AEF]', self.apply_mapping_dict, s)  # GUJARATI digits
@@ -793,13 +803,13 @@ class Wildebeest:
             s = re.sub(r'[\u0CE6-\u0CEF]', self.apply_mapping_dict, s)  # KANNADA digits
             s = re.sub(r'[\u0D66-\u0D6F]', self.apply_mapping_dict, s)  # MALAYALAM digits
             s = re.sub(r'[\u0DE6-\u0DEF]', self.apply_mapping_dict, s)  # SINHALA LITH digits
-        if lv & self.char_is_thai_plus:
+        if self.lv & self.char_is_thai_plus:
             s = re.sub(r'[\u0E50-\u0E59]', self.apply_mapping_dict, s)  # THAI digits
             s = re.sub(r'[\u0ED0-\u0ED9]', self.apply_mapping_dict, s)  # LAO digits
             s = re.sub(r'[\u0F20-\u0F29]', self.apply_mapping_dict, s)  # TIBETAN digits
             s = re.sub(r'[\u1040-\u1049]', self.apply_mapping_dict, s)  # MYANMAR digits
             s = re.sub(r'[\u1090-\u1099]', self.apply_mapping_dict, s)  # MYANMAR SHAN digits
-        if lv & self.char_is_khmer_plus:
+        if self.lv & self.char_is_khmer_plus:
             s = re.sub(r'[\u17E0-\u17E9]', self.apply_mapping_dict, s)  # KHMER digits
             s = re.sub(r'[\u1810-\u1819]', self.apply_mapping_dict, s)  # MONGOLIAN digits
             s = re.sub(r'[\u1946-\u194F]', self.apply_mapping_dict, s)  # LIMBU digits
@@ -810,7 +820,7 @@ class Wildebeest:
             s = re.sub(r'[\u1BB0-\u1BB9]', self.apply_mapping_dict, s)  # SUNDANESE digits
             s = re.sub(r'[\u1C40-\u1C49]', self.apply_mapping_dict, s)  # LEPCHA digits
             s = re.sub(r'[\u1C50-\u1C59]', self.apply_mapping_dict, s)  # OL CHIKI digits
-        if lv & self.char_is_lisu_plus:
+        if self.lv & self.char_is_lisu_plus:
             s = re.sub(r'[\uA620-\uA629]', self.apply_mapping_dict, s)  # VAI digits
             s = re.sub(r'[\uA8D0-\uA8D9]', self.apply_mapping_dict, s)  # SAURASHTRA digits
             s = re.sub(r'[\uA900-\uA909]', self.apply_mapping_dict, s)  # KAYAH LI digits
@@ -818,7 +828,7 @@ class Wildebeest:
             s = re.sub(r'[\uA9F0-\uA9F9]', self.apply_mapping_dict, s)  # MYANMAR TAI LAING digits
             s = re.sub(r'[\uAA50-\uAA59]', self.apply_mapping_dict, s)  # CHAM digits
             s = re.sub(r'[\uABF0-\uABF9]', self.apply_mapping_dict, s)  # MEETEI MAYEK digits
-        if re.search(r'[\U000104A0-\U0001E959]', s):
+        if self.lv & self.char_is_100_plus_block_of_interest:
             s = re.sub(r'[\U000104A0-\U000104A9]', self.apply_mapping_dict, s)  # OSMANYA digits
             s = re.sub(r'[\U00010D30-\U00010D39]', self.apply_mapping_dict, s)  # HANIFI ROHINGYA digits
             s = re.sub(r'[\U00011066-\U0001106F]', self.apply_mapping_dict, s)  # BRAHMI digits
@@ -842,7 +852,7 @@ class Wildebeest:
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def repair_xml(s: str, _lv: int) -> str:
+    def repair_xml(s: str) -> str:
         # Repair multi-level xml-escapes such as &amp;amp;quot; to &quot;
         s = re.sub(r'(?<=&)(?:amp;)+(?=(?:amp|apos|gt|lt|nbsp|quot|#\d{1,6}|#x[0-9A-F]{1,5});)',
                    '', s, flags=re.IGNORECASE)
@@ -850,13 +860,13 @@ class Wildebeest:
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def repair_url_escapes(s: str, _lv: int) -> str:
+    def repair_url_escapes(s: str) -> str:
         # Repair double url-escapes such as https://en.wikipedia.org/wiki/Jo%25C3%25ABlle_Aubron
         s = re.sub(r"(%)25([CD][0-9A-F]%)25([89AB][0-9A-F])", r"\1\2\3", s)
         s = re.sub(r'(%)25(E[0-9A-F]%)25([89AB][0-9A-F]%)25([89AB][0-9A-F])', r"\1\2\3\4", s)
         return s
 
-    def repair_arabic_tokenization(self, s: str, _lv: int) -> str:
+    def repair_arabic_tokenization(self, s: str) -> str:
         """Detach certain punctuation -_+*|% and ASCII digits from Arabic characters."""
         # s = re.sub(r"([-_+*|%0-9]+)([\u0600-\u06FF])", r"\1 \2", s)
         # s = re.sub(r"([\u0600-\u06FF])([-_+*|%0-9]+)", r"\1 \2", s)
@@ -870,8 +880,8 @@ class Wildebeest:
         ht[key] = ht.get(key, 0) + increment
         return ht[key]
 
-    def ncs_group(self, s: str, ht: dict, group_name: str, group_function: Callable[[str, int], str],
-                  loc_id: str, lv: int) -> str:
+    def ncs_group(self, s: str, ht: dict, group_name: str, group_function: Callable[[str], str],
+                  loc_id: str) -> str:
         """
         ncs_group: normalize and clean string group.
         For a given normalization/cleaning group, call appropriate function and update stats.
@@ -879,7 +889,7 @@ class Wildebeest:
         if f'SKIP-{group_name}' not in ht:
             self.increment_dict_count(ht, f'CALL-{group_name}')  # keep track of how often norm-group is called
             orig_s = s
-            s = group_function(s, lv)
+            s = group_function(s)
             if s != orig_s:
                 count_key = f'COUNT-{group_name}'
                 count = self.increment_dict_count(ht, count_key)
@@ -894,65 +904,71 @@ class Wildebeest:
         number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
         ht['NUMBER-OF-LINES'] = number_of_lines
         orig_s = s
-        lv = 0  # line_char_type_vector: each bit in this vector is to capture character type info, e.g. char_is_arabic
+        self.lv = 0  # line_char_type_vector
+        # Each bit in this vector is to capture character type info, e.g. char_is_arabic
         for char in s:
             char_type_vector = self.char_type_vector_dict.get(char, 0)
             if char_type_vector:
                 # A set bit in the lv means that the bit has been set by at least one char.
                 # So we will easily know whether e.g. a line contains an Arabic character.
                 # If not, some Arabic-specific normalization steps can be skipped to improve run-time.
-                lv = lv | char_type_vector
-        if lv & self.char_is_encoding_repair_anchor:
-            s = self.ncs_group(s, ht, 'repair-encodings-errors', self.repair_encoding_errors, loc_id, lv)
+                self.lv = self.lv | char_type_vector
+        if self.lv & self.char_is_encoding_repair_anchor:
+            s = self.ncs_group(s, ht, 'repair-encodings-errors', self.repair_encoding_errors, loc_id)
         # Cleaning step 'del-surrogate' is an alternative/backup to windows-1252.
         # It should not be skipped because surrogates are not printable.
-        s = self.ncs_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id, lv)
-        if lv & self.char_is_deletable_control_character:
-            s = self.ncs_group(s, ht, 'del-ctrl-char', self.delete_control_characters, loc_id, lv)
-        if lv & self.char_is_deletable_arabic_diacritic:
-            s = self.ncs_group(s, ht, 'del-arabic-diacr', self.delete_arabic_diacritics, loc_id, lv)
-        if lv & self.char_is_deletable_hebrew_diacritic:
-            s = self.ncs_group(s, ht, 'del-hebrew-diacr', self.delete_hebrew_diacritics, loc_id, lv)
-        if lv & self.char_is_core_compatibility:
-            s = self.ncs_group(s, ht, 'core-compat', self.normalize_core_compat_characters, loc_id, lv)
-        if lv & self.char_is_arabic_presentation_form:
-            s = self.ncs_group(s, ht, 'pres-form', self.normalize_arabic_pres_form_characters, loc_id, lv)
-        if lv & self.char_is_decomposable_ligature:
-            s = self.ncs_group(s, ht, 'ligatures', self.normalize_ligatures, loc_id, lv)
-        if lv & self.char_is_decomposable_sign_symbol:
-            s = self.ncs_group(s, ht, 'signs-and-symbols', self.normalize_signs_and_symbols, loc_id, lv)
-        s = self.ncs_group(s, ht, 'cjk', self.normalize_cjk, loc_id, lv)
-        s = self.ncs_group(s, ht, 'width', self.normalize_half_and_full_width_characters, loc_id, lv)
-        if lv & self.char_is_font_small_vertical:
-            s = self.ncs_group(s, ht, 'font', self.normalize_font_characters, loc_id, lv)
-            s = self.ncs_group(s, ht, 'small', self.normalize_small_characters, loc_id, lv)
-            s = self.ncs_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id, lv)
-        s = self.ncs_group(s, ht, 'enclosure', self.normalize_enclosure_characters, loc_id, lv)
-        s = self.ncs_group(s, ht, 'hangul', self.normalize_hangul, loc_id, lv)
-        s = self.ncs_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id, lv)
-        if (lv & self.char_is_composable_anchor_with_combining) and (lv & self.char_is_composable_combining_diacritic):
-            s = self.ncs_group(s, ht, 'combining-compose', self.apply_combining_modifiers_compose, loc_id, lv)
-        if lv & self.char_is_decomposable_with_combining:
-            s = self.ncs_group(s, ht, 'combining-decompose', self.apply_combining_modifiers_decompose, loc_id, lv)
-        s = self.ncs_group(s, ht, 'punct', self.normalize_punctuation, loc_id, lv)
-        s = self.ncs_group(s, ht, 'punct-f', self.normalize_f_punctuation, loc_id, lv)
-        s = self.ncs_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id, lv)
-        if lv & self.char_is_mappable_decimal_digit:
-            s = self.ncs_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id, lv)
-        if lv & self.char_is_arabic:
+        s = self.ncs_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id)
+        if self.lv & self.char_is_deletable_control_character:
+            s = self.ncs_group(s, ht, 'del-ctrl-char', self.delete_control_characters, loc_id)
+        if self.lv & self.char_is_deletable_arabic_diacritic:
+            s = self.ncs_group(s, ht, 'del-arabic-diacr', self.delete_arabic_diacritics, loc_id)
+        if self.lv & self.char_is_deletable_hebrew_diacritic:
+            s = self.ncs_group(s, ht, 'del-hebrew-diacr', self.delete_hebrew_diacritics, loc_id)
+        if self.lv & self.char_is_core_compatibility:
+            s = self.ncs_group(s, ht, 'core-compat', self.normalize_core_compat_characters, loc_id)
+        if self.lv & self.char_is_arabic_presentation_form:
+            s = self.ncs_group(s, ht, 'pres-form', self.normalize_arabic_pres_form_characters, loc_id)
+        if self.lv & self.char_is_decomposable_ligature:
+            s = self.ncs_group(s, ht, 'ligatures', self.normalize_ligatures, loc_id)
+        if self.lv & self.char_is_decomposable_sign_symbol:
+            s = self.ncs_group(s, ht, 'signs-and-symbols', self.normalize_signs_and_symbols, loc_id)
+        if self.lv & self.char_is_decomposable_cjk:
+            s = self.ncs_group(s, ht, 'cjk', self.normalize_cjk, loc_id)
+        s = self.ncs_group(s, ht, 'width', self.normalize_half_and_full_width_characters, loc_id)
+        if self.lv & self.char_is_font_small_vertical:
+            s = self.ncs_group(s, ht, 'font', self.normalize_font_characters, loc_id)
+            s = self.ncs_group(s, ht, 'small', self.normalize_small_characters, loc_id)
+            s = self.ncs_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
+        if self.lv & self.char_is_decomposable_enclosure:
+            s = self.ncs_group(s, ht, 'enclosure', self.normalize_enclosure_characters, loc_id)
+        s = self.ncs_group(s, ht, 'hangul', self.normalize_hangul, loc_id)
+        s = self.ncs_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id)
+        if (self.lv & self.char_is_composable_anchor_with_combining) \
+                and (self.lv & self.char_is_composable_combining_diacritic):
+            s = self.ncs_group(s, ht, 'combining-compose', self.apply_combining_modifiers_compose, loc_id)
+        if self.lv & self.char_is_decomposable_with_combining:
+            s = self.ncs_group(s, ht, 'combining-decompose', self.apply_combining_modifiers_decompose, loc_id)
+        if self.lv & self.char_is_core_compatibility:
+            s = self.ncs_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
+        if self.lv & self.char_is_decomposable_f_punctuation:
+            s = self.ncs_group(s, ht, 'punct-f', self.normalize_f_punctuation, loc_id)
+        s = self.ncs_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
+        if self.lv & self.char_is_mappable_decimal_digit:
+            s = self.ncs_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id)
+        if self.lv & self.char_is_arabic:
             if lang_code == 'fas':
-                s = self.ncs_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id, lv)
+                s = self.ncs_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id)
             elif lang_code == 'pas':
-                s = self.ncs_group(s, ht, 'pashto-char', self.normalize_pashto_characters, loc_id, lv)
+                s = self.ncs_group(s, ht, 'pashto-char', self.normalize_pashto_characters, loc_id)
             else:
-                s = self.ncs_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id, lv)
-        if lv & self.char_is_xml_tag_anchor:
-            s = self.ncs_group(s, ht, 'repair-xml', self.repair_xml, loc_id, lv)
-        if lv & self.char_is_url_escape_anchor:
-            s = self.ncs_group(s, ht, 'repair-url-espaces', self.repair_url_escapes, loc_id, lv)
-        if ((lv & self.char_is_arabic)
-                and ((lv & self.char_is_detachable_from_token) or (lv & self.char_is_mappable_decimal_digit))):
-            s = self.ncs_group(s, ht, 'repair-token', self.repair_arabic_tokenization, loc_id, lv)
+                s = self.ncs_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
+        if self.lv & self.char_is_xml_tag_anchor:
+            s = self.ncs_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
+        if self.lv & self.char_is_url_escape_anchor:
+            s = self.ncs_group(s, ht, 'repair-url-espaces', self.repair_url_escapes, loc_id)
+        if ((self.lv & self.char_is_arabic)
+                and ((self.lv & self.char_is_detachable_from_token) or (self.lv & self.char_is_mappable_decimal_digit))):
+            s = self.ncs_group(s, ht, 'repair-token', self.repair_arabic_tokenization, loc_id)
         if s != orig_s:
             self.increment_dict_count(ht, 'COUNT-ALL')
         return s
