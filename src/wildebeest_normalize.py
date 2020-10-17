@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Written by Ulf Hermjakob, USC/ISI
 Ported Pashto and Farsi-specific normalization from Perl to Python in August 2020.
@@ -36,7 +38,11 @@ List of available normalization/cleaning-types (default: all are applied):
  * del-hebrew-diacr (e.g. deletes Hebrew points)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
  * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
- * punct-f (e.g. Arabic exclamation mark etc. to ASCII equivalent)
+ * punct-dash (e.g. maps various dashes, hyphens, minus signs to ASCII hyphen-minus)
+ * punct-arabic (e.g. Arabic exclamation mark etc. to ASCII equivalent)
+ * punct-cjk (e.g. Chinese Ideographic Full Stop etc. to ASCII equivalent)
+ * punct-greek (e.g. Greek question mark etc. to ASCII equivalent)
+ * punct-misc-f (e.g. Tibetan punctuation to ASCII equivalent)
  * space (e.g. normalizes non-zero spaces to normal space)
  * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
  * repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
@@ -56,8 +62,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.12'
-last_mod_date = 'October 13, 2020'
+__version__ = '0.4.13'
+last_mod_date = 'October 16, 2020'
 
 
 class Wildebeest:
@@ -116,7 +122,17 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_composable_combining_diacritic = bit_vector
         bit_vector = bit_vector << 1
-        self.char_is_decomposable_f_punctuation = bit_vector
+        self.char_is_decomposable_arabic_punctuation = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_cjk_punctuation = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_greek_punctuation = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_misc_f_punctuation = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_dash = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_decomposable_non_zero_space = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_decomposable_enclosure = bit_vector
         bit_vector = bit_vector << 1
@@ -164,7 +180,6 @@ class Wildebeest:
         # Lisu, Vai Syllable, Banum, Sloti Nagri, Phags-Pa, Saurashtra,
         # Kayah Li, Rejang, Javanese, Cham, Tai Viet, Meetei Mayek
         self.char_is_lisu_plus = bit_vector
-        # self.char_is_space = bit
         # self.char_is_greek = bit
         # self.char_is_cyrillic = bit
         # self.char_is_armenian = bit
@@ -210,6 +225,18 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_decomposable_ligature
+        # Decomposable dash
+        for code_point in chain([0x00AD],
+                                range(0x2010, 0x2016),
+                                [0x2212, 0x2500, 0x2501, 0x2E3A, 0x2E3B, 0xFE31, 0xFE32, 0xFE58, 0xFE63, 0xFF0D]):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_decomposable_dash
+        # Decomposable non-zero space
+        for code_point in chain(range(0x2000, 0x200B), [0x00A0, 0x202F, 0x205F, 0x3000]):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_decomposable_non_zero_space
         # Detachable from token
         for char in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_', '+', '*', '|', '%']:
             self.char_type_vector_dict[char] \
@@ -297,9 +324,20 @@ class Wildebeest:
                 elif (code_point == 0x00B5) or (0x03D0 <= code_point <= 0x03F9) or (0x20A8 <= code_point <= 0x213B):
                     self.char_type_vector_dict[source] \
                         = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_sign_symbol
-                elif (0x0340 <= code_point <= 0x0387) or (0x060C <= code_point <= 0x06D4) or (code_point == 0x0F0C):
+                elif 0x0340 <= code_point <= 0x0387:
                     self.char_type_vector_dict[source] \
-                        = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_f_punctuation
+                        = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_greek_punctuation
+                elif 0x060C <= code_point <= 0x06D4:
+                    self.char_type_vector_dict[source] \
+                        = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_arabic_punctuation
+                elif ((0x3008 <= code_point <= 0x3011) or (0x3014 <= code_point <= 0x301B)  # Chinese brackets
+                        or (0xFF61 <= code_point <= 0xFF64)  # Chinese halfwidth punctuation
+                        or (code_point in [0x3001, 0x3002, 0xFE11, 0xFE12, 0xFE51])):  # periods, commas
+                    self.char_type_vector_dict[source] \
+                        = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_cjk_punctuation
+                elif code_point == 0x0F0C:
+                    self.char_type_vector_dict[source] \
+                        = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_misc_f_punctuation
         elif filename_core == 'Enclosure':
             if len(source) >= 1:
                 char = source[0]
@@ -681,8 +719,7 @@ class Wildebeest:
         return s
 
     @staticmethod
-    def normalize_f_punctuation(s: str) -> str:
-        # Arabic
+    def normalize_arabic_punctuation(s: str) -> str:
         s = s.replace('\u0640', '')         # U+0640 Arabic tatweel (always to be deleted)
         s = s.replace('\u060C', ',')        # U+060C Arabic comma
         s = s.replace('\u060D', '/')        # U+060C Arabic date separator
@@ -693,25 +730,88 @@ class Wildebeest:
         s = s.replace('\u066C', ',')        # U+066C Arabic thousands separator
         s = s.replace('\u066D', '*')        # U+066D Arabic five pointed star
         s = s.replace('\u06D4', '.')        # U+06D4 Arabic full stop
-        # Greek
+        return s
+
+    @staticmethod
+    def normalize_greek_punctuation(s: str) -> str:
         s = s.replace('\u0340', '\u0300')   # U+0340 combining grave tone mark -> combining grave accent
         s = s.replace('\u0341', '\u0301')   # U+0341 combining acute tone mark -> combining acute accent
         s = s.replace('\u0343', '\u0313')   # U+0342 combining Greek koronis -> combining comma above
         s = s.replace('\u0374', '\u02B9')   # U+0374 Greek numeral sign -> modifier letter prime
         s = s.replace('\u037E', ';')        # U+037E Greek question mark
         s = s.replace('\u0387', '\u00B7')   # U+0387 Greek ano teleia -> middle dot
+        return s
+
+    @staticmethod
+    def normalize_cjk_punctuation(s: str) -> str:
+        s = s.replace('\u3001', ',')        # U+3001 ideographic comma
+        s = s.replace('\u3002', '.')        # U+3002 ideographic full stop
+        s = s.replace('\u3008', '<')        # U+3008 left angle bracket
+        s = s.replace('\u3009', '>')        # U+3009 right angle bracket
+        s = s.replace('\u300A', '\u201C')   # U+300A left double angle bracket -> left double quotation mark
+        s = s.replace('\u300B', '\u201D')   # U+300B right double angle bracket -> right double quotation mark
+        s = s.replace('\u300C', '\u201C')   # U+300C left corner bracket -> left double quotation mark
+        s = s.replace('\u300D', '\u201D')   # U+300D right corner bracket -> right double quotation mark
+        s = s.replace('\u300E', '\u201C')   # U+300E left white corner bracket -> left double quotation mark
+        s = s.replace('\u300F', '\u201D')   # U+300F right white corner bracket -> right double quotation mark
+        s = s.replace('\u3010', '[')        # U+3010 left black lenticular bracket
+        s = s.replace('\u3011', ']')        # U+3011 right black lenticular bracket
+        s = s.replace('\u3014', '[')        # U+3014 left tortoise shell bracket
+        s = s.replace('\u3015', ']')        # U+3015 right tortoise shell bracket
+        s = s.replace('\u3016', '[')        # U+3016 left white lenticular bracket
+        s = s.replace('\u3017', ']')        # U+3017 right white lenticular bracket
+        s = s.replace('\u3018', '[')        # U+3018 left white tortoise shell bracket
+        s = s.replace('\u3019', ']')        # U+3019 right white tortoise shell bracket
+        s = s.replace('\u301A', '[')        # U+301A left white square bracket
+        s = s.replace('\u301B', ']')        # U+301B right white square bracket
+        return s
+
+    @staticmethod
+    def normalize_misc_f_punctuation(s: str) -> str:
         # Tibetan
         s = s.replace('\u0F0C', '\u0F0B')   # U+0F0C Tibetan no-break morpheme delimiter
         return s
 
     def normalize_punctuation(self, s: str) -> str:
-        # punctuation 〈〉
-        s = re.sub(r'[\u2011\u2024-\u2026\u2033-\u203C\u2047-\u2057\u2329-\u232A\u2A74-\u2A76]',
-                   self.apply_mapping_dict, s)
-        # a few math symbols ∭
-        s = re.sub(r'[\u222C-\u2230\u2A0C]', self.apply_mapping_dict, s)
+        # Excludes cases in normalize_dashes.
+        # punctuation
+        s = s.replace('\u00AB', '\u201C')  # U+201E left double-angle quotation mark -> left double quotation mark
+        s = s.replace('\u00BB', '\u201D')  # U+201F right double-angle quotation mark -> right double quotation mark
+        s = s.replace('\u201A', '\u2018')  # U+201A single low-9 quotation mark -> left single quotation mark
+        s = s.replace('\u201B', '\u2018')  # U+201B single high-reversed-9 quotation mark -> left single quotation mark
+        s = s.replace('\u201E', '\u201C')  # U+201E double low-9 quotation mark -> left double quotation mark
+        s = s.replace('\u201F', '\u201C')  # U+201F double high-reversed-9 quotation mark -> left double quotation mark
+        s = s.replace('\u2039', '\u2018')  # U+2039 left single-angle quotation mark -> left single quotation mark
+        s = s.replace('\u203A', '\u2019')  # U+203A right single-angle quotation mark -> right single quotation mark
+        s = re.sub(r'[\u2011\u2024-\u2026\u2033-\u203C\u2047-\u2057]', self.apply_mapping_dict, s)  # e.g. …
+        s = re.sub(r'[\u2329-\u232A\u2A74-\u2A76]',  self.apply_mapping_dict, s)                    # e.g. 〈〉
+        # math symbols
+        s = s.replace('\u2212', '-')       # U+2212 minus sign
+        s = s.replace('\u2215', '/')       # U+2215 division slash
+        s = s.replace('\u2216', '\\')      # U+2216 set minus
+        s = s.replace('\u2217', '*')       # U+2217 asterisk operator
+        s = s.replace('\u2218', '\u25E6')  # U+2218 ring operator -> white bullet
+        s = s.replace('\u2219', '\u2022')  # U+2219 bullet operator -> bullet
+        s = s.replace('\u2223', '|')       # U+2223 divides
+        s = s.replace('\u2236', ':')       # U+2236 ratio
+        s = s.replace('\u2254', ':=')      # U+2254 colon equals
+        s = s.replace('\u2255', '=:')      # U+2255 equals colon
+        s = s.replace('\u22C5', '\u00B7')  # U+22C5 dot operator -> middle dot
+        s = re.sub(r'[\u222C-\u2230\u2A0C]', self.apply_mapping_dict, s)  # e.g. ∭
         # integer plus period or comma ⒛ 🄆
         s = re.sub(r'[\u2488-\u249B\U0001F100-\U0001F10A]', self.apply_mapping_dict, s)
+        return s
+
+    @staticmethod
+    def normalize_dash_punctuation(s: str) -> str:
+        s = s.replace('\u00AD', '-')  # U+00AD soft hyphen
+        # hyphen, non-breaking hyphen, figure dash, en dash, em dash, horizontal bar
+        s = re.sub(r'[\u2010-\u2015]', '-', s)
+        s = s.replace('\u2212', '-')  # U+2212 minus sign
+        s = s.replace('\u2500', '-')  # U+2500 box drawings light horizontal
+        s = s.replace('\u2501', '-')  # U+2501 box drawings heavy horizontal,
+        s = s.replace('\u2E3A', '-')  # U+2E3A two-em dash
+        s = s.replace('\u2E3B', '-')  # U+2E3B three-em dash
         return s
 
     @staticmethod
@@ -950,9 +1050,18 @@ class Wildebeest:
             s = self.ncs_group(s, ht, 'combining-decompose', self.apply_combining_modifiers_decompose, loc_id)
         if self.lv & self.char_is_core_compatibility:
             s = self.ncs_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
-        if self.lv & self.char_is_decomposable_f_punctuation:
-            s = self.ncs_group(s, ht, 'punct-f', self.normalize_f_punctuation, loc_id)
-        s = self.ncs_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
+        if self.lv & self.char_is_decomposable_arabic_punctuation:
+            s = self.ncs_group(s, ht, 'punct-arabic', self.normalize_arabic_punctuation, loc_id)
+        if self.lv & self.char_is_decomposable_cjk_punctuation:
+            s = self.ncs_group(s, ht, 'punct-cjk', self.normalize_cjk_punctuation, loc_id)
+        if self.lv & self.char_is_decomposable_greek_punctuation:
+            s = self.ncs_group(s, ht, 'punct-greek', self.normalize_greek_punctuation, loc_id)
+        if self.lv & self.char_is_decomposable_misc_f_punctuation:
+            s = self.ncs_group(s, ht, 'punct-misc-f', self.normalize_misc_f_punctuation, loc_id)
+        if self.lv & self.char_is_decomposable_dash:
+            s = self.ncs_group(s, ht, 'punct-dash', self.normalize_dash_punctuation, loc_id)
+        if self.lv & self.char_is_decomposable_non_zero_space:
+            s = self.ncs_group(s, ht, 'space', self.normalize_non_zero_spaces, loc_id)
         if self.lv & self.char_is_mappable_decimal_digit:
             s = self.ncs_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id)
         if self.lv & self.char_is_arabic:
@@ -967,7 +1076,8 @@ class Wildebeest:
         if self.lv & self.char_is_url_escape_anchor:
             s = self.ncs_group(s, ht, 'repair-url-espaces', self.repair_url_escapes, loc_id)
         if ((self.lv & self.char_is_arabic)
-                and ((self.lv & self.char_is_detachable_from_token) or (self.lv & self.char_is_mappable_decimal_digit))):
+                and ((self.lv & self.char_is_detachable_from_token)
+                     or (self.lv & self.char_is_mappable_decimal_digit))):
             s = self.ncs_group(s, ht, 'repair-token', self.repair_arabic_tokenization, loc_id)
         if s != orig_s:
             self.increment_dict_count(ht, 'COUNT-ALL')
@@ -990,7 +1100,8 @@ def main(argv):
                       'del-hebrew-diacr', 'core-compat', 'pres-form', 'ligatures', 'signs-and-symbols', 'cjk',
                       'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
                       'repair-combining', 'combining-compose', 'combining-decompose',
-                      'punct', 'punct-f', 'space', 'digit',
+                      'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
+                      'space', 'digit',
                       'arabic-char', 'farsi-char', 'pashto-char', 'repair-xml', 'repair-url-escapes', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
