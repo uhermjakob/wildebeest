@@ -432,7 +432,7 @@ class Wildebeest:
             surrogate_char = chr(index + 0xDC00)
             self.set_mapping_dict(surrogate_char, latin1_char, index, None, 's3')
         src_dir_path = os.path.dirname(os.path.realpath(__file__))
-        data_dir_path = os.path.join(src_dir_path, "../data")
+        data_dir_path = os.path.join(src_dir_path, "data")
         for tsv_filename in ('PythonWildebeestMapping.tsv',
                              'ArabicPresentationFormMapping.tsv',
                              'CJKCompatibilityMapping.tsv',

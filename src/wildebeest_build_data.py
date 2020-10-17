@@ -20,7 +20,7 @@ from pathlib import Path
 import re
 import unicodedata as ud
 import sys
-from wildebeest.src import wildebeest_normalize
+from wildebeest import wildebeest_normalize
 
 log.basicConfig(level=log.INFO)
 
@@ -399,7 +399,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
         n_input_lines = 0
         output_lines = []
         current_function_name = ''
-        with open('wildebeest_normalize.py', 'r', encoding='utf-8') as f_in:
+        with open('../wildebeest_normalize.py', 'r', encoding='utf-8') as f_in:
             for line in f_in:
                 n_input_lines += 1
                 if re.match(r'\s*#', line):

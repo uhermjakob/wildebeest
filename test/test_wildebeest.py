@@ -4,7 +4,7 @@ Pytest for wildebeest_normalize.py
 """
 # -*- encoding: utf-8 -*-
 import logging as log
-import wildebeest.src.wildebeest_normalize as wb_norm
+import wildebeest.wildebeest_normalize as wb_norm
 
 log.basicConfig(level=log.INFO)
 
