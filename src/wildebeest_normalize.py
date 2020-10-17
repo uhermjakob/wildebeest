@@ -146,9 +146,11 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_detachable_from_token = bit_vector
         bit_vector = bit_vector << 1
-        self.char_is_xml_tag_anchor = bit_vector
+        self.char_is_ampersand = bit_vector
         bit_vector = bit_vector << 1
-        self.char_is_url_escape_anchor = bit_vector
+        self.char_is_semicolon = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_percent_sign = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_encoding_repair_anchor = bit_vector
         bit_vector = bit_vector << 1
@@ -164,12 +166,20 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_deletable_arabic_diacritic = bit_vector
         bit_vector = bit_vector << 1
+        self.char_is_mappable_in_arabic = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_mappable_in_farsi = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_mappable_in_pashto = bit_vector
+        bit_vector = bit_vector << 1
         self.char_is_thaana_plus = bit_vector  # Thaana, Nko, Samaritan, Mandaic, Syriac
         bit_vector = bit_vector << 1
         self.char_is_devanagari = bit_vector
         bit_vector = bit_vector << 1
         # Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala
         self.char_is_bengali_plus = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_nukta = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_thai_plus = bit_vector  # Thai, Lao, Tibetan, Myanmar, Georgian
         bit_vector = bit_vector << 1
@@ -180,11 +190,17 @@ class Wildebeest:
         # Lisu, Vai Syllable, Banum, Sloti Nagri, Phags-Pa, Saurashtra,
         # Kayah Li, Rejang, Javanese, Cham, Tai Viet, Meetei Mayek
         self.char_is_lisu_plus = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_surrogate = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_fullwidth_or_halfwidth = bit_vector
+        bit_vector = bit_vector << 1
+        # Korean
+        self.char_is_mappable_hangul = bit_vector
         # self.char_is_greek = bit
         # self.char_is_cyrillic = bit
         # self.char_is_armenian = bit
         # self.char_is_japanese_kana = bit
-        # self.char_is_korean = bit
         self.range_init_char_type_vector_dict()
         #
         # Initialize general mapping dictionary, which normalizes source strings (of length 1-3 characters)
@@ -220,6 +236,11 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_deletable_control_character
+        # Surrogate
+        for code_point in range(0xDC80, 0xDD00):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_surrogate
         # Decomposable ligatures (partial list)
         for code_point in [0x0E33, 0x0EB3, 0x0EDC, 0x0EDD, 0x1E9B]:
             char = chr(code_point)
@@ -242,8 +263,14 @@ class Wildebeest:
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_detachable_from_token
         # XML, URL escapes
-        self.char_type_vector_dict['&'] = self.char_type_vector_dict.get('&', 0) | self.char_is_xml_tag_anchor
-        self.char_type_vector_dict['%'] = self.char_type_vector_dict.get('%', 0) | self.char_is_url_escape_anchor
+        self.char_type_vector_dict['&'] = self.char_type_vector_dict.get('&', 0) | self.char_is_ampersand
+        self.char_type_vector_dict[';'] = self.char_type_vector_dict.get(';', 0) | self.char_is_semicolon
+        self.char_type_vector_dict['%'] = self.char_type_vector_dict.get('%', 0) | self.char_is_percent_sign
+        # Fullwidth, halfwidth
+        for code_point in range(0xFF01, 0xFFEF):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_fullwidth_or_halfwidth
         # Hebrew
         for code_point in chain(range(0x0590, 0x0600), range(0xFB1D, 0xFB50)):
             char = chr(code_point)
@@ -266,6 +293,18 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_deletable_arabic_diacritic
+        for code_point in [0x06A9, 0x06CC, 0x0675, 0x0676, 0x0678, 0x067C, 0x0689, 0x0693, 0x06AB, 0x06BC, 0x06CD]:
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_mappable_in_arabic
+        for code_point in [0x064A, 0x0649, 0x06CD, 0x0643, 0x06AB, 0x067C, 0x0689, 0x0693, 0x06BC, 0x06CD]:
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_mappable_in_farsi
+        for code_point in [0x0649, 0x06CD, 0x0643]:
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_mappable_in_pashto
         # Thaana+
         for code_point in range(0x0780, 0x08A0):
             char = chr(code_point)
@@ -281,11 +320,25 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_bengali_plus
+        # Nukta
+        for code_point in [0x093C, 0x09BC, 0x0A3C, 0x0ABC, 0x0B3C, 0x0CBC, 0x1C37, 0x110BA, 0x11173, 0x111CA, 0x11236,
+                           0x112E9, 0x1133C, 0x11446, 0x114C3, 0x115C0, 0x116B7, 0x1183A, 0x11943, 0x11D42, 0x1E94A]:
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_nukta
+            if code_point >= 0x10000:
+                self.char_type_vector_dict[char] \
+                    = self.char_type_vector_dict.get(char, 0) | self.char_is_100_plus_block_of_interest
         # Thai+
         for code_point in range(0x0E00, 0x1100):
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_thai_plus
+        # Korean
+        for code_point in range(0x1161, 0x1176):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_mappable_hangul
         # Khmer+
         for code_point in chain(range(0x1780, 0x1AB0), range(0x1B00, 0x1C80), range(0x1CC0, 0x1CD0)):
             char = chr(code_point)
@@ -489,6 +542,7 @@ class Wildebeest:
     # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_arabic_characters(s: str) -> str:
+        # For any additions below, also update setting of char_is_mappable_in_arabic
         # Some of the below, particularly the alef maksura, might be too aggressive. Too be verified.
         #    More conservative: keep alef maksura and map final/isolated Farsi yeh to alef maksura.
         # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
@@ -509,6 +563,7 @@ class Wildebeest:
     # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_farsi_characters(s: str) -> str:
+        # For any additions below, also update setting of char_is_mappable_in_farsi
         s = s.replace('\u064A', '\u06CC')  # Arabic to Farsi yeh
         s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
         s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
@@ -523,6 +578,7 @@ class Wildebeest:
 
     @staticmethod
     def normalize_pashto_characters(s: str) -> str:
+        # For any additions below, also update setting of char_is_mappable_in_pashto
         s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
         s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
         s = s.replace('\u0643', '\u06A9')  # Arabic kaf to keheh
@@ -670,19 +726,21 @@ class Wildebeest:
                        self.hangul_jamo_triple_match_to_syllable, s)
         return s
 
-    @staticmethod
-    def repair_combining_modifiers(s: str) -> str:
+    def repair_combining_modifiers_with_nukta(self, s: str) -> str:
         """This function repairs the order of combining modifiers."""
         # If an Indic vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
-        if re.search(r'[\u093C-\u1C37]', s):
+        if self.lv & self.char_is_devanagari:
             s = re.sub(r'([\u093E-\u094D])(\u093C)', r'\2\1', s)  # Devanagari
+        # Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala
+        if self.lv & self.char_is_bengali_plus:
             s = re.sub(r'([\u09BE-\u09CD])(\u09BC)', r'\2\1', s)  # Bengali
             s = re.sub(r'([\u0A3E-\u0A4D])(\u0A3C)', r'\2\1', s)  # Gurmukhi
             s = re.sub(r'([\u0ABE-\u0ACD])(\u0ABC)', r'\2\1', s)  # Gujarati
             s = re.sub(r'([\u0B3E-\u0B4D])(\u0B3C)', r'\2\1', s)  # Oriya
             s = re.sub(r'([\u0CBE-\u0CCD])(\u0CBC)', r'\2\1', s)  # Kannada
+        if self.lv & self.char_is_khmer_plus:
             s = re.sub(r'([\u1C26-\u1C2C])(\u1C37)', r'\2\1', s)  # Lepcha
-        if re.search(r'[\U000110B0-\U0001183A]', s):
+        if self.lv & self.char_is_100_plus_block_of_interest:
             s = re.sub(r'([\U000110B0-\U000110B8])(\U000110BA)', r'\2\1', s)  # Kaithi
             s = re.sub(r'([\U0001133E-\U0001134D])(\U0001133C)', r'\2\1', s)  # Grantha
             s = re.sub(r'([\U0001182C-\U00011839])(\U0001183A)', r'\2\1', s)  # Dogra
@@ -694,7 +752,8 @@ class Wildebeest:
     def normalize_devanagari_diacritics(s: str) -> str:
         """
         NOTE: This function is no longer used in wildebeest.
-        It has been subsumed by functions repair_combining_modifiers and the more general apply_combining_modifiers.
+        It has been subsumed by functions repair_combining_modifiers_with_nukta and the more general
+        apply_combining_modifiers.
         This function normalizes strings in the Devanagari script (used in Hindi etc.) by
          - mapping letters to the canonical composed or decomposed form and
          - putting diacritics in the canonical order (nukta before vowel sign).
@@ -1017,7 +1076,8 @@ class Wildebeest:
             s = self.ncs_group(s, ht, 'repair-encodings-errors', self.repair_encoding_errors, loc_id)
         # Cleaning step 'del-surrogate' is an alternative/backup to windows-1252.
         # It should not be skipped because surrogates are not printable.
-        s = self.ncs_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id)
+        if self.lv & self.char_is_surrogate:
+            s = self.ncs_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id)
         if self.lv & self.char_is_deletable_control_character:
             s = self.ncs_group(s, ht, 'del-ctrl-char', self.delete_control_characters, loc_id)
         if self.lv & self.char_is_deletable_arabic_diacritic:
@@ -1034,15 +1094,18 @@ class Wildebeest:
             s = self.ncs_group(s, ht, 'signs-and-symbols', self.normalize_signs_and_symbols, loc_id)
         if self.lv & self.char_is_decomposable_cjk:
             s = self.ncs_group(s, ht, 'cjk', self.normalize_cjk, loc_id)
-        s = self.ncs_group(s, ht, 'width', self.normalize_half_and_full_width_characters, loc_id)
+        if self.lv & self.char_is_fullwidth_or_halfwidth:
+            s = self.ncs_group(s, ht, 'width', self.normalize_half_and_full_width_characters, loc_id)
         if self.lv & self.char_is_font_small_vertical:
             s = self.ncs_group(s, ht, 'font', self.normalize_font_characters, loc_id)
             s = self.ncs_group(s, ht, 'small', self.normalize_small_characters, loc_id)
             s = self.ncs_group(s, ht, 'vertical', self.normalize_vertical_characters, loc_id)
         if self.lv & self.char_is_decomposable_enclosure:
             s = self.ncs_group(s, ht, 'enclosure', self.normalize_enclosure_characters, loc_id)
-        s = self.ncs_group(s, ht, 'hangul', self.normalize_hangul, loc_id)
-        s = self.ncs_group(s, ht, 'repair-combining', self.repair_combining_modifiers, loc_id)
+        if self.lv & self.char_is_mappable_hangul:
+            s = self.ncs_group(s, ht, 'hangul', self.normalize_hangul, loc_id)
+        if self.lv & self.char_is_nukta:
+            s = self.ncs_group(s, ht, 'repair-combining', self.repair_combining_modifiers_with_nukta, loc_id)
         if (self.lv & self.char_is_composable_anchor_with_combining) \
                 and (self.lv & self.char_is_composable_combining_diacritic):
             s = self.ncs_group(s, ht, 'combining-compose', self.apply_combining_modifiers_compose, loc_id)
@@ -1066,14 +1129,17 @@ class Wildebeest:
             s = self.ncs_group(s, ht, 'digit', self.map_digits_to_ascii, loc_id)
         if self.lv & self.char_is_arabic:
             if lang_code == 'fas':
-                s = self.ncs_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id)
+                if (self.lv & self.char_is_mappable_in_farsi) or (self.lv & self.char_is_arabic_presentation_form):
+                    s = self.ncs_group(s, ht, 'farsi-char', self.normalize_farsi_characters, loc_id)
             elif lang_code == 'pas':
-                s = self.ncs_group(s, ht, 'pashto-char', self.normalize_pashto_characters, loc_id)
+                if (self.lv & self.char_is_mappable_in_pashto) or (self.lv & self.char_is_arabic_presentation_form):
+                    s = self.ncs_group(s, ht, 'pashto-char', self.normalize_pashto_characters, loc_id)
             else:
-                s = self.ncs_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
-        if self.lv & self.char_is_xml_tag_anchor:
+                if (self.lv & self.char_is_mappable_in_arabic) or (self.lv & self.char_is_arabic_presentation_form):
+                    s = self.ncs_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
+        if (self.lv & self.char_is_ampersand) and (self.lv & self.char_is_semicolon):
             s = self.ncs_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
-        if self.lv & self.char_is_url_escape_anchor:
+        if self.lv & self.char_is_percent_sign:
             s = self.ncs_group(s, ht, 'repair-url-espaces', self.repair_url_escapes, loc_id)
         if ((self.lv & self.char_is_arabic)
                 and ((self.lv & self.char_is_detachable_from_token)
