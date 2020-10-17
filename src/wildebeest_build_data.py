@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Written by Ulf Hermjakob, USC/ISI
 This file contains functions that build data files used by wildebeest_normalize.py
@@ -407,9 +409,9 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                     current_function_name = mf.group(1)
                 elif current_function_name in ['normalize_arabic_characters', 'normalize_farsi_characters',
                                                'normalize_pashto_characters',
-                                               'normalize_arabic_punctuation', 'normalize_font_characters',
-                                               'normalize_devanagari_diacritics', 'normalize_hangul',
-                                               'normalize_enclosure_characters', 'normalize_punctuation',
+                                               'normalize_font_characters',
+                                               'normalize_hangul', 'normalize_devanagari_diacritics',
+                                               'normalize_enclosure_characters',
                                                'repair_xml', 'repair_url_escapes',
                                                'delete_surrogates', 'init_mapping_dict']:
                     continue  # because replacements are language-specific
