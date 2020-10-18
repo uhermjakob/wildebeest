@@ -742,9 +742,17 @@ class Wildebeest:
             s = re.sub(r'([\u1C26-\u1C2C])(\u1C37)', r'\2\1', s)  # Lepcha
         if self.lv & self.char_is_100_plus_block_of_interest:
             s = re.sub(r'([\U000110B0-\U000110B8])(\U000110BA)', r'\2\1', s)  # Kaithi
+            s = re.sub(r'([\U000111B3-\U000111C0])(\U000111CA)', r'\2\1', s)  # Sharada
+            s = re.sub(r'([\U0001122C-\U00011235])(\U00011236)', r'\2\1', s)  # Khojki
+            s = re.sub(r'([\U000112E0-\U000112E8\U000112EA])(\U000112E9)', r'\2\1', s)  # Khudawadi
             s = re.sub(r'([\U0001133E-\U0001134D])(\U0001133C)', r'\2\1', s)  # Grantha
+            s = re.sub(r'([\U00011435-\U00011442])(\U00011446)', r'\2\1', s)  # Newa
+            s = re.sub(r'([\U000114B0-\U000114C2])(\U000114C3)', r'\2\1', s)  # Tirhuta
+            s = re.sub(r'([\U000115AF-\U000115BF])(\U000115C0)', r'\2\1', s)  # Siddham
+            s = re.sub(r'([\U000116AD-\U000116B6])(\U000116B7)', r'\2\1', s)  # Takri
             s = re.sub(r'([\U0001182C-\U00011839])(\U0001183A)', r'\2\1', s)  # Dogra
-            # ? Mahajani, Sharada, Khoji, Khudawadi, Newa, Tirhuta, Siddham, Takri, Dives, Masaram Gondi, Adlam
+            s = re.sub(r'([\U00011930-\U0001193E])(\U00011943)', r'\2\1', s)  # Dives Akuru
+            s = re.sub(r'([\U00011D31-\U00011D3F\U00011D45])(\U00011D42)', r'\2\1', s)  # Masaram Gondi
         return s
 
     # noinspection SpellCheckingInspection
