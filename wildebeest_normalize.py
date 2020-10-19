@@ -8,8 +8,8 @@ This script normalizes and cleans text (details below).
 Examples:
   wildebeest_normalize.py -h  # for full usage info
   wildebeest_normalize.py --version
-  wildebeest_normalize.py --lc fas -i 3S-dev-ssplit.src.tok -o 3S-dev-ssplit.src.clean2.tok
-  wildebeest_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.src.tok > 3S-dev-ssplit.src.clean1.tok
+  wildebeest_normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
+  wildebeest_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
 List of available normalization/cleaning-types (default: all are applied):
  * repair-encodings-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
@@ -53,6 +53,7 @@ When using STDIN and/or STDOUT, if might be necessary, particularly for older ve
 # -*- encoding: utf-8 -*-
 import argparse
 from itertools import chain
+import datetime
 import logging as log
 import os
 from pathlib import Path
@@ -1209,8 +1210,17 @@ def main(argv):
     # Add a little language code robustness for Persian language code, more comprehensive solution to come
     if lang_code == 'fa':
         lang_code = 'fas'
+    start_time = datetime.datetime.now()
     if args.verbose:
-        log.info(f'# ISO 639-3 language code: {lang_code or "(not specified)"}')
+        log.info(f'Start: {start_time}')
+        if args.input is not sys.stdin:
+            log.info(f'Input: {args.input.name}')
+        if args.output is not sys.stdout:
+            log.info(f'Output: {args.output.name}')
+        if args.skip:
+            log.info(f'Skip: {args.skip}')
+        if lang_code:
+            log.info(f'ISO 639-3 language code: {lang_code}')
     # The following line is the core call. ht is a dictionary (empty if no steps are to be skipped).
     wb.norm_clean_lines(ht, input_file=args.input, output_file=args.output, lang_code=lang_code)
     # Log some change stats.
@@ -1218,7 +1228,7 @@ def main(argv):
         change_count = ht.get('COUNT-ALL', 0)
         number_of_lines = ht.get('NUMBER-OF-LINES', 0)
         lines = 'line' if change_count == 1 else 'lines'
-        log_info = f"# {str(change_count)} out of {str(number_of_lines)} {lines} changed"
+        log_info = f"{str(change_count)} out of {str(number_of_lines)} {lines} changed"
         for skip_elem in all_skip_elems:
             n_changed_lines = ht.get(f'COUNT-{skip_elem}', 0)
             n_lines_with_call = ht.get(f'CALL-{skip_elem}', 0)
@@ -1226,6 +1236,10 @@ def main(argv):
                 lines = 'line' if n_changed_lines == 1 else 'lines'
                 log_info += f'; {skip_elem} in {str(n_changed_lines)}/{str(n_lines_with_call)} {lines}'
         log.info(log_info)
+        end_time = datetime.datetime.now()
+        log.info(f'End: {end_time}')
+        elapsed_time = end_time - start_time
+        log.info(f'Time: {elapsed_time}')
 
 
 if __name__ == "__main__":
