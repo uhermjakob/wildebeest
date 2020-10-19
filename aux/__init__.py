@@ -1,1 +1,1 @@
-"""Dummy init file for Python scripts at wildebeest/src"""
+"""Dummy init file for Python scripts at wildebeest/aux"""
