@@ -54,6 +54,7 @@ errors:
 * punct-greek (e.g. Greek question mark etc. to ASCII equivalent)
 * punct-misc-f (e.g. Tibetan punctuation to ASCII equivalent)
 * space (e.g. maps non-zero spaces to normal space)
+* look-alike (normalizes Latin/Cyrillic/Greek look-alike characters, e.g. Latin character A to Greek Α (capital alpha) in otherwise Greek word)
 * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
 * repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
