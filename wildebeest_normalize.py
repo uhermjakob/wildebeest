@@ -44,6 +44,8 @@ List of available normalization/cleaning-types (default: all are applied):
  * punct-greek (e.g. Greek question mark etc. to ASCII equivalent)
  * punct-misc-f (e.g. Tibetan punctuation to ASCII equivalent)
  * space (e.g. normalizes non-zero spaces to normal space)
+ * look-alike (normalizes Latin/Cyrillic/Greek look-alike characters,
+               e.g. Latin character A to Greek Α (capital alpha) in otherwise Greek word)
  * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
  * repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
  * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
@@ -63,8 +65,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.4.13'
-last_mod_date = 'October 16, 2020'
+__version__ = '0.6.1'
+last_mod_date = 'November 30, 2020'
 
 
 class Wildebeest:
@@ -157,6 +159,12 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_100_plus_block_of_interest = bit_vector  # code_points >= 0x10000 and of interest (e.g. digit)
         bit_vector = bit_vector << 1
+        self.char_is_latin = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_greek = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_cyrillic = bit_vector
+        bit_vector = bit_vector << 1
         self.char_is_hebrew = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_deletable_hebrew_diacritic = bit_vector
@@ -198,8 +206,6 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         # Korean
         self.char_is_mappable_hangul = bit_vector
-        # self.char_is_greek = bit
-        # self.char_is_cyrillic = bit
         # self.char_is_armenian = bit
         # self.char_is_japanese_kana = bit
         self.range_init_char_type_vector_dict()
@@ -208,6 +214,11 @@ class Wildebeest:
         # to target strings (of length 0-5 characters).
         self.mapping_dict = {}
         self.init_mapping_dict()
+        self.look_alike_dict = {}
+        self.look_alike_unchanged_dict = {}
+        self.look_alike_split_dict = {}
+        self.look_alike_url_dict = {}
+        self.look_alike_scripts = ['Latin', 'Greek', 'Cyrillic']
         self.repair_tok_punct_arabic_match = re.compile(r"([-_+*|%0-9]+)([\u0600-\u06FF])")
         self.repair_tok_arabic_punct_match = re.compile(r"([\u0600-\u06FF])([-_+*|%0-9]+)")
 
@@ -272,6 +283,24 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_fullwidth_or_halfwidth
+        # Latin
+        for code_point in chain(range(0x0041, 0x005B), range(0x0061, 0x007B), range(0x00C0, 0x00D7),
+                                range(0x00D8, 0x00F7), range(0x00F8, 0x02B0), range(0x2C60, 0x2080),
+                                range(0xA720, 0xA800), range(0xAB30, 0xAB70)):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_latin
+        # Greek
+        for code_point in chain(range(0x0370, 0x0400), range(0x1F00, 0x2000)):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_greek
+        # Cyrillic
+        for code_point in chain(range(0x0400, 0x0530), range(0x1C80, 0x1C90), range(0x2DE0, 0x2E00),
+                                range(0xA640, 0xA6A0)):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_cyrillic
         # Hebrew
         for code_point in chain(range(0x0590, 0x0600), range(0xFB1D, 0xFB50)):
             char = chr(code_point)
@@ -352,6 +381,45 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_lisu_plus
+
+    def load_look_alike_file(self) -> None:
+        src_dir_path = os.path.dirname(os.path.realpath(__file__))
+        data_dir_path = os.path.join(src_dir_path, "data")
+        look_alike_filename = os.path.join(data_dir_path, 'look-alikes.txt')
+        line_number = 0
+        n_entries = 0
+        look_alike_category = None
+        with open(look_alike_filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                line_number += 1
+                line_contains_entry = False
+                script_dict = {}  # local mapping from script (e.g. Latin|Greek|Cyrillic) to character (e.g. w|θ|ж)
+                if re.search('::section', line):
+                    if re.search('Identical-looking characters', line):
+                        look_alike_category = 'identical'
+                    elif re.search('Similar-looking characters', line):
+                        look_alike_category = 'similar'
+                    else:
+                        look_alike_category = None
+                else:
+                    char_list = re.split(r'\s+', line.rstrip())
+                    if look_alike_category == 'identical':
+                        for char in char_list:
+                            script = self.char_script(char)
+                            if script and script_dict.get(script, None) is None:
+                                script_dict[script] = char
+                        for script1 in self.look_alike_scripts:
+                            char1 = script_dict.get(script1, None)
+                            if char1:
+                                for script2 in self.look_alike_scripts:
+                                    if script1 != script2:
+                                        char2 = script_dict.get(script2, None)
+                                        if char2:
+                                            self.look_alike_dict[f'{script1} {script2} {char1}'] = char2
+                                            line_contains_entry = True
+                if line_contains_entry:
+                    n_entries += 1
+            log.info(f'Loaded {n_entries} entries from {look_alike_filename}')
 
     def update_char_type_vector_dict(self, source: str, target: str, filename_core: str) -> None:
         if filename_core == 'Digit':
@@ -1042,6 +1110,144 @@ class Wildebeest:
         s = self.repair_tok_arabic_punct_match.sub(r"\1 \2", s)
         return s
 
+    def char_script(self, char: str) -> Optional[str]:
+        char_type_vector = self.char_type_vector_dict.get(char, 0)
+        if char_type_vector & self.char_is_latin:
+            return 'Latin'
+        elif char_type_vector & self.char_is_greek:
+            return 'Greek'
+        elif char_type_vector & self.char_is_cyrillic:
+            return 'Cyrillic'
+        else:
+            return None
+
+    def tokenize_mixed_script_tokens(self, orig_token: str) -> str:
+        token = ''
+        script = None
+        script_start = 0
+        position = -1
+        orig_token_len = len(orig_token)
+        last_char_is_punctuation = False
+        for char in orig_token:
+            position += 1
+            if char in ['.', '/', '_', '-']:
+                last_char_is_punctuation = True
+            else:
+                new_script = self.char_script(char)
+                if new_script != script:
+                    if (position - script_start >= 3
+                            and orig_token_len - position >= 3
+                            and not last_char_is_punctuation
+                            and script in self.look_alike_scripts
+                            and new_script in self.look_alike_scripts)\
+                            and new_script == self.char_script(orig_token[position+1]):
+                        token += ' '
+                    script = new_script
+                    script_start = position
+                last_char_is_punctuation = False
+            token += char
+        return token
+
+    @staticmethod
+    def is_mixed_script_url(s: str) -> bool:
+        return bool(re.match(r'(?:https?://)?[a-zA-Z][-_./0-9a-zA-Z]*\.(?:bg|by|me|mk|kg|kz|rs|ru|tj|tm|ua|uz|'
+                             r'com|info)/[-_./#0-9\u0400-\u04FF]+$', s, flags=re.IGNORECASE)
+                    or re.match(r'(?:https?://)?[\u0400-\u04FF][-_./0-9\u0400-\u04FF]*'
+                                r'\.(bg|by|me|mk|kg|kz|rs|ru|tj|tm|ua|uz|com|info)$', s))
+
+    def map_look_alikes_to_script(self, s: str, source_script: str, target_script: str) -> str:
+        result = ''
+        for char in s:
+            result += self.look_alike_dict.get(f'{source_script} {target_script} {char}', char)
+        return result
+
+    def correct_look_alikes(self, s: str) -> str:
+        # orig_s = s
+        result = ''
+        while True:
+            m = re.match(r'(\s*)(\S+)(.*)$', s)
+            if m:
+                result += m.group(1)
+                orig_token = m.group(2)
+                stat_dict = {}
+                for char in orig_token:
+                    script = self.char_script(char)
+                    if script:
+                        stat_dict[script] = stat_dict.get(script, 0) + 1
+                        for target_script in self.look_alike_scripts:
+                            if script != target_script:
+                                target_char = self.look_alike_dict.get(f'{script} {target_script} {char}', None)
+                                if target_char:
+                                    key = f'{script} {target_script}'
+                                    stat_dict[key] = stat_dict.get(key, 0) + 1
+                target_script = None
+                mixed_token = False
+                n_scripts = 0
+                for script in ['Latin', 'Greek', "Cyrillic"]:
+                    if stat_dict.get(script, 0) >= 1:
+                        n_scripts += 1
+                if n_scripts >= 2:
+                    mixed_token = True
+                    if (stat_dict.get('Cyrillic Latin', 0) == stat_dict.get('Cyrillic', 0)
+                            and stat_dict.get('Latin Cyrillic', 0) < stat_dict.get('Latin', 0)):
+                        target_script = 'Latin'
+                    elif (stat_dict.get('Latin Cyrillic', 0) == stat_dict.get('Latin', 0)
+                          and stat_dict.get('Cyrillic Latin', 0) < stat_dict.get('Cyrillic', 0)):
+                        target_script = 'Cyrillic'
+                    elif (stat_dict.get('Cyrillic', 0) == 1 and stat_dict.get('Cyrillic Latin', 0) == 1
+                          and stat_dict.get('Latin', 0) >= 3):
+                        target_script = 'Latin'
+                    elif (stat_dict.get('Latin', 0) == 1 and stat_dict.get('Latin Cyrillic', 0) == 1
+                          and stat_dict.get('Cyrillic', 0) >= 3):
+                        target_script = 'Cyrillic'
+                    else:
+                        lat_token = self.map_look_alikes_to_script(orig_token, 'Cyrillic', 'Latin')
+                        if (lat_token in ['SpA', 'USA']
+                            or (len(orig_token) >= 2
+                                and re.match(r'(?:X|XX|XXX|XL|L|LX|LXX|LXXX|XC|)(?:I|II|III|IV|V|VI|VII|VIII|IX|)$',
+                                             lat_token))):
+                            target_script = 'Latin'
+                        cyr_token = self.map_look_alikes_to_script(orig_token, 'Latin', 'Cyrillic')
+                        if cyr_token in ['әр', 'Әр', 'әрі', 'сі', 'Сі', 'іс', 'Іс', 'ісі', 'ірі']:
+                            target_script = 'Cyrillic'
+                if target_script:
+                    token = ''
+                    for char in orig_token:
+                        script = self.char_script(char)
+                        target_char = self.look_alike_dict.get(f'{script} {target_script} {char}', char)
+                        token += target_char
+                    key = 'n-to-' + target_script
+                    self.look_alike_dict[key] = self.look_alike_dict.get(key, 0) + 1
+                else:
+                    retok_orig_token = self.tokenize_mixed_script_tokens(orig_token)
+                    if retok_orig_token != orig_token:
+                        token = retok_orig_token
+                        key = 'n-split'
+                        if self.look_alike_split_dict.get(orig_token, None) is None:
+                            log.debug(f'   correct-look-alike split {orig_token} -> {token}')
+                            self.look_alike_split_dict[orig_token] = token
+                        self.look_alike_dict[key] = self.look_alike_dict.get(key, 0) + 1
+                    else:
+                        token = orig_token
+                        if mixed_token:
+                            key = 'n-unchanged'
+                            self.look_alike_dict[key] = self.look_alike_dict.get(key, 0) + 1
+                # if token != orig_token:
+                #     log.info(f'   correct-look-alike {orig_token} -> {token} (to {target_script})')
+                if mixed_token and token == orig_token:
+                    if self.is_mixed_script_url(orig_token):
+                        if self.look_alike_url_dict.get(orig_token, None) is None:
+                            log.debug(f'mixed-script-URL: {orig_token}')
+                            self.look_alike_url_dict[orig_token] = True
+                    else:
+                        self.look_alike_unchanged_dict[token] = self.look_alike_unchanged_dict.get(token, 0) + 1
+                result += token
+                s = m.group(3)
+            else:
+                result += s
+                # log.info(f'  look-alike {orig_s} -> {result}')
+                return result
+
     @staticmethod
     def increment_dict_count(ht: dict, key: str, increment=1) -> int:
         """For example ht['NUMBER-OF-LINES']"""
@@ -1146,6 +1352,12 @@ class Wildebeest:
             else:
                 if (self.lv & self.char_is_mappable_in_arabic) or (self.lv & self.char_is_arabic_presentation_form):
                     s = self.ncs_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
+        n_scripts = 0
+        for script_lv in [self.char_is_latin, self.char_is_greek, self.char_is_cyrillic]:
+            if self.lv & script_lv:
+                n_scripts += 1
+        if n_scripts >= 2:
+            s = self.ncs_group(s, ht, 'look-alike', self.correct_look_alikes, loc_id)
         if (self.lv & self.char_is_ampersand) and (self.lv & self.char_is_semicolon):
             s = self.ncs_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
         if self.lv & self.char_is_percent_sign:
@@ -1176,8 +1388,8 @@ def main(argv):
                       'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
                       'repair-combining', 'combining-compose', 'combining-decompose',
                       'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
-                      'space', 'digit',
-                      'arabic-char', 'farsi-char', 'pashto-char', 'repair-xml', 'repair-url-escapes', 'repair-token']
+                      'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char',
+                      'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
@@ -1213,6 +1425,7 @@ def main(argv):
     start_time = datetime.datetime.now()
     if args.verbose:
         log.info(f'Start: {start_time}')
+        log.info('Script wildebeest_normalize.py')
         if args.input is not sys.stdin:
             log.info(f'Input: {args.input.name}')
         if args.output is not sys.stdout:
@@ -1221,10 +1434,19 @@ def main(argv):
             log.info(f'Skip: {args.skip}')
         if lang_code:
             log.info(f'ISO 639-3 language code: {lang_code}')
+    wb.load_look_alike_file()
     # The following line is the core call. ht is a dictionary (empty if no steps are to be skipped).
     wb.norm_clean_lines(ht, input_file=args.input, output_file=args.output, lang_code=lang_code)
     # Log some change stats.
     if args.verbose:
+        n_unchanged = 0
+        for unchanged_token in sorted(wb.look_alike_unchanged_dict.keys(),
+                                      key=lambda s: wb.look_alike_unchanged_dict[s],
+                                      reverse=True):
+            n_unchanged += 1
+            if n_unchanged <= 100:
+                count = wb.look_alike_unchanged_dict[unchanged_token]
+                log.debug(f'   unchanged mixed token: {unchanged_token} ({count})')
         change_count = ht.get('COUNT-ALL', 0)
         number_of_lines = ht.get('NUMBER-OF-LINES', 0)
         lines = 'line' if change_count == 1 else 'lines'
@@ -1235,6 +1457,11 @@ def main(argv):
             if n_changed_lines:
                 lines = 'line' if n_changed_lines == 1 else 'lines'
                 log_info += f'; {skip_elem} in {str(n_changed_lines)}/{str(n_lines_with_call)} {lines}'
+                if skip_elem == 'look-alike':
+                    n_change_list = []
+                    for key in ['n-to-Latin', 'n-to-Cyrillic', 'n-to-Greek', 'n-split', 'n-unchanged']:
+                        n_change_list.append(str(wb.look_alike_dict.get(key, 0)))
+                    log_info += f" ({'/'.join(n_change_list)} L/C/G/S/-)"
         log.info(log_info)
         end_time = datetime.datetime.now()
         log.info(f'End: {end_time}')
