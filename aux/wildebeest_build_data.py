@@ -130,7 +130,7 @@ def norm_string_by_mapping_dict(s: str, m_dict: dict, wb: wildebeest_normalize.W
     result = ''
     i, n = 0, len(s)
     while i < n:
-        for l in (3, 2, 1):
+        for l in range(3, 0, -1):
             sub_map = m_dict.get(s[i:i+l])
             if sub_map is not None:
                 result += sub_map
