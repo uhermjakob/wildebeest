@@ -2,7 +2,7 @@
 
 # Author: Ulf Hermjakob (USC Information Sciences Institute)
 # First written: September 9, 2009
-# Current version: v2.3 (September 18, 2020)
+# Current version: v2.4 (December 5, 2020)
 
 # default values for optional parameters
 $max_n_examples = 20;
@@ -159,6 +159,10 @@ sub init_ht {
       CUNEIFORM:            Token contains Cuneiform character (Ancient Mesopotamia)
       CYRILLIC:             Token contains Cyrillic character
       CYRILLIC_EXTENDED:    Token contains Cyrillic extended character
+      MIXED_CYRILLIC_LATIN: Token contains mix of Cyrillic and Latin
+      MIXED_PUNCT_CYRILLIC: Token contains mix of Punctuation followed by Cyrillic
+      MIXED_CYRILLIC_PUNCT: Token contains mix of Cyrillic and Punctuation
+      CYRILLIC_PLUS_PERIOD: Token contains Cyrillic and a period (possibly abbreviation)
       DEVANAGARI:           Token contains Devanagari character (Indian languages)
       STD_SEP_NUKTA:        Token contains separate Nukta character, standard (Devanagari)
       ALT_SEP_NUKTA:        Token contains separate Nukta character, non-standard encoding, should be composed (Devanagari)
@@ -604,6 +608,26 @@ while (<STDIN>) {
             &note_issue("MIXED_CJK_ASCII", $token, $line_id);
 	 }
       }
+      if (($token =~ /[\x41-\x5A\x61-\x7A\xC3-\xC8]/)  # mixed Latin and ...
+       || ($token =~ /\xC9[\x80-\x8F]/)) {
+         if (($token =~ /[\xD0-\xD3]/)  # ... Cyrillic
+          || ($token =~ /\xD4[\x80-\xAF]/)) {
+            &note_issue("MIXED_CYRILLIC_LATIN", $token, $line_id);
+	 }
+      }
+      if (($token =~ /(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF])/)  # Punct
+       || ($token =~ /(?:\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD])/)
+       || ($token =~ /(?:\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])/)) {
+         if ($token =~ /(?:[\xD0-\xD3]|\xD4[\x80-\xAF])/) { # ... Cyrillic
+            if ($token =~ /^(?:(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF]|\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]|\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])[\x80-\xBF]*)+(?:[\xD0-\xD3]|\xD4[\x80-\xAF])/) {
+               &note_issue("MIXED_PUNCT_CYRILLIC", $token, $line_id);
+            } elsif ($token =~ /^(?:[\xD0-\xD3]|\xD4[\x80-\xAF])+\.$/) {
+               &note_issue("CYRILLIC_PLUS_PERIOD", $token, $line_id);
+	    } else {
+               &note_issue("MIXED_CYRILLIC_PUNCT", $token, $line_id);
+            }
+	 }
+      }  
 
       # nukta
       if ($token =~ /\xE0[\xA4-\xA5]/) { # Devanagari
