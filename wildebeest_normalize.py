@@ -562,6 +562,7 @@ class Wildebeest:
     def delete_control_characters(s: str) -> str:
         """Deletes control characters (except tab and linefeed), zero-width characters, byte order mark,
            directional marks, join marks, variation selectors, Arabic tatweel"""
+        s = s.replace('\u00AD', '')  # U+00AD soft hyphen
         s = re.sub(r'[\u0000-\u0008]', '', s)  # control characters C0 code block (except tab \x09, linefeed \x0A)
         s = re.sub(r'[\u000B-\u000C]', '', s)  # control characters C0 code block (continued, except CR \x0D)
         s = re.sub(r'[\u000E-\u001F]', '', s)  # control characters C0 code block (continued)
@@ -940,7 +941,6 @@ class Wildebeest:
 
     @staticmethod
     def normalize_dash_punctuation(s: str) -> str:
-        s = s.replace('\u00AD', '-')  # U+00AD soft hyphen
         # hyphen, non-breaking hyphen, figure dash, en dash, em dash, horizontal bar
         s = re.sub(r'[\u2010-\u2015]', '-', s)
         s = s.replace('\u2212', '-')  # U+2212 minus sign
