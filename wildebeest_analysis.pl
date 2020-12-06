@@ -160,7 +160,8 @@ sub init_ht {
       CYRILLIC:             Token contains Cyrillic character
       CYRILLIC_EXTENDED:    Token contains Cyrillic extended character
       MIXED_CYRILLIC_LATIN: Token contains mix of Cyrillic and Latin
-      MIXED_PUNCT_CYRILLIC: Token contains mix of Punctuation followed by Cyrillic
+      PUNCT_CYRILLIC:       Token contains punctuation followed by Cyrillic
+      CYRILLIC_PUNCT:       Token contains Cyrillic followed by punctuation
       MIXED_CYRILLIC_PUNCT: Token contains mix of Cyrillic and Punctuation
       CYRILLIC_PLUS_PERIOD: Token contains Cyrillic and a period (possibly abbreviation)
       DEVANAGARI:           Token contains Devanagari character (Indian languages)
@@ -620,9 +621,11 @@ while (<STDIN>) {
        || ($token =~ /(?:\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])/)) {
          if ($token =~ /(?:[\xD0-\xD3]|\xD4[\x80-\xAF])/) { # ... Cyrillic
             if ($token =~ /^(?:(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF]|\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]|\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])[\x80-\xBF]*)+(?:[\xD0-\xD3]|\xD4[\x80-\xAF])/) {
-               &note_issue("MIXED_PUNCT_CYRILLIC", $token, $line_id);
-            } elsif ($token =~ /^(?:[\xD0-\xD3]|\xD4[\x80-\xAF])+\.$/) {
+               &note_issue("PUNCT_CYRILLIC", $token, $line_id);
+            } elsif ($token =~ /(?:[\xD0-\xD3]|\xD4[\x80-\xAF])(?:[\x80-\xBF]*)\.$/) {
                &note_issue("CYRILLIC_PLUS_PERIOD", $token, $line_id);
+            } elsif ($token =~ /(?:[\xD0-\xD3]|\xD4[\x80-\xAF])(?:[\x80-\xBF]*)(?:(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF]|\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]|\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])[\x80-\xBF]*)+$/) {
+               &note_issue("CYRILLIC_PUNCT", $token, $line_id);
 	    } else {
                &note_issue("MIXED_CYRILLIC_PUNCT", $token, $line_id);
             }

@@ -65,8 +65,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.6.1'
-last_mod_date = 'November 30, 2020'
+__version__ = '0.6.2'
+last_mod_date = 'December 5, 2020'
 
 
 class Wildebeest:
