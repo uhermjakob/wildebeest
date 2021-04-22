@@ -2,7 +2,7 @@
 
 # Author: Ulf Hermjakob (USC Information Sciences Institute)
 # First written: September 9, 2009
-# Current version: v2.4 (December 5, 2020)
+# Current version: v2.5 (April 21, 2021)
 
 # default values for optional parameters
 $max_n_examples = 20;
@@ -31,7 +31,7 @@ $long_token_min = 20;
 
 sub print_version {
    print STDERR "Script wildebeest_analysis.pl\n";
-   print STDERR "   Version 2.3 (September 18, 2020)\n";
+   print STDERR "   Version 2.5 (April 21, 2021)\n";
    print STDERR "   Author: Ulf Hermjakob - USC Information Sciences Institute\n";
    print STDERR "   Status: Checks for UNSPLIT_PUNCT still rudimentary.\n";
    exit 1;
@@ -174,7 +174,11 @@ sub init_ht {
       ENCLOSED_ALPHANUMERIC: Token contains Enclosed alphanumeric character
       ETHIOPIC:             Token contains Ethiopic character
       ETHIOPIC_PUNCT:       Token contains Ethiopic punctuation
-      GEORGIAN:             Token contains Georgian character
+      GEORGIAN_STANDARD:    Token contains standard Georgian character
+      GEORGIAN_ARCHAIC:     Token contains archaic Georgian character in standard script
+      GEORGIAN_EMPHASIS:    Token contains Georgian character in non-standard Mkhedruli Mtavruli script (emphasis)
+      GEORGIAN_ASOMTAVRULI: Token contains Georgian character in historic Asomtavruli script
+      GEORGIAN_NUSHKHURI:   Token contains Georgian character in historic Nuskhuri script
       GOTHIC:               Token contains Gothic character
       GREEK:                Token contains Greek character
       GREEK_EXTENDED:       Token contains Extended-Greek character
@@ -766,8 +770,10 @@ while (<STDIN>) {
             next if ($c =~ /\xE0[\xBC-\xBF]/)     && &note_issue("TIBETAN", $token, $line_id, $co);
             next if ($c =~ /\xE1[\x80-\x81]/)     && &note_issue("MYANMAR", $token, $line_id, $co);
             next if ($c =~ /\xE1\x82[\x80-\x9F]/) && &note_issue("MYANMAR", $token, $line_id, $co);
-            next if ($c =~ /\xE1\x82[\xA0-\xBF]/) && &note_issue("GEORGIAN", $token, $line_id, $co);
-            next if ($c =~ /\xE1\x83/)            && &note_issue("GEORGIAN", $token, $line_id, $co);
+            next if ($c =~ /\xE1\x82[\xA0-\xBF]/) && &note_issue("GEORGIAN_ASOMTAVRULI", $token, $line_id, $co);
+            next if ($c =~ /\xE1\x83[\x80-\x8F]/) && &note_issue("GEORGIAN_ASOMTAVRULI", $token, $line_id, $co);
+            next if ($c =~ /\xE1\x83[\xB1-\xB5]/) && &note_issue("GEORGIAN_ARCHAIC", $token, $line_id, $co);
+            next if ($c =~ /\xE1\x83[\x90-\xBF]/) && &note_issue("GEORGIAN_STANDARD", $token, $line_id, $co);
             next if ($c =~ /\xE1[\x84-\x87]/)     && &note_issue("KOREAN_HANGUL", $token, $line_id, $co);
             next if ($c =~ /\xE1\x8D[\xA0-\xA8]/) && &note_issue("ETHIOPIC_PUNCT", $token, $line_id, $co);
             next if ($c =~ /\xE1[\x88-\x8D]/)     && &note_issue("ETHIOPIC", $token, $line_id, $co);
@@ -783,6 +789,7 @@ while (<STDIN>) {
             next if ($c =~ /\xE1\xA8[\x80-\x9F]/) && &note_issue("BUGINESE", $token, $line_id, $co);
             next if ($c =~ /\xE1\xAE/)            && &note_issue("SUNDANESE", $token, $line_id, $co);
             next if ($c =~ /\xE1\xB2[\x80-\x8F]/) && &note_issue("CYRILLIC_EXTENDED", $token, $line_id, $co);
+            next if ($c =~ /\xE1\xB2[\x90-\xBF]/) && &note_issue("GEORGIAN_EMPHASIS", $token, $line_id, $co);
             next if ($c =~ /\xE1[\xB4-\xB5]/)     && &note_issue("IPA", $token, $line_id, $co);
             next if ($c =~ /\xE1\xB6/)            && &note_issue("IPA", $token, $line_id, $co); # supplement
             next if ($c =~ /\xE1[\xB8-\xBB]/)     && &note_issue("LATIN_EXTENDED_ADD", $token, $line_id, $co);
@@ -811,7 +818,7 @@ while (<STDIN>) {
 	    next if ($c =~ /\xE2[\xAC-\xAF]/)     && &note_issue("MISC_SYMBOL", $token, $line_id, $co, $c);
             next if ($c =~ /\xE2[\x80-\xAF]/)     && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
             next if ($c =~ /\xE2[\xB2-\xB3]/)     && &note_issue("COPTIC", $token, $line_id, $co);
-            next if ($c =~ /\xE2\xB4[\x80-\xAF]/) && &note_issue("GEORGIAN", $token, $line_id, $co);
+            next if ($c =~ /\xE2\xB4[\x80-\xAF]/) && &note_issue("GEORGIAN_NUSHKHURI", $token, $line_id, $co);
             next if ($c =~ /\xE2\xB4[\xB0-\xBF]/) && &note_issue("TIFINAGH", $token, $line_id, $co);
             next if ($c =~ /\xE2\xB5/)            && &note_issue("TIFINAGH", $token, $line_id, $co);
             next if ($c =~ /\xE2\xB7[\xA0-\xBF]/) && &note_issue("CYRILLIC_EXTENDED", $token, $line_id, $co);

@@ -20,6 +20,7 @@ List of available normalization/cleaning-types (default: all are applied):
  * arabic-char (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
  * farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
  * pashto-char (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
+ * georgian-char (to Georgian canonical forms, e.g. to standard script, map archaic characters)
  * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ligatures (e.g. decomposes ligatures)
  * signs-and-symbols (e.g. maps symbols (e.g. kappa symbol), signs (e.g. micro sign))
@@ -65,8 +66,8 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.6.2'
-last_mod_date = 'December 5, 2020'
+__version__ = '0.6.3'
+last_mod_date = 'April 21, 2021'
 
 
 class Wildebeest:
@@ -181,6 +182,8 @@ class Wildebeest:
         bit_vector = bit_vector << 1
         self.char_is_mappable_in_pashto = bit_vector
         bit_vector = bit_vector << 1
+        self.char_is_georgian = bit_vector
+        bit_vector = bit_vector << 1
         self.char_is_thaana_plus = bit_vector  # Thaana, Nko, Samaritan, Mandaic, Syriac
         bit_vector = bit_vector << 1
         self.char_is_devanagari = bit_vector
@@ -221,6 +224,9 @@ class Wildebeest:
         self.look_alike_scripts = ['Latin', 'Greek', 'Cyrillic']
         self.repair_tok_punct_arabic_match = re.compile(r"([-_+*|%0-9]+)([\u0600-\u06FF])")
         self.repair_tok_arabic_punct_match = re.compile(r"([\u0600-\u06FF])([-_+*|%0-9]+)")
+        self.georgian_intab = "\u1C90\u1C91\u1C92\u1C93\u1C94\u1C95\u1C96\u1C97\u1C98\u1C99\u1C9A\u1C9B\u1C9C\u1C9D\u1C9E\u1C9F\u1CA0\u1CA1\u1CA2\u1CA3\u1CA4\u1CA5\u1CA6\u1CA7\u1CA8\u1CA9\u1CAA\u1CAB\u1CAC\u1CAD\u1CAE\u1CAF\u1CB0\u1CB1\u1CB2\u1CB3\u1CB4\u1CB5\u1CB6\u1CB7\u1CB8\u1CB9\u1CBA\u1CBD\u1CBE\u1CBF\u10A0\u10A1\u10A2\u10A3\u10A4\u10A5\u10A6\u10A7\u10A8\u10A9\u10AA\u10AB\u10AC\u10AD\u10AE\u10AF\u10B0\u10B1\u10B2\u10B3\u10B4\u10B5\u10B6\u10B7\u10B8\u10B9\u10BA\u10BB\u10BC\u10BD\u10BE\u10BF\u10C0\u10C1\u10C2\u10C3\u10C4\u10C5\u10C7\u10CD\u2D00\u2D01\u2D02\u2D03\u2D04\u2D05\u2D06\u2D07\u2D08\u2D09\u2D0A\u2D0B\u2D0C\u2D0D\u2D0E\u2D0F\u2D10\u2D11\u2D12\u2D13\u2D14\u2D15\u2D16\u2D17\u2D18\u2D19\u2D1A\u2D1B\u2D1C\u2D1D\u2D1E\u2D1F\u2D20\u2D21\u2D22\u2D23\u2D24\u2D25\u2D27\u2D2D"
+        self.georgian_outtab = "\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F6\u10F7\u10F8\u10F9\u10FA\u10FD\u10FE\u10FF\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F7\u10FD\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F7\u10FD"
+        self.georgian_trantab = str.maketrans(self.georgian_intab, self.georgian_outtab)
 
     def windows1252_to_utf8_char(self, index: int) -> str:
         """ Typical input: 0x80       Typical output: '€' """
@@ -335,6 +341,11 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_mappable_in_pashto
+        # Georgian
+        for code_point in chain(range(0x10A0, 0x10FF), range(0x1C90, 0x1CBF), range(0x2D00, 0x2D2F)):
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_georgian
         # Thaana+
         for code_point in range(0x0780, 0x08A0):
             char = chr(code_point)
@@ -652,6 +663,15 @@ class Wildebeest:
         s = s.replace('\u0649', '\u06CC')  # Arabic alef maksura to Farsi yeh
         s = s.replace('\u06CD', '\u06CC')  # Arabic yeh with tail to Farsi yeh
         s = s.replace('\u0643', '\u06A9')  # Arabic kaf to keheh
+        return s
+
+    def normalize_georgian_characters(self, s: str) -> str:
+        s = s.translate(self.georgian_trantab)
+        s = s.replace('ჱ', 'ე')   # archaic Georgian letter he
+        s = s.replace('ჲ', 'ი')   # archaic Georgian letter hie
+        s = s.replace('ჳ', 'ვი')  # archaic Georgian letter we
+        s = s.replace('ჴ', 'ხე')  # archaic Georgian letter har
+        s = s.replace('ჵ', 'ჰოი') # archaic Georgian letter hoe
         return s
 
     # noinspection SpellCheckingInspection
@@ -1352,6 +1372,8 @@ class Wildebeest:
             else:
                 if (self.lv & self.char_is_mappable_in_arabic) or (self.lv & self.char_is_arabic_presentation_form):
                     s = self.ncs_group(s, ht, 'arabic-char', self.normalize_arabic_characters, loc_id)
+        if self.lv & self.char_is_georgian:
+            s = self.ncs_group(s, ht, 'georgian-char', self.normalize_georgian_characters, loc_id)
         n_scripts = 0
         for script_lv in [self.char_is_latin, self.char_is_greek, self.char_is_cyrillic]:
             if self.lv & script_lv:
@@ -1388,7 +1410,7 @@ def main(argv):
                       'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
                       'repair-combining', 'combining-compose', 'combining-decompose',
                       'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
-                      'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char',
+                      'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char', 'georgian-char',
                       'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"

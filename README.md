@@ -31,6 +31,7 @@ errors:
 * arabic-char (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
 * farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
 * pashto-char (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
+* georgian-char (to Georgian canonical forms, e.g. to standard script, map archaic characters)
 * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
 * ligatures (e.g. decomposes non-Arabic ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ))
 * signs-and-symbols (e.g. maps symbols (e.g. kappa symbol) and signs (e.g. micro sign µ))
