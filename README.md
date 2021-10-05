@@ -74,3 +74,41 @@ It will report the number of instances in each category and give examples.
 
 Currently available: wildebeest_analysis.pl (Perl) v2.3 (September 18, 2020)
 
+### Usage &nbsp; (click below for details)
+
+<details>
+<summary>wildebeest_normalize.py (command line interface to normalize a file)</summary>
+
+```
+wildebeest_normalize.py [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS] [-v] [--version]
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT-FILENAME, --input INPUT-FILENAME
+                        (default: STDIN)
+  -o OUTPUT-FILENAME, --output OUTPUT-FILENAME
+                        (default: STDOUT)
+  --lc LANGUAGE-CODE    ISO 639-3, e.g. 'fas' for Persian
+  --skip NORM-STEPS     comma-separated list of normalization/cleaning steps to be skipped: repair-encodings-errors,del-surrogate,del-
+                        ctrl-char,del-arabic-diacr,del-hebrew-diacr,core-compat,pres-form,ligatures,signs-and-
+                        symbols,cjk,width,font,small,vertical,enclosure,hangul,repair-combining,combining-compose,combining-
+                        decompose,punct,punct-dash,punct-arabic,punct-cjk,punct-greek,punct-misc-f,space,digit,arabic-char,farsi-
+                        char,pashto-char,georgian-char,look-alike,repair-xml,repair-url-escapes,repair-token (default: nothing skipped)
+  -v, --verbose         write change log etc. to STDERR
+  --version             show program's version number and exit
+```
+</details>
+
+<details>
+<summary>norm_clean_string (Python function call to normalize a string)</summary>
+ 
+```python 
+from wildebeest import wildebeest_normalize
+wb = Wildebeest()
+ht = {}                             # dictionary sets/resets steps to be skipped (default: not skipped)
+# ht['SKIP-enclosure'] = 1          # optionally skip 'enclosure' normalization
+# ht['SKIP-del-arabic-diacr'] = 1   # optionally skip 'delete arabic diacritic' normalization
+wb.load_look_alike_file()           # optional
+print(wb.norm_clean_string('🄐…25kmÂ²', ht, lang_code='eng'))
+print(wb.norm_clean_string('೧೯೨೩', ht, lang_code='kan'))
+``` 
+</details>
