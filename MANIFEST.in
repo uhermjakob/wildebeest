@@ -1,0 +1,4 @@
+include README.md
+include data/*.tsv
+include data/look-alikes.txt
+global-exclude *.pyc
