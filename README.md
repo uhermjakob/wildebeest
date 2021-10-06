@@ -67,7 +67,7 @@ pip install --editable .   # run it from dir having setup.py
 To call wildebeest after installation, run `python -m wildebeest` or its alias `wb-norm`. 
 </details>
 
-## _wildebeest_ Normalization Steps
+## List of Normalization Steps
 
 ### repair-encodings-errors
 The script generally expects input encoded in UTF8. However, it will recognize and repair some common text encoding
