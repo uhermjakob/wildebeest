@@ -63,11 +63,12 @@ from pathlib import Path
 import re
 import sys
 from typing import Callable, Match, Optional, TextIO
-from wildebeest import __version__, last_mod_date
+from . import __version__, last_mod_date
 
 log.basicConfig(level=log.INFO)
 data_dir = Path(__file__).parent / 'data'
 data_dir_path = str(data_dir.resolve())
+
 
 class Wildebeest:
     # noinspection PyPep8
@@ -427,7 +428,7 @@ class Wildebeest:
                                             line_contains_entry = True
                 if line_contains_entry:
                     n_entries += 1
-            log.info(f'Loaded {n_entries} entries from {look_alike_filename}')
+            # log.info(f'Loaded {n_entries} entries from {look_alike_filename}')
 
     def update_char_type_vector_dict(self, source: str, target: str, filename_core: str) -> None:
         if filename_core == 'Digit':
