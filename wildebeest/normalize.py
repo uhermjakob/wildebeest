@@ -1410,7 +1410,7 @@ def main():
                       'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
-    parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
+    parser = argparse.ArgumentParser(description='Normalizes and cleans a given text', prog="python -m wildebeest")
     parser.add_argument('-i', '--input', type=argparse.FileType('r', encoding='utf-8', errors='surrogateescape'),
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
