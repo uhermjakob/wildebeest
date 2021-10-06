@@ -6,10 +6,10 @@ Ported Pashto and Farsi-specific normalization from Perl to Python in August 202
 Ported general normalization from Perl to Python in September 2020.
 This script normalizes and cleans text (details below).
 Examples:
-  wildebeest_normalize.py -h  # for full usage info
-  wildebeest_normalize.py --version
-  wildebeest_normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
-  wildebeest_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
+  normalize.py -h  # for full usage info
+  normalize.py --version
+  normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
+  normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
 List of available normalization/cleaning-types (default: all are applied):
  * repair-encodings-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
@@ -63,8 +63,11 @@ from pathlib import Path
 import re
 import sys
 from typing import Callable, Match, Optional, TextIO
+from wildebeest import __version__, last_mod_date
 
 log.basicConfig(level=log.INFO)
+data_dir = Path(__file__).parent / 'data'
+data_dir_path = str(data_dir.resolve())
 
 class Wildebeest:
     # noinspection PyPep8
@@ -390,8 +393,6 @@ class Wildebeest:
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_lisu_plus
 
     def load_look_alike_file(self) -> None:
-        src_dir_path = os.path.dirname(os.path.realpath(__file__))
-        data_dir_path = os.path.join(src_dir_path, "data")
         look_alike_filename = os.path.join(data_dir_path, 'look-alikes.txt')
         line_number = 0
         n_entries = 0
@@ -507,8 +508,6 @@ class Wildebeest:
             latin1_char = chr(index)
             surrogate_char = chr(index + 0xDC00)
             self.set_mapping_dict(surrogate_char, latin1_char, index, None, 's3')
-        src_dir_path = os.path.dirname(os.path.realpath(__file__))
-        data_dir_path = os.path.join(src_dir_path, "data")
         for tsv_filename in ('PythonWildebeestMapping.tsv',
                              'ArabicPresentationFormMapping.tsv',
                              'CJKCompatibilityMapping.tsv',
@@ -1401,7 +1400,7 @@ class Wildebeest:
 
 
 # noinspection SpellCheckingInspection
-def main(argv):
+def main():
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
     all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-arabic-diacr',
@@ -1413,7 +1412,7 @@ def main(argv):
                       'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
     skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
     (default: nothing skipped)"
-    parser = argparse.ArgumentParser(description='Normalizes and cleans a given text')
+    parser = argparse.ArgumentParser(description='Normalizes and cleans a given text', prog="python -m wildebeest")
     parser.add_argument('-i', '--input', type=argparse.FileType('r', encoding='utf-8', errors='surrogateescape'),
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
@@ -1423,7 +1422,7 @@ def main(argv):
     parser.add_argument('-v', '--verbose', action='count', default=0, help='write change log etc. to STDERR')
     parser.add_argument('--version', action='version',
                         version=f'%(prog)s {__version__} last modified: {last_mod_date}')
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     lang_code = args.lc
     skip_list_csv = args.skip
     wb = Wildebeest()
@@ -1446,7 +1445,7 @@ def main(argv):
     start_time = datetime.datetime.now()
     if args.verbose:
         log.info(f'Start: {start_time}')
-        log.info('Script wildebeest_normalize.py')
+        log.info('Script normalize.py')
         if args.input is not sys.stdin:
             log.info(f'Input: {args.input.name}')
         if args.output is not sys.stdout:
@@ -1491,4 +1490,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
