@@ -66,10 +66,6 @@ from typing import Callable, Match, Optional, TextIO
 
 log.basicConfig(level=log.INFO)
 
-__version__ = '0.6.3'
-last_mod_date = 'April 21, 2021'
-
-
 class Wildebeest:
     # noinspection PyPep8
     def __init__(self):
@@ -667,11 +663,11 @@ class Wildebeest:
 
     def normalize_georgian_characters(self, s: str) -> str:
         s = s.translate(self.georgian_trantab)
-        s = s.replace('ჱ', 'ე')   # archaic Georgian letter he
-        s = s.replace('ჲ', 'ი')   # archaic Georgian letter hie
-        s = s.replace('ჳ', 'ვი')  # archaic Georgian letter we
-        s = s.replace('ჴ', 'ხე')  # archaic Georgian letter har
-        s = s.replace('ჵ', 'ჰოი') # archaic Georgian letter hoe
+        s = s.replace('ჱ', 'ე')    # archaic Georgian letter he
+        s = s.replace('ჲ', 'ი')    # archaic Georgian letter hie
+        s = s.replace('ჳ', 'ვი')   # archaic Georgian letter we
+        s = s.replace('ჴ', 'ხე')   # archaic Georgian letter har
+        s = s.replace('ჵ', 'ჰოი')  # archaic Georgian letter hoe
         return s
 
     # noinspection SpellCheckingInspection
@@ -979,11 +975,11 @@ class Wildebeest:
         to regular SPACE.
         **Not** included: tab (= horizontal tabulation/character tabulation)
         """
-        s = s.replace('\u00A0', ' ')  # U+00A0 NO-BREAK SPACE
+        s = s.replace('\u00A0', ' ')  # NO-BREAK SPACE
         s = re.sub(r'[\u2000-\u200A]', ' ', s)
-        s = s.replace('\u202F', ' ')  # U+00A0 NARROW NO-BREAK SPACE
-        s = s.replace('\u205F', ' ')  # U+00A0 MEDIUM MATHEMATICAL SPACE
-        s = s.replace('\u3000', ' ')  # U+3000 IDEOGRAPHIC SPACE
+        s = s.replace('\u202F', ' ')  # NARROW NO-BREAK SPACE
+        s = s.replace('\u205F', ' ')  # MEDIUM MATHEMATICAL SPACE
+        s = s.replace('\u3000', ' ')  # IDEOGRAPHIC SPACE
         return s
 
     # noinspection SpellCheckingInspection
@@ -1274,7 +1270,7 @@ class Wildebeest:
         ht[key] = ht.get(key, 0) + increment
         return ht[key]
 
-    def ncs_group(self, s: str, ht: dict, group_name: str, group_function: Callable[[str], str],
+    def ncs_group(self, s: str, ht: dict, group_name: str, group_function: Callable,
                   loc_id: str) -> str:
         """
         ncs_group: normalize and clean string group.
@@ -1390,6 +1386,8 @@ class Wildebeest:
             s = self.ncs_group(s, ht, 'repair-token', self.repair_arabic_tokenization, loc_id)
         if s != orig_s:
             self.increment_dict_count(ht, 'COUNT-ALL')
+        # remove trailing spaces (before tab or end of line)
+        s = re.sub(' +(?=[\t\n])', '', s)
         return s
 
     def norm_clean_lines(self, ht: dict, input_file: TextIO, output_file: TextIO, lang_code=''):
@@ -1397,7 +1395,8 @@ class Wildebeest:
         line_number = 0
         for line in input_file:
             line_number += 1
-            output_file.write(self.norm_clean_string(line.rstrip(), ht, lang_code=lang_code, loc_id=str(line_number))
+            output_file.write(self.norm_clean_string(line.rstrip(" \n"), ht, lang_code=lang_code,
+                                                     loc_id=str(line_number))
                               + "\n")
 
 
