@@ -1,8 +1,9 @@
+# -*- encoding: utf-8 -*-
 """
 Written by Ulf Hermjakob, USC/ISI
 Pytest for normalize.py
 """
-# -*- encoding: utf-8 -*-
+
 import logging as log
 import wildebeest.normalize as wb_norm
 
