@@ -22,3 +22,4 @@ Punct: ∭ 〈〉 ⒈⒛🄆 ‼  ;·ʹ 。、﹑､｡｢｣『』【】「」
 ￠￡￢￣￤￥￦￨￩￪￫￬￭￮
 Look-alikes: aйды жəне Austіn CTVтелеарнасына
 Georgian: ქრისტჱ სხჳსი ჴლმწიფე ჵ ᲪᲘ ჰⴀⴥ  ႠჅ ᲐᲯ
+Spaces and tabs: field1 	field2  	  
