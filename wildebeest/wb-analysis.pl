@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 
 # Author: Ulf Hermjakob (USC Information Sciences Institute)
 # First written: September 9, 2009
