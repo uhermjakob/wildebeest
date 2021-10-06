@@ -37,9 +37,10 @@ setup(
                                                         'computational linguistics'],
     entry_points={
         'console_scripts': [
-            'wb_norm=wildebeest.wildebeest_normalize:main'
+            'wb-norm=wildebeest.normalize:main'
         ],
     },
+    scripts=['wildebeest/wb-analysis.pl'],
     install_requires=[],
     include_package_data=True,
     zip_safe=False,
