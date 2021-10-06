@@ -2,7 +2,7 @@
 
 # Author: Ulf Hermjakob (USC Information Sciences Institute)
 # First written: September 9, 2009
-# Current version: v2.5 (April 21, 2021)
+# Current version: v2.6 (April 28, 2021)
 
 # default values for optional parameters
 $max_n_examples = 20;
@@ -94,6 +94,7 @@ sub init_ht {
 
       CONTROL_CHAR:         Token contains control character
       VARIATION_SELECTOR:   Token contains variation selector, used to specify specific glyph variants for Unicode characters (highly unusual)
+      REPL_OBJECT:          Token contains replacement object
       REPL_CHAR:            Token contains replacement character
       OTHER_CHAR:           Token contains character of unknown script (possibly junk)
       PRIVATE_USE:          Token contains private use area character (undefined)
@@ -105,8 +106,8 @@ sub init_ht {
       COMBINING_DIACRITIC:  Token contains combining diacritic
       NON_ASCII_PUNCT_CHAR: Character is non-ASCII punctuation
       NON_ASCII_PUNCT:      Token contains non-ASCII punctuation
-      NON_ASCII_WHITESPACE_CHAR: Character is non-ASCII punctuation
-      NON_ASCII_WHITESPACE: Token contains non-ASCII punctuation
+      NON_ASCII_WHITESPACE_CHAR: Character is non-ASCII whitespace
+      NON_ASCII_WHITESPACE: Token contains non-ASCII whitespace
       GEOMETRIC_SHAPE_CHAR: Character is geometric shape, incl. circles and squares
       GEOMETRIC_SHAPE:      Token contains geometric shape, incl. circles and squares
       LETTERLIKE_SYMBOL_CHAR: Character is letterlike symbol
@@ -179,6 +180,10 @@ sub init_ht {
       GEORGIAN_EMPHASIS:    Token contains Georgian character in non-standard Mkhedruli Mtavruli script (emphasis)
       GEORGIAN_ASOMTAVRULI: Token contains Georgian character in historic Asomtavruli script
       GEORGIAN_NUSHKHURI:   Token contains Georgian character in historic Nuskhuri script
+      PUNCT_GEORGIAN:       Token contains punctuation followed by Georgian
+      GEORGIAN_PUNCT:       Token contains Georgian followed by punctuation
+      MIXED_GEORGIAN_PUNCT: Token contains mix of Georgian and Punctuation
+      GEORGIAN_PLUS_PERIOD: Token contains Georgian and a period (possibly abbreviation)
       GOTHIC:               Token contains Gothic character
       GREEK:                Token contains Greek character
       GREEK_EXTENDED:       Token contains Extended-Greek character
@@ -635,6 +640,22 @@ while (<STDIN>) {
             }
 	 }
       }  
+      # Georgian and punctuation
+      if (($token =~ /(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF])/)  # Punct
+       || ($token =~ /(?:\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD])/)
+       || ($token =~ /(?:\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])/)) {
+         if ($token =~ /(?:\xE1\x82[\xA0-\xBF]|\xE1\x83[\x80-\xBF]|\xE1\xB2[\x90-\xBF]|\xE2\xB4[\x80-\xAF])/) { # ... Georgian
+            if ($token =~ /^(?:(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF]|\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]|\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])[\x80-\xBF]*)+(?:\xE1\x82[\xA0-\xBF]|\xE1\x83[\x80-\xBF]|\xE1\xB2[\x90-\xBF]|\xE2\xB4[\x80-\xAF])/) {
+               &note_issue("PUNCT_GEORGIAN", $token, $line_id);
+            } elsif ($token =~ /(?:\xE1\x82[\xA0-\xBF]|\xE1\x83[\x80-\xBF]|\xE1\xB2[\x90-\xBF]|\xE2\xB4[\x80-\xAF]*)\.$/) {
+               &note_issue("GEORGIAN_PLUS_PERIOD", $token, $line_id);
+            } elsif ($token =~ /(?:\xE1\x82[\xA0-\xBF]|\xE1\x83[\x80-\xBF]|\xE1\xB2[\x90-\xBF]|\xE2\xB4[\x80-\xAF])(?:(?:[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E]|\xE2[\x80-\xAF]|\xC2[\xA0-\xBF]|\xC3[\x97\xB7]|\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]|\xEF\xB8[\x90-\x99\xB0-\xBF]|\xEF\xB9[\x80-\xAB]|\xEF\xBD[\x9B-\xA4]|\xF0\x9F[\xA0-\xA3])[\x80-\xBF]*)+$/) {
+               &note_issue("GEORGIAN_PUNCT", $token, $line_id);
+	    } else {
+               &note_issue("MIXED_GEORGIAN_PUNCT", $token, $line_id);
+            }
+	 }
+      }  
 
       # nukta
       if ($token =~ /\xE0[\xA4-\xA5]/) { # Devanagari
@@ -697,7 +718,7 @@ while (<STDIN>) {
             next if ($c =~ /[\xC0-\xC1]/)     && &note_issue("UTF8_NON_SHORTEST", $token, $line_id, $co);
             next if ($c =~ /\xC2[\x80-\x9F]/) && &note_issue("CONTROL_CHAR", $token, $line_id, $co);
             next if ($c =~ /\xC2[\xA2-\xA5]/) && &note_issue("CURRENCY", $token, $line_id, $co);
-            next if ($c =~ /\xC2\xA0/)        && &note_issue("NON_ASCII_WHITESPACE", $token, $line_id, $co, $c);
+            next if ($c =~ /\xC2\xA0/)        && &note_issue("NON_ASCII_WHITESPACE", $token, $line_id, $co, $c); # U+00A0 (nbsp)
             next if ($c =~ /\xC2[\xA0-\xBF]/) && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
             next if ($c =~ /\xC3[\x97\xB7]/)  && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
             next if ((($lang_code =~ /^(de|ger)$/) # German umlauts, sharp s
@@ -794,7 +815,9 @@ while (<STDIN>) {
             next if ($c =~ /\xE1\xB6/)            && &note_issue("IPA", $token, $line_id, $co); # supplement
             next if ($c =~ /\xE1[\xB8-\xBB]/)     && &note_issue("LATIN_EXTENDED_ADD", $token, $line_id, $co);
             next if ($c =~ /\xE1[\xBC-\xBF]/)     && &note_issue("GREEK_EXTENDED", $token, $line_id, $co);
+            next if ($c =~ /\xE2\x80[\x80-\x8A\xAF]/) && &note_issue("NON_ASCII_WHITESPACE", $token, $line_id, $co);
             next if ($c =~ /\xE2\x80[\x8B-\x8F\xAA-\xAE]/) && &note_issue("ZERO_WIDTH", $token, $line_id, $co);
+            next if ($c =~ /\xE2\x81\x9F/)        && &note_issue("NON_ASCII_WHITESPACE", $token, $line_id, $co); # Medium Mathematical Space
             next if ($c =~ /\xE2\x82[\xA0-\xBF]/) && &note_issue("CURRENCY", $token, $line_id, $co);
 	    next if ($c =~ /\xE2\x84/)            && &note_issue("LETTERLIKE_SYMBOL", $token, $line_id, $co, $c);
 	    next if ($c =~ /\xE2\x85[\x80-\x8F]/) && &note_issue("LETTERLIKE_SYMBOL", $token, $line_id, $co, $c);
@@ -822,7 +845,8 @@ while (<STDIN>) {
             next if ($c =~ /\xE2\xB4[\xB0-\xBF]/) && &note_issue("TIFINAGH", $token, $line_id, $co);
             next if ($c =~ /\xE2\xB5/)            && &note_issue("TIFINAGH", $token, $line_id, $co);
             next if ($c =~ /\xE2\xB7[\xA0-\xBF]/) && &note_issue("CYRILLIC_EXTENDED", $token, $line_id, $co);
-            next if ($c =~ /\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]/) && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
+            next if ($c =~ /\xE3\x80\x80/)        && &note_issue("NON_ASCII_WHITESPACE", $token, $line_id, $co, $c); # Ideographic Space
+            next if ($c =~ /\xE3\x80[\x81-\x91\x94-\x9F\xB0\xBB-\xBD]/) && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
             next if ($c =~ /\xE3\x83\xBB/)        && &note_issue("JAPANESE_PUNCT", $token, $line_id, $co); # katakana middle dot
             next if ($c =~ /\xE3[\x81-\x83]/)     && &note_issue("JAPANESE_KANA", $token, $line_id, $co);
             next if ($c =~ /\xE3\x84[\x80-\xAF]/) && &note_issue("BOPOMOFO", $token, $line_id, $co);
@@ -863,6 +887,7 @@ while (<STDIN>) {
             next if ($c =~ /\xEF\xBD[\x80-\x9A]/) && &note_issue("FULL_WIDTH", $token, $line_id, $co); # lc
             next if ($c =~ /\xEF\xBD[\x9B-\xA4]/) && &note_issue("NON_ASCII_PUNCT", $token, $line_id, $co, $c);
             next if ($c =~ /\xEF\xBF[\xB0-\xB6]/) && &note_issue("FULL_WIDTH", $token, $line_id, $co); # currency
+	    next if ($c =~ /\xEF\xBF\xBC/)        && &note_issue("REPL_OBJECT", $token, $line_id, $co); 
 	    next if ($c =~ /\xEF\xBF\xBD/)        && &note_issue("REPL_CHAR", $token, $line_id, $co); 
          } elsif ($c =~ /[\xF0-\xFE]/) {
             next if ($c =~ /\xF0\x90\x8C[\xB0-\xBF]/) && &note_issue("GOTHIC", $token, $line_id, $co);
