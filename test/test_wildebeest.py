@@ -1,10 +1,10 @@
 """
 Written by Ulf Hermjakob, USC/ISI
-Pytest for wildebeest_normalize.py
+Pytest for normalize.py
 """
 # -*- encoding: utf-8 -*-
 import logging as log
-import wildebeest.wildebeest_normalize as wb_norm
+import wildebeest.normalize as wb_norm
 
 log.basicConfig(level=log.INFO)
 
