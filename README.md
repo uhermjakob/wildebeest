@@ -8,8 +8,49 @@ A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
 The script contains a list of normalization modules as listed below. The script argument --skip allows users to specify
 any normalization modules they want to skip.
 
-## Quick start
-Installation: 
+## Usage &nbsp; (click below for details)
+<details>
+<summary>CLI to normalize a file: <code>python -m wildebeest</code> or its alias <code>wb-norm</code> </summary>
+
+```
+python -m wildebeest  [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS] [-v] [--version]
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT-FILENAME, --input INPUT-FILENAME
+                        (default: STDIN)
+  -o OUTPUT-FILENAME, --output OUTPUT-FILENAME
+                        (default: STDOUT)
+  --lc LANGUAGE-CODE    ISO 639-3, e.g. 'fas' for Persian
+  --skip NORM-STEPS     comma-separated list of normalization/cleaning steps to be skipped: repair-encodings-errors,del-surrogate,del-
+                        ctrl-char,del-arabic-diacr,del-hebrew-diacr,core-compat,pres-form,ligatures,signs-and-
+                        symbols,cjk,width,font,small,vertical,enclosure,hangul,repair-combining,combining-compose,combining-
+                        decompose,punct,punct-dash,punct-arabic,punct-cjk,punct-greek,punct-misc-f,space,digit,arabic-char,farsi-
+                        char,pashto-char,georgian-char,look-alike,repair-xml,repair-url-escapes,repair-token (default: nothing skipped)
+  -v, --verbose         write change log etc. to STDERR
+  --version             show program's version number and exit
+```
+Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+</details>
+
+<details>
+<summary>norm_clean_string (Python function call to normalize a string)</summary>
+ 
+```python 
+from wildebeest.normalize import Wildebeest
+wb = Wildebeest()
+ht = {}                             # dictionary sets/resets steps to be skipped (default: not skipped)
+# ht['SKIP-enclosure'] = 1          # optionally skip 'enclosure' normalization
+# ht['SKIP-del-arabic-diacr'] = 1   # optionally skip 'delete arabic diacritic' normalization
+wb.load_look_alike_file()           # optional
+print(wb.norm_clean_string('🄐…25kmÂ²', ht, lang_code='eng'))
+print(wb.norm_clean_string('೧೯೨೩', ht, lang_code='kan'))
+``` 
+Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+</details>
+
+<details>
+<summary>Installation</summary>
+
 ```bash
 # from PyPi (after public release)
 pip install wildebeest
@@ -24,6 +65,7 @@ pip install --editable .   # run it from dir having setup.py
 ```
 
 To call wildebeest after installation, run `python -m wildebeest` or its alias `wb-norm`. 
+</details>
 
 ### repair-encodings-errors
 The script generally expects input encoded in UTF8. However, it will recognize and repair some common text encoding
@@ -89,43 +131,6 @@ XML tokens.
 
 It will report the number of instances in each category and give examples.
 
-Currently available: wildebeest_analysis.pl (Perl) v2.3 (September 18, 2020)
+Currently available: wildebeest_analysis.pl (Perl) v2.6 (April 28, 2021)
 
-### Usage &nbsp; (click below for details)
 
-<details>
-<summary>CLI to normalize a file: <code>python -m wildebeest</code> or its alias <code>wb-norm</code> </summary>
-
-```
-python -m wildebeest  [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS] [-v] [--version]
-optional arguments:
-  -h, --help            show this help message and exit
-  -i INPUT-FILENAME, --input INPUT-FILENAME
-                        (default: STDIN)
-  -o OUTPUT-FILENAME, --output OUTPUT-FILENAME
-                        (default: STDOUT)
-  --lc LANGUAGE-CODE    ISO 639-3, e.g. 'fas' for Persian
-  --skip NORM-STEPS     comma-separated list of normalization/cleaning steps to be skipped: repair-encodings-errors,del-surrogate,del-
-                        ctrl-char,del-arabic-diacr,del-hebrew-diacr,core-compat,pres-form,ligatures,signs-and-
-                        symbols,cjk,width,font,small,vertical,enclosure,hangul,repair-combining,combining-compose,combining-
-                        decompose,punct,punct-dash,punct-arabic,punct-cjk,punct-greek,punct-misc-f,space,digit,arabic-char,farsi-
-                        char,pashto-char,georgian-char,look-alike,repair-xml,repair-url-escapes,repair-token (default: nothing skipped)
-  -v, --verbose         write change log etc. to STDERR
-  --version             show program's version number and exit
-```
-</details>
-
-<details>
-<summary>norm_clean_string (Python function call to normalize a string)</summary>
- 
-```python 
-from wildebeest.normalize import Wildebeest
-wb = Wildebeest()
-ht = {}                             # dictionary sets/resets steps to be skipped (default: not skipped)
-# ht['SKIP-enclosure'] = 1          # optionally skip 'enclosure' normalization
-# ht['SKIP-del-arabic-diacr'] = 1   # optionally skip 'delete arabic diacritic' normalization
-wb.load_look_alike_file()           # optional
-print(wb.norm_clean_string('🄐…25kmÂ²', ht, lang_code='eng'))
-print(wb.norm_clean_string('೧೯೨೩', ht, lang_code='kan'))
-``` 
-</details>
