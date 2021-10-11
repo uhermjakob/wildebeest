@@ -576,10 +576,11 @@ class Wildebeest:
         s = re.sub(r'[\u007F-\u009F]', '', s)  # control characters 'DELETE' and C1 code block
         s = s.replace('\u0640', '')  # Arabic tatweel
         s = re.sub(r'[\u200B-\u200F]', '', s)  # zero width space/non-joiner/joiner, direction marks
-        s = re.sub(r'[\uFE00-\uFE0F]', '', s)  # variation selectors 1-16
+        # Remove variation selectors that follow most letters, numbers, punctuation. Keep after emoji etc.
+        s = re.sub(r'(?<=[\u0000-\u218F])[\uFE00-\uFE0F]', '', s)  # variation selectors 1-16
+        s = re.sub(r'(?<=[\u0000-\u218F])[\U000E0100-\U000E01EF]', '', s)  # variation selectors 17-256
         # noinspection SpellCheckingInspection
         s = s.replace('\uFEFF', '')  # byte order mark, zero width no-break space
-        s = re.sub(r'[\U000E0100-\U000E01EF]', '', s)  # variation selectors 17-256
         return s
 
     @staticmethod
