@@ -29,7 +29,12 @@ optional arguments:
   -v, --verbose         write change log etc. to STDERR
   --version             show program's version number and exit
 ```
+Example:
+```
+python -m wildebeest -i corpus-raw.txt -o corpus-wb.txt --lc eng --skip punct-dash,enclosure,del-arabic-diacr
+```
 Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+Note: For robustness regarding input files that do not fully conform to UTF8, please use -i (rather than STDIN), as it includes UTF8-encoding error handling.
 </details>
 
 <details>
@@ -39,6 +44,7 @@ Note: Please make sure that your $PYTHONPATH includes the directory in which thi
 from wildebeest.normalize import Wildebeest
 wb = Wildebeest()
 ht = {}                             # dictionary sets/resets steps to be skipped (default: not skipped)
+# ht['SKIP-punct-dash'] = 1         # optionally skip normalization of ndash, mdash etc. to ASCII hyphen-minus.
 # ht['SKIP-enclosure'] = 1          # optionally skip 'enclosure' normalization
 # ht['SKIP-del-arabic-diacr'] = 1   # optionally skip 'delete arabic diacritic' normalization
 wb.load_look_alike_file()           # optional
@@ -120,8 +126,6 @@ errors:
 * `repair-xml` (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
 * `repair-url-escapes` (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 * `repair-token` (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
-
-This script is still work in progress.
 
 ## wildebeest_analysis
 
