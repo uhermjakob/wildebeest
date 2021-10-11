@@ -5,7 +5,7 @@
 Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
 punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
 A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
-The script contains a list of normalization modules as listed below. The script argument --skip allows users to specify
+The script contains a list of normalization modules as listed below. The script argument `--skip` allows users to specify
 any normalization modules they want to skip.
 
 ## Usage &nbsp; (click below for details)
