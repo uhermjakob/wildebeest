@@ -5,7 +5,7 @@
 Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
 punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
 A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
-The script contains a list of normalization modules as listed below. The script argument --skip allows users to specify
+The script contains a list of normalization modules as listed below. The script argument `--skip` allows users to specify
 any normalization modules they want to skip.
 
 ## Usage &nbsp; (click below for details)
@@ -29,7 +29,12 @@ optional arguments:
   -v, --verbose         write change log etc. to STDERR
   --version             show program's version number and exit
 ```
+Example:
+```
+python -m wildebeest -i corpus-raw.txt -o corpus-wb.txt --lc eng --skip punct-dash,enclosure,del-arabic-diacr
+```
 Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+Note: For robustness regarding input files that do not fully conform to UTF8, please use -i (rather than STDIN), as it includes UTF8-encoding error handling.
 </details>
 
 <details>
@@ -39,6 +44,7 @@ Note: Please make sure that your $PYTHONPATH includes the directory in which thi
 from wildebeest.normalize import Wildebeest
 wb = Wildebeest()
 ht = {}                             # dictionary sets/resets steps to be skipped (default: not skipped)
+# ht['SKIP-punct-dash'] = 1         # optionally skip normalization of ndash, mdash etc. to ASCII hyphen-minus.
 # ht['SKIP-enclosure'] = 1          # optionally skip 'enclosure' normalization
 # ht['SKIP-del-arabic-diacr'] = 1   # optionally skip 'delete arabic diacritic' normalization
 wb.load_look_alike_file()           # optional
@@ -86,42 +92,40 @@ errors:
     * Output: Don’t tell your “fiancé” — Schöne Grüße aus Mähren… – Ma sœur trouve ça «bête». ¡Coño! €50 • 25km² • ½µm
 
 ### Other normalization modules
-* del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
-* del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
-* core-compat (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
-* arabic-char (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
-* farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
-* pashto-char (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
-* georgian-char (to Georgian canonical forms, e.g. to standard script, map archaic characters)
-* pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
-* ligatures (e.g. decomposes non-Arabic ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ))
-* signs-and-symbols (e.g. maps symbols (e.g. kappa symbol) and signs (e.g. micro sign µ))
-* cjk (e.g. CJK square composites (e.g. ㋀㏾))
-* width (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
-* font (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters)
-* small (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
-* vertical (maps vertical versions of punctuation characters with normal horizontal version, such as vertical em-dash ︱ to horizontal em-dash —)
-* enclosure (decomposes circled, squared and parenthesized characters, e.g. 🄐 to (A))
-* hangul (combine Hangul jamos onto Hangul syllables)
-* repair-combining (e.g. order of nukta/vowel-sign)
-* combining-compose (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
-* combining-decompose (e.g. for some Indian characters, splits off Nukta)
-* del-arabic-diacr (e.g. deletes optional Arabic diacritics such as fatha, damma, kasra)
-* del-hebrew-diacr (e.g. deletes Hebrew points)
-* digit (e.g. maps decimal-system digits of 54 scripts to ASCII digits)
-* punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
-* punct-dash (e.g. maps various dashes, hyphens, minus signs to ASCII hyphen-minus)
-* punct-arabic (e.g. Arabic exclamation mark etc. to ASCII equivalent)
-* punct-cjk (e.g. Chinese Ideographic Full Stop etc. to ASCII equivalent)
-* punct-greek (e.g. Greek question mark etc. to ASCII equivalent)
-* punct-misc-f (e.g. Tibetan punctuation to ASCII equivalent)
-* space (e.g. maps non-zero spaces to normal space)
-* look-alike (normalizes Latin/Cyrillic/Greek look-alike characters, e.g. Latin character A to Greek Α (capital alpha) in otherwise Greek word)
-* repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
-* repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
-* repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
-
-This script is still work in progress.
+* `del-surrogate` (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
+* `del-ctrl-char` (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
+* `core-compat` (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
+* `arabic-char` (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
+* `farsi-char` (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
+* `pashto-char` (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
+* `georgian-char` (to Georgian canonical forms, e.g. to standard script, map archaic characters)
+* `pres-form` (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
+* `ligatures` (e.g. decomposes non-Arabic ligatures (e.g. ĳ, ﬃ, Ǆ, ﬓ))
+* `signs-and-symbols` (e.g. maps symbols (e.g. kappa symbol) and signs (e.g. micro sign µ))
+* `cjk` (e.g. CJK square composites (e.g. ㋀㏾))
+* `width` (e.g. maps fullwidth and halfwidth characters to ASCII, e.g. Ａ to A)
+* `font` (maps font-variations characters such as ℂ, ℹ, 𝒜 to regular characters)
+* `small` (maps small versions of characters to normal versions, such as small ampersand ﹠ to regular &)
+* `vertical` (maps vertical versions of punctuation characters with normal horizontal version, such as vertical em-dash ︱ to horizontal em-dash —)
+* `enclosure` (decomposes circled, squared and parenthesized characters, e.g. 🄐 to (A))
+* `hangul` (combine Hangul jamos onto Hangul syllables)
+* `repair-combining` (e.g. order of nukta/vowel-sign)
+* `combining-compose` (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
+* `combining-decompose` (e.g. for some Indian characters, splits off Nukta)
+* `del-arabic-diacr` (e.g. deletes optional Arabic diacritics such as fatha, damma, kasra)
+* `del-hebrew-diacr` (e.g. deletes Hebrew points)
+* `digit` (e.g. maps decimal-system digits of 54 scripts to ASCII digits)
+* `punct` (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
+* `punct-dash` (e.g. maps various dashes, hyphens, minus signs to ASCII hyphen-minus)
+* `punct-arabic` (e.g. Arabic exclamation mark etc. to ASCII equivalent)
+* `punct-cjk` (e.g. Chinese Ideographic Full Stop etc. to ASCII equivalent)
+* `punct-greek` (e.g. Greek question mark etc. to ASCII equivalent)
+* `punct-misc-f` (e.g. Tibetan punctuation to ASCII equivalent)
+* `space` (e.g. maps non-zero spaces to normal space)
+* `look-alike` (normalizes Latin/Cyrillic/Greek look-alike characters, e.g. Latin character A to Greek Α (capital alpha) in otherwise Greek word)
+* `repair-xml` (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
+* `repair-url-escapes` (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
+* `repair-token` (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
 ## wildebeest_analysis
 
