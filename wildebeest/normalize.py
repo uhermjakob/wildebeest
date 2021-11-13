@@ -828,6 +828,11 @@ class Wildebeest:
             s = re.sub(r'([\u0ABE-\u0ACD])(\u0ABC)', r'\2\1', s)  # Gujarati
             s = re.sub(r'([\u0B3E-\u0B4D])(\u0B3C)', r'\2\1', s)  # Oriya
             s = re.sub(r'([\u0CBE-\u0CCD])(\u0CBC)', r'\2\1', s)  # Kannada
+            s = re.sub(r'(\u09BC)\u09BC+', r'\1', s)  # remove duplicate Bengali nuktas
+            s = re.sub(r'(\u0A3C)\u0A3C+', r'\1', s)  # remove duplicate Gurmukhi nuktas
+            s = re.sub(r'(\u0ABC)\u0ABC+', r'\1', s)  # remove duplicate Gujarati nuktas
+            s = re.sub(r'(\u0B3C)\u0B3C+', r'\1', s)  # remove duplicate Oriya nuktas
+            s = re.sub(r'(\u0CBC)\u0CBC+', r'\1', s)  # remove duplicate Kannada nuktas
         if self.lv & self.char_is_khmer_plus:
             s = re.sub(r'([\u1C26-\u1C2C])(\u1C37)', r'\2\1', s)  # Lepcha
         if self.lv & self.char_is_100_plus_block_of_interest:
