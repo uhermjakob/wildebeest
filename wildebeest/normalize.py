@@ -820,6 +820,7 @@ class Wildebeest:
         # If an Indic vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
         if self.lv & self.char_is_devanagari:
             s = re.sub(r'([\u093E-\u094D])(\u093C)', r'\2\1', s)  # Devanagari
+            s = re.sub(r'(\u093C)\u093C+', r'\1', s)  # remove duplicate Devanagari nuktas
         # Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala
         if self.lv & self.char_is_bengali_plus:
             s = re.sub(r'([\u09BE-\u09CD])(\u09BC)', r'\2\1', s)  # Bengali
