@@ -763,6 +763,7 @@ class Wildebeest:
         # U+3099 COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK  ゙(e.g. ka -> ga)
         # U+309A COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK  ゚(e.g. ha -> pa)
         if re.search(r'[\u0300-\u036F\u0653-\u0655\u3099\u309A]', s):
+            s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]{3}', self.apply_mapping_dict, s)
             s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]{2}', self.apply_mapping_dict, s)
             s = re.sub(r'.[\u0300-\u036F\u0653-\u0655\u3099\u309A]', self.apply_mapping_dict, s)
         # U+093C Devanagari sign nukta, other South Asian

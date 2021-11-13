@@ -20,12 +20,11 @@ from pathlib import Path
 import re
 import unicodedata as ud
 import sys
-from pathlib import Path
 from wildebeest import normalize
 
 
 log.basicConfig(level=log.INFO)
-data_dir = Path(__file__).parent / 'data'
+data_dir = Path(__file__).parent.parent / 'data'
 data_dir_path: str = str(data_dir.resolve())  # FIXME: update this code to work with pathlib
 
 mapping_dict = {}        # general dict used to build Mapping.tsv files
@@ -132,13 +131,14 @@ def norm_string_by_mapping_dict(s: str, m_dict: dict, wb: normalize.Wildebeest,
                                 verbose: bool = False) -> str:
     """Function greedily applies to a string the mapping of short sub-strings using a lookup-table."""
     result = ''
+    sub_map = None
     i, n = 0, len(s)
     while i < n:
-        for l in range(3, 0, -1):
-            sub_map = m_dict.get(s[i:i+l])
+        for sub_length in range(3, 0, -1):
+            sub_map = m_dict.get(s[i:i+sub_length])
             if sub_map is not None:
                 result += sub_map
-                i += l
+                i += sub_length
                 break
         if sub_map is None:
             result += s[i:i+1]
@@ -244,14 +244,17 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
             for code_point in code_points:
                 char = chr(code_point)
                 decomp_ssv = ud.decomposition(char)
-                action = ''
+                action = None
+                decomp_str1 = None
+                decomp_str2 = None
+                decomp_str3 = None
                 if decomp_ssv:
                     decomp_elements = decomp_ssv.split()
                     if ((codeblock == 'ArabicPresentationFormMapping')
                             and (len(decomp_elements) >= 2)
                             and (decomp_elements[0] in ['<initial>', '<medial>', '<final>', '<isolated>'])):
                         decomp_chars = decomp_elements[1:]
-                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                        decomp_str1 = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         action = 'decomposition'
                     elif ((codeblock == 'CJKCompatibilityMapping')
                             and (len(decomp_elements) >= 1)):
@@ -262,9 +265,9 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         elif not (decomp_elements[0]).startswith('<'):
                             decomp_chars = decomp_elements
                         if decomp_chars:
-                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            decomp_str1 = ''.join([chr(int(x, 16)) for x in decomp_chars])
                             # map ℓ (U+2113, script small l) to regular l (as in ml)
-                            decomp_str = decomp_str.replace('\u2113', 'l')
+                            decomp_str1 = decomp_str1.replace('\u2113', 'l')
                             action = 'decomposition'
                     elif ((codeblock == 'CombiningModifierMapping')
                             and (len(decomp_elements) >= 2)):
@@ -279,12 +282,25 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         else:
                             decomp_chars = None
                         if decomp_chars:
-                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
-                            if not action:
+                            decomp_str1 = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            if action is None:
                                 if char in unicode_composition_exclusion_dict:
                                     action = 'decomposition'
                                 else:
                                     action = 'composition'
+                            if len(decomp_str1) >= 2 \
+                                    and (action == 'composition') \
+                                    and (sub_decomp_ssv := ud.decomposition(decomp_str1[0])) \
+                                    and (sub_decomp_elements := sub_decomp_ssv.split()) \
+                                    and not sub_decomp_elements[0].startswith('<'):
+                                decomp_chars2 = sub_decomp_elements + decomp_chars[1:]
+                                decomp_str2 = ''.join([chr(int(x, 16)) for x in decomp_chars2])
+                                if len(decomp_str2) >= 2 \
+                                        and (sub2_decomp_ssv := ud.decomposition(decomp_str2[0])) \
+                                        and (sub2_decomp_elements := sub2_decomp_ssv.split()) \
+                                        and not sub2_decomp_elements[0].startswith('<'):
+                                    decomp_chars3 = sub2_decomp_elements + decomp_chars2[1:]
+                                    decomp_str3 = ''.join([chr(int(x, 16)) for x in decomp_chars3])
                     elif codeblock == 'CoreCompatibilityMapping':
                         # for mappings of Hangul compatibility characters, some punctuation and math symbols,
                         # Roman numerals, numerals with attached punctuation, some complex modifier characters
@@ -294,7 +310,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         elif (len(decomp_elements) >= 1) and not decomp_elements[0].startswith('<'):
                             decomp_chars = decomp_elements
                         if decomp_chars:
-                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            decomp_str1 = ''.join([chr(int(x, 16)) for x in decomp_chars])
                             action = 'decomposition'
                     elif codeblock == 'EnclosureMapping':
                         # build mappings for Unicode characters that are squared, circled etc.
@@ -324,17 +340,17 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             decomp_chars = decomp_elements[1:]
                             left_enclosure, right_enclosure = '〔', '〕'
                         if decomp_chars:
-                            decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
-                            if ((not decomp_str.startswith(left_enclosure))
-                                    and (not decomp_str.endswith(right_enclosure))):
-                                decomp_str = left_enclosure + decomp_str + right_enclosure
+                            decomp_str1 = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                            if ((not decomp_str1.startswith(left_enclosure))
+                                    and (not decomp_str1.endswith(right_enclosure))):
+                                decomp_str1 = left_enclosure + decomp_str1 + right_enclosure
                             action = 'decomposition'
                     elif ((codeblock == 'FontSmallVerticalMapping')
                             and (len(decomp_elements) >= 2)
                             and (decomp_elements[0] in ['<font>', '<small>', '<vertical>'])):
                         # build mapping for Unicode entries with '<font>', '<small>', or '<vertical>'
                         decomp_chars = decomp_elements[1:]
-                        decomp_str = ''.join([chr(int(x, 16)) for x in decomp_chars])
+                        decomp_str1 = ''.join([chr(int(x, 16)) for x in decomp_chars])
                         action = 'decomposition'
                 elif codeblock == 'DigitMapping':
                     # build a mapping from all decimal-system digits to ASCII (54 sets in Unicode)
@@ -348,7 +364,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                             and ('ETHIOPIC' not in char_name)    # digits don't map one-to-one to ASCII digits
                             and ('KHAROSHTHI' not in char_name)  # digits don't map one-to-one to ASCII digits
                             and ('RUMI' not in char_name)):      # digits don't map one-to-one to ASCII digits
-                        decomp_str = str(digit)
+                        decomp_str1 = str(digit)
                         action = 'decomposition'
                         if (digit == 0) and supplementary_code_mode:  # used only in early versions of Wildebeest
                             unicode_from = '\\u' + ('%04x' % code_point).upper() if code_point < 0x10000 else \
@@ -363,39 +379,47 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                                 supplementary_code += f"    # {char_name[:-len(char_name_suffix)]} digits\n"
                             else:
                                 supplementary_code += '\n'
-                if action and verbose:
-                    char_name = ud.name(char, None)
-                    char_name_clause = f' ({char_name})' if char_name else ''
-                    char_hex = 'U+' + ('%04x' % code_point).upper()
+                decomp_strings = []
+                if decomp_str1:
+                    decomp_strings.append(decomp_str1)
+                if decomp_str2:
+                    decomp_strings.append(decomp_str2)
+                if decomp_str3:
+                    decomp_strings.append(decomp_str3)
+                for decomp_str in decomp_strings:
+                    if action and verbose:
+                        char_name = ud.name(char, None)
+                        char_name_clause = f' ({char_name})' if char_name else ''
+                        char_hex = 'U+' + ('%04x' % code_point).upper()
+                        if action == 'decomposition':
+                            # delete any space + deletable Arabic diacritics (fathatan .. sukrun):
+                            decomp_str = re.sub(r' [\u064B-\u0652]+', '', decomp_str)
+                            decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict, wb)
+                            decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
+                        elif action == 'composition':
+                            char = norm_string_by_mapping_dict(char, core_mapping_dict, wb)
+                            char = norm_string_by_mapping_dict(char, mapping_dict, wb)
+                            decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
+                        decomp_descr = string_to_character_unicode_descriptions(decomp_str)
                     if action == 'decomposition':
-                        # delete any space + deletable Arabic diacritics (fathatan .. sukrun):
-                        decomp_str = re.sub(r' [\u064B-\u0652]+', '', decomp_str)
-                        decomp_str = norm_string_by_mapping_dict(decomp_str, core_mapping_dict, wb)
-                        decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
+                        f.write(char + '\t' + decomp_str)
+                        mapping_dict[char] = decomp_str
+                        if verbose:
+                            f.write(f'\t{char_hex}{char_name_clause} -> {decomp_descr}')
+                            ud_ref = ud.normalize('NFKC', char)
+                            if (ud_ref != decomp_str) and (codeblock not in ['DigitMapping']):
+                                f.write(f"   NFKC-ref: {ud_ref}{' (unchanged)' if ud_ref == char else ''}")
+                        f.write('\n')
+                        n_output_lines += 1
                     elif action == 'composition':
-                        char = norm_string_by_mapping_dict(char, core_mapping_dict, wb)
-                        char = norm_string_by_mapping_dict(char, mapping_dict, wb)
-                        decomp_str = norm_string_by_mapping_dict(decomp_str, mapping_dict, wb)
-                    decomp_descr = string_to_character_unicode_descriptions(decomp_str)
-                if action == 'decomposition':
-                    f.write(char + '\t' + decomp_str)
-                    mapping_dict[char] = decomp_str
-                    if verbose:
-                        f.write(f'\t{char_hex}{char_name_clause} -> {decomp_descr}')
-                        ud_ref = ud.normalize('NFKC', char)
-                        if (ud_ref != decomp_str) and (codeblock not in ['DigitMapping']):
-                            f.write(f"   NFKC-ref: {ud_ref}{' (unchanged)' if ud_ref == char else ''}")
-                    f.write('\n')
-                    n_output_lines += 1
-                elif action == 'composition':
-                    f.write(decomp_str + '\t' + char)
-                    if verbose:
-                        f.write(f'\t{decomp_descr} -> {char_hex}{char_name_clause}')
-                        ud_ref = ud.normalize('NFKC', decomp_str)
-                        if (ud_ref != char) and (codeblock not in ['DigitMapping']):
-                            f.write(f"   NFKC-ref: {ud_ref}{' (unchanged)' if ud_ref == decomp_str else ''}")
-                    f.write('\n')
-                    n_output_lines += 1
+                        f.write(decomp_str + '\t' + char)
+                        if verbose:
+                            f.write(f'\t{decomp_descr} -> {char_hex}{char_name_clause}')
+                            ud_ref = ud.normalize('NFKC', decomp_str)
+                            if (ud_ref != char) and (codeblock not in ['DigitMapping']):
+                                f.write(f"   NFKC-ref: {ud_ref}{' (unchanged)' if ud_ref == decomp_str else ''}")
+                        f.write('\n')
+                        n_output_lines += 1
         log.info(f'Wrote {n_output_lines} entries to {output_tsv_filename}')
     elif codeblock == 'PythonWildebeestMapping':
         # extract some data mappings from (early) Wildebeest Python code
@@ -429,9 +453,9 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         source_strings = [source_string]
                         target_string = codecs.unicode_escape_decode(mr.group(2))[0]
                     else:
-                        ms = re.match(r".*re\.sub\(r'\[([^-'\[\]]+)-([^-'\[\]]+)\]',\s*'([^']*)',", line)
+                        ms = re.match(r".*re\.sub\(r'\[([^-'\[\]]+)-([^-'\[\]]+)]',\s*'([^']*)',", line)
                         ms2 = \
-                            re.match(r".*re\.sub\(r'\(\[([^-'\[\]]+)-([^-'\[\]]+)\]\)\(([^-'\[\]]+)\)',\s*r'(\\2\\1)',",
+                            re.match(r".*re\.sub\(r'\(\[([^-'\[\]]+)-([^-'\[\]]+)]\)\(([^-'\[\]]+)\)',\s*r'(\\2\\1)',",
                                      line)
                         if ms:
                             source_string_from = codecs.unicode_escape_decode(ms.group(1))[0]
@@ -475,7 +499,7 @@ def build_wildebeest_tsv_file(codeblock: str, verbose: bool = True, supplementar
                         out_line += '\n'
                         output_lines.append(out_line)
                     if ((not source_strings)
-                            and not re.search(r'(?:self\.apply_mapping_dict|\\2\\1)', line)):
+                            and not re.search(r'self\.apply_mapping_dict|\\2\\1', line)):
                         log.info(f'Unprocessed replace/sub statement: {line.rstrip()}')
         with open(output_tsv_filename, 'w', encoding='utf-8') as f_out:
             f_out.write(head_info + '\n')
@@ -765,7 +789,7 @@ def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_re
             if line == '':
                 break
             line_number += 1
-            cp_elem_list = re.split(r'(?:,\s*|\s+)', line.rstrip())
+            cp_elem_list = re.split(r',\s*|\s+', line.rstrip())
             for cp_elem in cp_elem_list:
                 if '-' in cp_elem:
                     cp_elem_from_to = re.split('-', cp_elem)
@@ -793,7 +817,6 @@ def addenda_to_assert_orig_wb_nfkc(filename_i: str, filename_o: str, filename_re
 
 
 def load_assert_files() -> None:
-    src_dir_path = os.path.dirname(os.path.realpath(__file__))
     assert_filename = os.path.join(data_dir_path, 'assert.tsv')
     assert_preserve_filename = os.path.join(data_dir_path, 'assert-preserve.tsv')
     for filename in [assert_filename, assert_preserve_filename]:
