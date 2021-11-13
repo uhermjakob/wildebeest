@@ -1292,12 +1292,7 @@ class Wildebeest:
                     ht[loc_key] = loc_id
         return s
 
-    # noinspection SpellCheckingInspection,SpellCheckingInspection
-    def norm_clean_string(self, s: str, ht: dict, lang_code: str = '', loc_id: str = '') -> str:
-        """Go through a list of applicable normalization/cleaning steps and keep track of the number of changes."""
-        number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
-        ht['NUMBER-OF-LINES'] = number_of_lines
-        orig_s = s
+    def set_lv(self, s:str) -> None:
         self.lv = 0  # line_char_type_vector
         # Each bit in this vector is to capture character type info, e.g. char_is_arabic
         for char in s:
@@ -1307,6 +1302,14 @@ class Wildebeest:
                 # So we will easily know whether e.g. a line contains an Arabic character.
                 # If not, some Arabic-specific normalization steps can be skipped to improve run-time.
                 self.lv = self.lv | char_type_vector
+
+    # noinspection SpellCheckingInspection,SpellCheckingInspection
+    def norm_clean_string(self, s: str, ht: dict, lang_code: str = '', loc_id: str = '') -> str:
+        """Go through a list of applicable normalization/cleaning steps and keep track of the number of changes."""
+        number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
+        ht['NUMBER-OF-LINES'] = number_of_lines
+        orig_s = s
+        self.set_lv(s)
         if self.lv & self.char_is_encoding_repair_anchor:
             s = self.ncs_group(s, ht, 'repair-encodings-errors', self.repair_encoding_errors, loc_id)
         # Cleaning step 'del-surrogate' is an alternative/backup to windows-1252.
