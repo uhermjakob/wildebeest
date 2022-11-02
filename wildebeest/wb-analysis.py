@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Written by Ulf Hermjakob, USC/ISI
-This script is a draft of a tokenizer.
+This script is analyzes a given text for a wide range of anomalies.
 When using STDIN and/or STDOUT, if might be necessary, particularly for older versions of Python, to do
 'export PYTHONIOENCODING=UTF-8' before calling this Python script to ensure UTF-8 encoding.
 """
@@ -26,7 +26,7 @@ import unicodeblock.blocks
 from normalize import Wildebeest
 
 __version__ = '0.1.0'
-last_mod_date = 'October 27, 2022'
+last_mod_date = 'November 1, 2022'
 
 log.basicConfig(level=log.INFO)
 
@@ -277,7 +277,7 @@ class WildebeestAnalysis:
         """Collect counts and examples for characters, tokens, and patterns occurring in file."""
         line_number = 0
         st = time.time()
-        prefix = 'Tokenizing'
+        prefix = 'Checking'
         with tqdm(input_file, total=total_bytes, disable=not progress_bar, unit='b', unit_scale=True,
                   dynamic_ncols=True, desc=prefix) as data_bar:
             try:
@@ -950,9 +950,9 @@ def process_file(args, ref_id_dict: dict = None):
 
 
 def main():
-    """Wrapper around tokenization that takes care of argument parsing and prints change stats to STDERR."""
+    """Wrapper around Wildebeest analysis that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
-    parser = argparse.ArgumentParser(description='Tokenizes a given text')
+    parser = argparse.ArgumentParser(description='Analyzes a given text for a wide range of anomalies')
     parser.add_argument('-i', '--input', type=Path,
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
     parser.add_argument('--batch', type=Path, default=None, help='Batch of input files (./*txt)')
