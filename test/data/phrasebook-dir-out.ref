@@ -1,0 +1,3 @@
+deu.txt: 2 letter scripts: LATIN, GREEK (ο); Replacement character; multi-script word
+ell.txt: 3 letter scripts: GREEK, LATIN (K), CYRILLIC (о); multi-script word
+eng.txt: 
