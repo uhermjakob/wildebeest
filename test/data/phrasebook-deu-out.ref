@@ -1,0 +1,35 @@
+OVERVIEW:
+File size: 2 lines, 21 characters
+Letter scripts: 2
+    LATIN (16 instances)
+    GREEK (1 instance): ο
+Number scripts: 0
+Other character groups: 2
+    SPACE (1 instance)
+    REPLACEMENT (1 instance): �
+Words with characters from multiple scripts: 1 category, 1 unique type, 1 instance
+
+DETAILS:
+Non-canonical character combinations: 0
+Character conflict sets: 0
+WORDS WITH CHARACTERS FROM MULTIPLE SCRIPTS (GREEK, LATIN):
+    Mοrgen count: 1, example: Mοrgen (Good morning)
+REPLACEMENT characters:
+    � U+FFFD REPLACEMENT CHARACTER count: 1, example: Tsch�ss (Bye)
+SPACE characters:
+      U+0020 SPACE count: 1, example:   (Good morning)
+BASIC_LATIN characters:
+    G U+0047 LATIN CAPITAL LETTER G count: 1, example: Guten (Good morning)
+    M U+004D LATIN CAPITAL LETTER M count: 1, example: Mοrgen (Good morning)
+    T U+0054 LATIN CAPITAL LETTER T count: 1, example: Tsch�ss (Bye)
+    c U+0063 LATIN SMALL LETTER C count: 1, example: Tsch�ss (Bye)
+    e U+0065 LATIN SMALL LETTER E count: 2, examples: Guten (Good morning), Mοrgen (Good morning)
+    g U+0067 LATIN SMALL LETTER G count: 1, example: Mοrgen (Good morning)
+    h U+0068 LATIN SMALL LETTER H count: 1, example: Tsch�ss (Bye)
+    n U+006E LATIN SMALL LETTER N count: 2, examples: Guten (Good morning), Mοrgen (Good morning)
+    r U+0072 LATIN SMALL LETTER R count: 1, example: Mοrgen (Good morning)
+    s U+0073 LATIN SMALL LETTER S count: 3, example: Tsch�ss (Bye)
+    t U+0074 LATIN SMALL LETTER T count: 1, example: Guten (Good morning)
+    u U+0075 LATIN SMALL LETTER U count: 1, example: Guten (Good morning)
+GREEK characters:
+    ο U+03BF GREEK SMALL LETTER OMICRON count: 1, example: Mοrgen (Good morning)
