@@ -1,0 +1,762 @@
+OVERVIEW:
+File size: 25 lines, 1722 characters
+Letter scripts: 17
+    LATIN (727 instances)
+    ARABIC (74 instances): آابتحخرسـكلمنهويٱپچږکگیېﭘﺍﺪﺳﻟﻠﻪ
+    DEVANAGARI (34 instances): कखगजटडढनऩफबयरऱळऴक़ख़ग़ज़ड़ढ़फ़य़
+    HEBREW (28 instances): בדהויכלמנעפשﬡ
+    GEORGIAN (28 instances): ႠჅეილმრსტფქწხჰჱჳჴჵᲐᲘᲪᲯⴀⴥ
+    CYRILLIC (19 instances): адежйлнрстыі
+    LETTERLIKE_SYMBOLS (10 instances): µℂℇΩKÅℳℹ
+    LAO (8 instances): ນມຫາຳໜໝ
+    MATHEMATICAL_ALPHANUMERIC_SYMBOLS (8 instances): 𝐀𝐴𝑨𝒜𝔄𝔸𝖠𝗔
+    GREEK (7 instances): ʹΎΥΫϒϓϔ
+    CJK (5 instances): 二五十年百
+    ARMENIAN (3 instances): եւև
+    HALFWIDTH_AND_FULLWIDTH_FORMS (3 instances): ｰｶﾸ
+    SUPERSCRIPTS_AND_SUBSCRIPTS (2 instances): ªₙ
+    THAI (2 instances): าำ
+    FULLWIDTH_LATIN (2 instances): Ａｚ
+    OTHER (1 instance): 𞸀
+Number scripts: 14
+    ASCII_DIGIT (58 instances): 01234578
+    EXTENDED_ARABIC_INDIC_DIGIT (15 instances): ۰۱۲۳۴۵۶۷۸۹
+    ARABIC_INDIC_DIGIT (10 instances): ٠١٢٣٤٥٦٧٨٩
+    SUPERSCRIPT_DIGIT (6 instances): ²³
+    ENCLOSED_ALPHANUMERICS (5 instances): ①⒇⒈⒛🄆
+    VULGAR_FRACTION (3 instances): ¼½
+    ETHIOPIC (3 instances): ፪፶፻
+    ROMAN_NUMERAL (3 instances): ⅬⅭ
+    ENCLOSED_CJK_LETTERS_AND_MONTHS (3 instances): ㈤㉑㊄
+    DEVANAGARI (2 instances): ०९
+    MALAYALAM (2 instances): ൦൯
+    FULLWIDTH_DIGIT (2 instances): ０９
+    SUBSCRIPT_DIGIT (1 instance): ₂
+    CJK_SYMBOLS_AND_PUNCTUATION (1 instance): 〹
+Other character groups: 36
+    SPACE (256 instances)
+    ASCII_PUNCTUATION (80 instances): !#%&,-.:;_
+    C0_CONTROL (31 instances)
+    C1_CONTROL (28 instances)
+    HEBREW_MODIFIERS (22 instances):  ְ ִ ֵ ֶ ַ ָ ֹ ּ ׁ
+    DEVANAGARI_MODIFIERS (22 instances):  ़ ा ु े
+    ARABIC_MODIFIERS (18 instances):  َ ِ ّ ْ ٓ ٰ
+    VARIATION_SELECTORS (18 instances)
+    HALFWIDTH_AND_FULLWIDTH_FORMS (18 instances): ￠￡￢￣￤￥￦￨￩￪￫￬￭￮
+    TIBETAN_MODIFIERS (17 instances):  ཱ ི ཱི ུ ཱུ ྲྀ ཷ ླྀ ཹ ེ ཻ ོ ཽ ཾ ཿ ྀ ཱྀ
+    GENERAL_PUNCTUATION (15 instances): ¡¦§©«¬±¶»‐‑‼
+    CJK_SYMBOLS_AND_PUNCTUATION (10 instances): 　、。「」『』【】〶
+    ENCLOSED_CJK_LETTERS_AND_MONTHS (10 instances): ㈀㈎㈷㉄㉐㉰㉼㊗㋀㋐
+    HALFWIDTH_AND_FULLWIDTH_FORMS_PUNCTUATION (7 instances): ！｟｠｡｢｣､
+    CURRENCY_SYMBOLS (6 instances): ¢¤₨₹
+    ENCLOSED_IDEOGRAPHIC (6 instances): 🈀🈁🈩🈯🉀🉐
+    COMBINING_DIACRITICAL_MARKS (5 instances):  ́ ̈ ̀ ́ ̓
+    ENCLOSED_ALPHANUMERICS (5 instances): ⒜Ⓐ🄐🄰🅏
+    ZERO_WIDTH (4 instances)
+    LETTERLIKE_SYMBOLS (4 instances): ℃℉№™
+    SMALL_FORM_VARIANTS_PUNCTUATION (4 instances): ﹐﹑﹠﹫
+    CJK_COMPATIBILITY (3 instances): ㍻㎢㏾
+    CJK_COMPATIBILITY_FORMS_PUNCTUATION (3 instances): ︱﹇﹈
+    REPLACEMENT (3 instances): �
+    MUSICAL_SYMBOLS (3 instances): 𝅘𝅘𝅥𝅘𝅥𝅮
+    MUSICAL_SYMBOLS_MODIFIERS (3 instances):  𝅥 𝅮
+    GREEK_PUNCTUATION (2 instances): ;·
+    TIBETAN_PUNCTUATION (2 instances): ་༌
+    DIRECTIONAL (2 instances)
+    MISCELLANEOUS_TECHNICAL_PUNCTUATION (2 instances): 〈〉
+    ARABIC_PUNCTUATION (1 instance): ٫
+    THAI_MODIFIERS (1 instance):  ํ
+    LAO_MODIFIERS (1 instance):  ໍ
+    SUPERSCRIPTS_AND_SUBSCRIPTS (1 instance): ⁻
+    MATHEMATICAL_OPERATORS (1 instance): ∭
+    VERTICAL_FORMS_PUNCTUATION (1 instance): ︐
+Non-canonical character combinations: 28
+Character conflict sets: 2
+Words with characters from multiple scripts: 5 categories, 12 unique types, 13 instances
+XML escape tokens: 5 categories, 7 unique types, 9 instances
+
+DETAILS:
+Non-canonical character combinations: 28
+    Non-canonical: é (NFD, e + ́, count: 1)  Canonical: é (NFC, é, count: 2)
+    Non-canonical: ö (NFD, o + ̈, count: 1)  Canonical: ö (NFC, ö, count: 2)
+    Non-canonical: ĳ (NFC, ĳ, count: 1)  Canonical: ij (NFC, i + j, count: 0)
+    Non-canonical: ſ (NFC, ſ, count: 1)  Canonical: s (NFC, s, count: 47)
+    Non-canonical: ǈ (NFC, ǈ, count: 1)  Canonical: Lj (NFC, L + j, count: 0)
+‎    Non-canonical: آ (NFD, ا + ٓ, count: 1)  Canonical: آ (NFC, آ, count: 1)
+    Non-canonical: डे़ (ड + े + ़, count: 2)  Canonical: ड़े (REORDERED, ड + ़ + े, count: 1)
+    Non-canonical: ऩ (NFD, न + ़, count: 1)  Canonical: ऩ (NFC, ऩ, count: 1)
+    Non-canonical: ऱ (NFD, र + ़, count: 1)  Canonical: ऱ (NFC, ऱ, count: 1)
+    Non-canonical: ऴ (NFD, ळ + ़, count: 1)  Canonical: ऴ (NFC, ऴ, count: 1)
+    Non-canonical: क़ (क़, count: 1)  Canonical: क़ (NFC, क + ़, count: 1)
+    Non-canonical: ख़ (ख़, count: 1)  Canonical: ख़ (NFC, ख + ़, count: 1)
+    Non-canonical: ग़ (ग़, count: 1)  Canonical: ग़ (NFC, ग + ़, count: 1)
+    Non-canonical: ज़ (ज़, count: 2)  Canonical: ज़ (NFC, ज + ़, count: 1)
+    Non-canonical: ज़ा (ज़ + ा, count: 1)  Canonical: ज़ा (NFC, ज + ़ + ा, count: 0)
+    Non-canonical: ड़ (ड़, count: 2)  Canonical: ड़ (NFC, ड + ़, count: 1)
+    Non-canonical: ड़े (ड़ + े, count: 1)  Canonical: ड़े (NFC, ड + ़ + े, count: 1)
+    Non-canonical: ढ़ (ढ़, count: 1)  Canonical: ढ़ (NFC, ढ + ़, count: 1)
+    Non-canonical: फ़ (फ़, count: 1)  Canonical: फ़ (NFC, फ + ़, count: 1)
+    Non-canonical: य़ (य़, count: 1)  Canonical: य़ (NFC, य + ़, count: 1)
+‎    Non-canonical: ﬡ (NFC, ﬡ, count: 1)  Canonical: א (NFC, א, count: 0)
+‎    Non-canonical: ﭘ (ﭘ, count: 1)  Canonical: پ (NORM-ARABIC-PRES-FORM, پ, count: 1)
+‎    Non-canonical: ﺍ (ﺍ, count: 1)  Canonical: ا (NORM-ARABIC-PRES-FORM, ا, count: 4)
+‎    Non-canonical: ﺪ (ﺪ, count: 1)  Canonical: د (NORM-ARABIC-PRES-FORM, د, count: 0)
+‎    Non-canonical: ﺳ (ﺳ, count: 1)  Canonical: س (NORM-ARABIC-PRES-FORM, س, count: 1)
+‎    Non-canonical: ﻟ (ﻟ, count: 1)  Canonical: ل (NORM-ARABIC-PRES-FORM, ل, count: 5)
+‎    Non-canonical: ﻠ (ﻠ, count: 1)  Canonical: ل (NORM-ARABIC-PRES-FORM, ل, count: 5)
+‎    Non-canonical: ﻪ (ﻪ, count: 2)  Canonical: ه (NORM-ARABIC-PRES-FORM, ه, count: 3)
+Character conflict sets: 2
+‎    ك U+0643 (ARABIC LETTER KAF) count: 2; ک U+06A9 (ARABIC LETTER KEHEH) count: 3
+‎    ي U+064A (ARABIC LETTER YEH) count: 7; ی U+06CC (ARABIC LETTER FARSI YEH) count: 3
+Number of Arabic tatweel characters: 6
+WORDS WITH CHARACTERS FROM MULTIPLE SCRIPTS (CYRILLIC, LATIN):
+    Austіn count: 1, line: 23
+    CTVтелеарнасына count: 1, line: 23
+    aйды count: 1, line: 23
+    жəне count: 1, line: 23
+WORDS WITH CHARACTERS FROM MULTIPLE SCRIPTS (LAO, THAI):
+    าໍາຫນຫມ count: 1, line: 16
+    ำຳໜໝ count: 1, line: 16
+WORDS WITH CHARACTERS FROM MULTIPLE SCRIPTS (LATIN, LETTERLIKE_SYMBOLS):
+    kΩ count: 1, line: 16
+    µm count: 2, lines: 11, 16
+    Âµm count: 1, line: 10
+WORDS WITH CHARACTERS FROM MULTIPLE SCRIPTS (LATIN, SUPERSCRIPTS_AND_SUBSCRIPTS):
+    aₙ count: 1, line: 18
+    bÃªteÂ count: 1, line: 10
+WORDS WITH CHARACTERS FROM MULTIPLE SCRIPTS (MATHEMATICAL_ALPHANUMERIC_SYMBOLS, OTHER):
+‎    𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 count: 1, line: 12
+XML ESCAPE TOKENS (BASIC):
+    &amp; count: 3, line: 15
+XML ESCAPE TOKENS (DECIMAL):
+    &#8204; count: 1, line: 15
+XML ESCAPE TOKENS (EXTENDED):
+    &bullet; count: 1, line: 15
+XML ESCAPE TOKENS (HEX):
+    &#x200C; count: 1, line: 15
+XML ESCAPE TOKENS (NESTED):
+    &amp;amp;#8204; count: 1, line: 15
+    &amp;amp;amp;#x200C; count: 1, line: 15
+    &amp;quot; count: 1, line: 15
+REPLACEMENT characters:
+    � U+FFFD REPLACEMENT CHARACTER count: 3, examples: China�s (l.13), isn�t (l.13), Espa�a (l.13)
+C0_CONTROL characters:
+     U+0001 START OF HEADING count: 1, line: 9
+     U+0002 START OF TEXT count: 1, line: 9
+     U+0003 END OF TEXT count: 1, line: 9
+     U+0004 END OF TRANSMISSION count: 1, line: 9
+     U+0005 ENQUIRY count: 1, line: 9
+     U+0006 ACKNOWLEDGE count: 1, line: 9
+     U+0007 BELL count: 1, line: 9
+     U+0008 BACKSPACE count: 1, line: 9
+    	 U+0009 TAB count: 2, lines: 8, 25
+     U+000B LINE TABULATION count: 1, line: 9
+     U+000C FORM FEED count: 1, line: 9
+     U+000E SHIFT OUT count: 1, line: 9
+     U+000F SHIFT IN count: 1, line: 9
+     U+0010 DATA LINK ESCAPE count: 1, line: 9
+     U+0011 DEVICE CONTROL ONE count: 1, line: 9
+     U+0012 DEVICE CONTROL TWO count: 1, line: 9
+     U+0013 DEVICE CONTROL THREE count: 1, line: 9
+     U+0014 DEVICE CONTROL FOUR count: 1, line: 9
+     U+0015 NEGATIVE ACKNOWLEDGE count: 1, line: 9
+     U+0016 SYNCHRONOUS IDLE count: 1, line: 9
+     U+0017 END OF TRANSMISSION BLOCK count: 1, line: 9
+     U+0018 CANCEL count: 1, line: 9
+     U+0019 END OF MEDIUM count: 1, line: 9
+     U+001A SUBSTITUTE count: 1, line: 9
+     U+001B ESCAPE count: 1, line: 9
+     U+001C INFORMATION SEPARATOR FOUR count: 1, line: 9
+     U+001D INFORMATION SEPARATOR THREE count: 1, line: 9
+     U+001E INFORMATION SEPARATOR TWO count: 1, line: 9
+     U+001F INFORMATION SEPARATOR ONE count: 1, line: 9
+     U+007F DELETE count: 1, line: 9
+C1_CONTROL characters:
+     U+0080 PADDING CHARACTER (W1252: Euro Sign) count: 10, lines: 9, 10, 11
+     U+0082 BREAK PERMITTED HERE (W1252: Single Low-9 Quotation Mark) count: 1, line: 10
+     U+0085 NEXT LINE (W1252: Horizontal Ellipsis) count: 1, line: 11
+     U+0092 PRIVATE USE TWO (W1252: Right Single Quotation Mark) count: 1, line: 11
+     U+0093 SET TRANSMIT STATE (W1252: Left Double Quotation Mark) count: 3, lines: 10, 11
+     U+0094 CANCEL CHARACTER (W1252: Right Double Quotation Mark) count: 2, lines: 10, 11
+     U+0095 MESSAGE WAITING (W1252: Bullet) count: 2, line: 11
+     U+0096 START OF GUARDED AREA (W1252: En Dash) count: 1, line: 11
+     U+0097 END OF GUARDED AREA (W1252: Em Dash) count: 1, line: 11
+     U+0099 SINGLE GRAPHIC CHARACTER INTRODUCER (W1252: Trade Mark Sign) count: 1, line: 10
+     U+009C STRING TERMINATOR (W1252: Latin Small Ligature OE) count: 2, lines: 10, 11
+     U+009D OPERATING SYSTEM COMMAND count: 1, line: 10
+     U+009F APPLICATION PROGRAM COMMAND (W1252: Latin Capital Letter Y With Diaeresis) count: 2, lines: 9, 10
+ZERO_WIDTH characters:
+    ​ U+200B ZERO WIDTH SPACE count: 1, line: 9
+    ‌ U+200C ZERO WIDTH NON-JOINER count: 1, line: 9
+    ‍ U+200D ZERO WIDTH JOINER count: 1, line: 9
+    ﻿ U+FEFF ZERO WIDTH NO-BREAK SPACE (BYTE ORDER MARK) count: 1, line: 9
+DIRECTIONAL characters:
+    ‎ U+200E LEFT-TO-RIGHT MARK count: 1, line: 9
+    ‏ U+200F RIGHT-TO-LEFT MARK count: 1, line: 9
+VARIATION_SELECTORS characters:
+     ︀ U+FE00 VARIATION SELECTOR-1 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︁ U+FE01 VARIATION SELECTOR-2 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︂ U+FE02 VARIATION SELECTOR-3 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︃ U+FE03 VARIATION SELECTOR-4 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︄ U+FE04 VARIATION SELECTOR-5 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︅ U+FE05 VARIATION SELECTOR-6 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︆ U+FE06 VARIATION SELECTOR-7 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︇ U+FE07 VARIATION SELECTOR-8 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︈ U+FE08 VARIATION SELECTOR-9 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︉ U+FE09 VARIATION SELECTOR-10 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︊ U+FE0A VARIATION SELECTOR-11 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︋ U+FE0B VARIATION SELECTOR-12 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︌ U+FE0C VARIATION SELECTOR-13 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︍ U+FE0D VARIATION SELECTOR-14 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ︎ U+FE0E VARIATION SELECTOR-15 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+     ️ U+FE0F VARIATION SELECTOR-16 count: 1, example: ︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ (l.9)
+VARIATION_SELECTORS_SUPPLEMENT characters:
+     󠄀 U+E0100 VARIATION SELECTOR-17 count: 1, example: DE󠄀󠇯F (l.9)
+     󠇯 U+E01EF VARIATION SELECTOR-256 count: 1, example: DE󠄀󠇯F (l.9)
+ASCII_PUNCTUATION characters:
+    ! U+0021 EXCLAMATION MARK count: 2, lines: 10, 11
+    # U+0023 NUMBER SIGN count: 4, line: 15
+    % U+0025 PERCENT SIGN count: 8, line: 15
+    & U+0026 AMPERSAND count: 6, line: 15
+    , U+002C COMMA count: 12, lines: 8, 12, 15, 16, 18
+    - U+002D HYPHEN-MINUS count: 3, lines: 18, 20, 23
+    . U+002E FULL STOP count: 7, lines: 8, 10, 11, 13, 14
+    : U+003A COLON count: 25, lines: 1, 2, 3, 4, 5
+    ; U+003B SEMICOLON count: 12, line: 15
+    _ U+005F LOW LINE count: 1, line: 15
+GENERAL_PUNCTUATION characters:
+    ¡ U+00A1 INVERTED EXCLAMATION MARK count: 2, lines: 10, 11
+    ¦ U+00A6 BROKEN BAR count: 1, line: 10
+    § U+00A7 SECTION SIGN count: 1, line: 10
+    © U+00A9 COPYRIGHT SIGN count: 1, line: 10
+    « U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK count: 2, lines: 10, 11
+    ¬ U+00AC NOT SIGN count: 1, line: 10
+    ± U+00B1 PLUS-MINUS SIGN count: 1, line: 10
+    ¶ U+00B6 PILCROW SIGN count: 1, line: 10
+    » U+00BB RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK count: 2, lines: 10, 11
+    ‐ U+2010 HYPHEN count: 1, line: 12
+    ‑ U+2011 NON-BREAKING HYPHEN count: 1, line: 12
+    ‼ U+203C DOUBLE EXCLAMATION MARK count: 1, line: 21
+CURRENCY_SYMBOLS characters:
+    ¢ U+00A2 CENT SIGN count: 2, line: 10
+    ¤ U+00A4 CURRENCY SIGN count: 1, line: 10
+    ₨ U+20A8 RUPEE SIGN count: 1, line: 16
+    ₹ U+20B9 INDIAN RUPEE SIGN count: 2, lines: 4, 5
+SPACE characters:
+      U+0020 SPACE count: 251, lines: 1, 2, 3, 4, 5
+      U+00A0 NO-BREAK SPACE count: 1, line: 8
+      U+2002 EN SPACE count: 1, line: 8
+      U+200A HAIR SPACE count: 1, line: 8
+      U+202F NARROW NO-BREAK SPACE count: 1, line: 8
+      U+205F MEDIUM MATHEMATICAL SPACE count: 1, line: 8
+ASCII_DIGIT characters:
+    0 U+0030 DIGIT ZERO count: 8, examples: 50 (l.10, 11), 8204 (l.15), 200 (l.15)
+    1 U+0031 DIGIT ONE count: 3, examples: 15 (l.16), 31 (l.16), 1 (l.25)
+    2 U+0032 DIGIT TWO count: 24, examples: 25 (l.10, 11, 15), 8204 (l.15), 200 (l.15)
+    3 U+0033 DIGIT THREE count: 3, examples: 3 (l.15), 273 (l.16), 31 (l.16)
+    4 U+0034 DIGIT FOUR count: 2, example: 8204 (l.15)
+    5 U+0035 DIGIT FIVE count: 13, examples: 50 (l.10, 11), 25 (l.10, 11, 15)
+    7 U+0037 DIGIT SEVEN count: 1, example: 273 (l.16)
+    8 U+0038 DIGIT EIGHT count: 4, examples: 8204 (l.15), 2582 (l.15)
+FULLWIDTH_DIGIT characters:
+    ０ U+FF10 FULLWIDTH DIGIT ZERO count: 1, example: ９０ (l.7)
+    ９ U+FF19 FULLWIDTH DIGIT NINE count: 1, example: ９０ (l.7)
+VULGAR_FRACTION characters:
+    ¼ U+00BC VULGAR FRACTION ONE QUARTER count: 1, line: 10
+    ½ U+00BD VULGAR FRACTION ONE HALF count: 2, lines: 10, 11
+ROMAN_NUMERAL characters:
+    Ⅼ U+216C ROMAN NUMERAL FIFTY count: 1, example: ⅭⅭⅬ (l.20)
+    Ⅽ U+216D ROMAN NUMERAL ONE HUNDRED count: 2, example: ⅭⅭⅬ (l.20)
+ARABIC_INDIC_DIGIT characters:
+    ٠ U+0660 ARABIC-INDIC DIGIT ZERO count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ١ U+0661 ARABIC-INDIC DIGIT ONE count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٢ U+0662 ARABIC-INDIC DIGIT TWO count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٣ U+0663 ARABIC-INDIC DIGIT THREE count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٤ U+0664 ARABIC-INDIC DIGIT FOUR count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٥ U+0665 ARABIC-INDIC DIGIT FIVE count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٦ U+0666 ARABIC-INDIC DIGIT SIX count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٧ U+0667 ARABIC-INDIC DIGIT SEVEN count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٨ U+0668 ARABIC-INDIC DIGIT EIGHT count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+    ٩ U+0669 ARABIC-INDIC DIGIT NINE count: 1, example: ٠١٢٣٤٥٦٧٨٩ (l.3)
+EXTENDED_ARABIC_INDIC_DIGIT characters:
+    ۰ U+06F0 EXTENDED ARABIC-INDIC DIGIT ZERO count: 5, examples: ۰۱۲۳۴۵۶۷۸۹ (l.3), ۲۰ (l.3), ۰۰۰ (l.3)
+    ۱ U+06F1 EXTENDED ARABIC-INDIC DIGIT ONE count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۲ U+06F2 EXTENDED ARABIC-INDIC DIGIT TWO count: 2, examples: ۰۱۲۳۴۵۶۷۸۹ (l.3), ۲۰ (l.3)
+    ۳ U+06F3 EXTENDED ARABIC-INDIC DIGIT THREE count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۴ U+06F4 EXTENDED ARABIC-INDIC DIGIT FOUR count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۵ U+06F5 EXTENDED ARABIC-INDIC DIGIT FIVE count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۶ U+06F6 EXTENDED ARABIC-INDIC DIGIT SIX count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۷ U+06F7 EXTENDED ARABIC-INDIC DIGIT SEVEN count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۸ U+06F8 EXTENDED ARABIC-INDIC DIGIT EIGHT count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+    ۹ U+06F9 EXTENDED ARABIC-INDIC DIGIT NINE count: 1, example: ۰۱۲۳۴۵۶۷۸۹ (l.3)
+SUPERSCRIPT_DIGIT characters:
+    ² U+00B2 SUPERSCRIPT TWO count: 5, examples: ² (l.10, 11, 16, 18), 2³² (l.18)
+    ³ U+00B3 SUPERSCRIPT THREE count: 1, example: 2³² (l.18)
+SUBSCRIPT_DIGIT characters:
+    ₂ U+2082 SUBSCRIPT TWO count: 1, line: 18
+SUPERSCRIPTS_AND_SUBSCRIPTS characters:
+    ª U+00AA FEMININE ORDINAL INDICATOR count: 1, example: bÃªteÂ (l.10)
+    ⁻ U+207B SUPERSCRIPT MINUS count: 1, line: 18
+    ₙ U+2099 LATIN SUBSCRIPT SMALL LETTER N count: 1, example: aₙ (l.18)
+COMBINING_DIACRITICAL_MARKS characters:
+     ́ U+0301 COMBINING ACUTE ACCENT count: 1, example: José (l.17)
+     ̈ U+0308 COMBINING DIAERESIS count: 1, example: schön (l.17)
+     ̀ U+0340 COMBINING GRAVE TONE MARK count: 1, example: ̀́̓ (l.17), decomposition: ̀ (COMBINING GRAVE ACCENT)
+     ́ U+0341 COMBINING ACUTE TONE MARK count: 1, example: ̀́̓ (l.17), decomposition: ́ (COMBINING ACUTE ACCENT)
+     ̓ U+0343 COMBINING GREEK KORONIS count: 1, example: ̀́̓ (l.17), decomposition: ̓ (COMBINING COMMA ABOVE)
+BASIC_LATIN characters:
+    A U+0041 LATIN CAPITAL LETTER A count: 7, examples: Arabic (l.3), A (l.9), ABlle (l.15), Aubron (l.15), AC (l.15)
+    B U+0042 LATIN CAPITAL LETTER B count: 2, examples: BC (l.9), ABlle (l.15)
+    C U+0043 LATIN CAPITAL LETTER C count: 13, examples: Control (l.9), BC (l.9), CoÃ (l.10), Coño (l.11), China�s (l.13)
+    D U+0044 LATIN CAPITAL LETTER D count: 5, examples: Devanagari (l.4), DE󠄀󠇯F (l.9), Double (l.10), Donâ (l.10), Don (l.11)
+    E U+0045 LATIN CAPITAL LETTER E count: 5, examples: DE󠄀󠇯F (l.9), Espa�a (l.13), E (l.15), Enclosed (l.19)
+    F U+0046 LATIN CAPITAL LETTER F count: 3, examples: Farsi (l.2), DE󠄀󠇯F (l.9), Font (l.12)
+    G U+0047 LATIN CAPITAL LETTER G count: 3, examples: GrÃ (l.10), Grüße (l.11), Georgian (l.24)
+    H U+0048 LATIN CAPITAL LETTER H count: 1, example: Hebrew (l.6)
+    I U+0049 LATIN CAPITAL LETTER I count: 1, example: In (l.8)
+    J U+004A LATIN CAPITAL LETTER J count: 4, examples: Jo (l.15), CJK (l.16), José (l.17), José (l.17)
+    K U+004B LATIN CAPITAL LETTER K count: 1, example: CJK (l.16)
+    L U+004C LATIN CAPITAL LETTER L count: 5, examples: XML (l.15), URL (l.15), Ligatures (l.16), Luſt (l.16), Look (l.23)
+    M U+004D LATIN CAPITAL LETTER M count: 6, examples: Malayalam (l.5), MÃ (l.10), Ma (l.10, 11), Mähren (l.11)
+    N U+004E LATIN CAPITAL LETTER N count: 1, example: Non (l.20)
+    O U+004F LATIN CAPITAL LETTER O count: 2, line: 18
+    P U+0050 LATIN CAPITAL LETTER P count: 4, examples: Pashto (l.1), Phillippine (l.14), Paolo (l.14), Punct (l.21)
+    R U+0052 LATIN CAPITAL LETTER R count: 2, examples: Replacement (l.13), URL (l.15)
+    S U+0053 LATIN CAPITAL LETTER S count: 6, examples: Spaces (l.8), SchÃ (l.10), Schöne (l.11), Sao (l.14), Superscripts (l.18)
+    T U+0054 LATIN CAPITAL LETTER T count: 3, examples: Typos (l.14), The (l.14), CTVтелеарнасына (l.23)
+    U U+0055 LATIN CAPITAL LETTER U count: 1, example: URL (l.15)
+    V U+0056 LATIN CAPITAL LETTER V count: 1, example: CTVтелеарнасына (l.23)
+    W U+0057 LATIN CAPITAL LETTER W count: 2, examples: Width (l.7), Wrong (l.11)
+    X U+0058 LATIN CAPITAL LETTER X count: 1, example: XML (l.15)
+    a U+0061 LATIN SMALL LETTER A count: 64, examples: Pashto (l.1), Farsi (l.2), Arabic (l.3), Devanagari (l.4), Malayalam (l.5)
+    b U+0062 LATIN SMALL LETTER B count: 16, examples: Arabic (l.3), Hebrew (l.6), Double (l.10), bÃªteÂ (l.10), bête (l.11)
+    c U+0063 LATIN SMALL LETTER C count: 32, examples: Arabic (l.3), Spaces (l.8), sentence (l.8), spaces (l.8), characters (l.9)
+    d U+0064 LATIN SMALL LETTER D count: 13, examples: Width (l.7), different (l.8), encoding (l.12), embarassed (l.14), kidnaping (l.14)
+    e U+0065 LATIN SMALL LETTER E count: 64, examples: Devanagari (l.4), Hebrew (l.6), Spaces (l.8), sentence (l.8), there (l.8)
+    f U+0066 LATIN SMALL LETTER F count: 10, examples: different (l.8), fiancÃ (l.10), fiancé (l.11), flag (l.13), offical (l.14)
+    g U+0067 LATIN SMALL LETTER G count: 10, examples: Devanagari (l.4), Wrong (l.11), encoding (l.12), flag (l.13), green (l.13)
+    h U+0068 LATIN SMALL LETTER H count: 17, examples: Pashto (l.1), Width (l.7), this (l.8), there (l.8), characters (l.9)
+    i U+0069 LATIN SMALL LETTER I count: 35, examples: Farsi (l.2), Arabic (l.3), Devanagari (l.4), Width (l.7), this (l.8)
+    j U+006A LATIN SMALL LETTER J count: 1, example: ǈubljana (l.16)
+    k U+006B LATIN SMALL LETTER K count: 7, examples: kmÂ (l.10), km (l.11, 16), kidnaping (l.14), kΩ (l.16)
+    l U+006C LATIN SMALL LETTER L count: 29, examples: Malayalam (l.5), Control (l.9), Double (l.10), tell (l.10, 11)
+    m U+006D LATIN SMALL LETTER M count: 23, examples: Malayalam (l.5), many (l.8), kmÂ (l.10), Âµm (l.10), km (l.11)
+    n U+006E LATIN SMALL LETTER N count: 47, examples: Devanagari (l.4), In (l.8), sentence (l.8), many (l.8), different (l.8)
+    o U+006F LATIN SMALL LETTER O count: 45, examples: Pashto (l.1), Control (l.9), Double (l.10), conversion (l.10), Donâ (l.10)
+    p U+0070 LATIN SMALL LETTER P count: 20, examples: Spaces (l.8), spaces (l.8), punctuation (l.12), Replacement (l.13), Espa�a (l.13)
+    q U+0071 LATIN SMALL LETTER Q count: 1, example: quot (l.15)
+    r U+0072 LATIN SMALL LETTER R count: 43, examples: Farsi (l.2), Arabic (l.3), Devanagari (l.4), Hebrew (l.6), there (l.8)
+    s U+0073 LATIN SMALL LETTER S count: 47, examples: Pashto (l.1), Farsi (l.2), Spaces (l.8), this (l.8), sentence (l.8)
+    t U+0074 LATIN SMALL LETTER T count: 40, examples: Pashto (l.1), Width (l.7), this (l.8), sentence (l.8), there (l.8)
+    u U+0075 LATIN SMALL LETTER U count: 24, examples: Double (l.10), your (l.10), aus (l.10), ur (l.10), trouve (l.10)
+    v U+0076 LATIN SMALL LETTER V count: 6, examples: Devanagari (l.4), conversion (l.10, 11), trouve (l.10, 11)
+    w U+0077 LATIN SMALL LETTER W count: 2, examples: Hebrew (l.6), was (l.14)
+    x U+0078 LATIN SMALL LETTER X count: 2, line: 15
+    y U+0079 LATIN SMALL LETTER Y count: 6, examples: Malayalam (l.5), many (l.8), your (l.10, 11), Typos (l.14)
+LATIN_EXTENDED_LETTER characters:
+    Â U+00C2 LATIN CAPITAL LETTER A WITH CIRCUMFLEX count: 8, examples: Â (l.10), bÃªteÂ (l.10), kmÂ (l.10), Âµm (l.10), ÂŒ (l.12)
+    Ã U+00C3 LATIN CAPITAL LETTER A WITH TILDE count: 8, examples: fiancÃ (l.10), SchÃ (l.10), GrÃ (l.10), Ã (l.10), MÃ (l.10)
+    Å U+00C5 LATIN CAPITAL LETTER A WITH RING ABOVE count: 1, example: sÅ (l.10)
+    ß U+00DF LATIN SMALL LETTER SHARP S count: 1, example: Grüße (l.11)
+    â U+00E2 LATIN SMALL LETTER A WITH CIRCUMFLEX count: 9, examples: Donâ (l.10), â (l.10), hrenâ (l.10)
+    ä U+00E4 LATIN SMALL LETTER A WITH DIAERESIS count: 1, example: Mähren (l.11)
+    æ U+00E6 LATIN SMALL LETTER AE count: 1, example: bær (l.16)
+    ç U+00E7 LATIN SMALL LETTER C WITH CEDILLA count: 1, example: ça (l.11)
+    é U+00E9 LATIN SMALL LETTER E WITH ACUTE count: 2, examples: fiancé (l.11), José (l.17)
+    ê U+00EA LATIN SMALL LETTER E WITH CIRCUMFLEX count: 1, example: bête (l.11)
+    ñ U+00F1 LATIN SMALL LETTER N WITH TILDE count: 1, example: Coño (l.11)
+    ö U+00F6 LATIN SMALL LETTER O WITH DIAERESIS count: 2, examples: Schöne (l.11), schön (l.17)
+    ü U+00FC LATIN SMALL LETTER U WITH DIAERESIS count: 1, example: Grüße (l.11)
+LATIN_EXTENDED_A characters:
+    ĳ U+0133 LATIN SMALL LIGATURE IJ count: 1, example: bĳ (l.16)
+    Œ U+0152 LATIN CAPITAL LIGATURE OE count: 1, example: ÂŒ (l.12)
+    œ U+0153 LATIN SMALL LIGATURE OE count: 1, example: sœur (l.16)
+    ſ U+017F LATIN SMALL LETTER LONG S count: 1, example: Luſt (l.16)
+LATIN_EXTENDED_B characters:
+    ǈ U+01C8 LATIN CAPITAL LETTER L WITH SMALL LETTER J count: 1, example: ǈubljana (l.16)
+LATIN characters:
+    ə U+0259 LATIN SMALL LETTER SCHWA count: 1, example: жəне (l.23)
+    ⁿ U+207F SUPERSCRIPT LATIN SMALL LETTER N count: 1, example: aⁿ (l.18)
+LETTERLIKE_SYMBOLS characters:
+    µ U+00B5 MICRO SIGN count: 3, examples: Âµm (l.10), µm (l.11, 16)
+    ℂ U+2102 DOUBLE-STRUCK CAPITAL C count: 1, example: ℂℳℹ (l.12)
+    ℃ U+2103 DEGREE CELSIUS count: 1, line: 16
+    ℇ U+2107 EULER CONSTANT count: 1, line: 16
+    ℉ U+2109 DEGREE FAHRENHEIT count: 1, line: 16
+    № U+2116 NUMERO SIGN count: 1, line: 16
+    ™ U+2122 TRADE MARK SIGN count: 1, line: 12
+    Ω U+2126 OHM SIGN count: 1, example: kΩ (l.16), decomposition: Ω (GREEK CAPITAL LETTER OMEGA)
+    K U+212A KELVIN SIGN count: 1, line: 16, decomposition: K (LATIN CAPITAL LETTER K)
+    Å U+212B ANGSTROM SIGN count: 1, line: 16, decomposition: Å (LATIN CAPITAL LETTER A WITH RING ABOVE)
+    ℳ U+2133 SCRIPT CAPITAL M count: 1, example: ℂℳℹ (l.12)
+    ℹ U+2139 INFORMATION SOURCE count: 1, example: ℂℳℹ (l.12)
+FULLWIDTH_LATIN characters:
+    Ａ U+FF21 FULLWIDTH LATIN CAPITAL LETTER A count: 1, example: Ａｚ (l.7)
+    ｚ U+FF5A FULLWIDTH LATIN SMALL LETTER Z count: 1, example: Ａｚ (l.7)
+CYRILLIC characters:
+    а U+0430 CYRILLIC SMALL LETTER A count: 3, example: CTVтелеарнасына (l.23)
+    д U+0434 CYRILLIC SMALL LETTER DE count: 1, example: aйды (l.23)
+    е U+0435 CYRILLIC SMALL LETTER IE count: 3, examples: жəне (l.23), CTVтелеарнасына (l.23)
+    ж U+0436 CYRILLIC SMALL LETTER ZHE count: 1, example: жəне (l.23)
+    й U+0439 CYRILLIC SMALL LETTER SHORT I count: 1, example: aйды (l.23)
+    л U+043B CYRILLIC SMALL LETTER EL count: 1, example: CTVтелеарнасына (l.23)
+    н U+043D CYRILLIC SMALL LETTER EN count: 3, examples: жəне (l.23), CTVтелеарнасына (l.23)
+    р U+0440 CYRILLIC SMALL LETTER ER count: 1, example: CTVтелеарнасына (l.23)
+    с U+0441 CYRILLIC SMALL LETTER ES count: 1, example: CTVтелеарнасына (l.23)
+    т U+0442 CYRILLIC SMALL LETTER TE count: 1, example: CTVтелеарнасына (l.23)
+    ы U+044B CYRILLIC SMALL LETTER YERU count: 2, examples: aйды (l.23), CTVтелеарнасына (l.23)
+    і U+0456 CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I count: 1, example: Austіn (l.23)
+ARMENIAN characters:
+    ե U+0565 ARMENIAN SMALL LETTER ECH count: 1, example: ևեւ (l.16)
+    ւ U+0582 ARMENIAN SMALL LETTER YIWN count: 1, example: ևեւ (l.16)
+    և U+0587 ARMENIAN SMALL LIGATURE ECH YIWN count: 1, example: ևեւ (l.16)
+GREEK characters:
+    ʹ U+0374 GREEK NUMERAL SIGN count: 1, line: 21, decomposition: ʹ (MODIFIER LETTER PRIME)
+    ; U+037E GREEK QUESTION MARK count: 1, line: 21, decomposition: ; (SEMICOLON)
+    · U+0387 GREEK ANO TELEIA count: 1, line: 21, decomposition: · (MIDDLE DOT)
+    Ύ U+038E GREEK CAPITAL LETTER UPSILON WITH TONOS count: 1, example: ΥΎΫ (l.17)
+    Υ U+03A5 GREEK CAPITAL LETTER UPSILON count: 1, example: ΥΎΫ (l.17)
+    Ϋ U+03AB GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA count: 1, example: ΥΎΫ (l.17)
+    ϒ U+03D2 GREEK UPSILON WITH HOOK SYMBOL count: 1, example: ϒϓϔ (l.17)
+    ϓ U+03D3 GREEK UPSILON WITH ACUTE AND HOOK SYMBOL count: 1, example: ϒϓϔ (l.17)
+    ϔ U+03D4 GREEK UPSILON WITH DIAERESIS AND HOOK SYMBOL count: 1, example: ϒϓϔ (l.17)
+ARABIC characters:
+‎    آ U+0622 ARABIC LETTER ALEF WITH MADDA ABOVE count: 1, line: 17
+‎    ا U+0627 ARABIC LETTER ALEF count: 4, examples: وبلاگ (l.2), اﺳﺪ (l.2), این (l.2), آ (l.17)
+‎    ب U+0628 ARABIC LETTER BEH count: 2, examples: وبلاگ (l.2), بِسْمِ (l.3)
+‎    ت U+062A ARABIC LETTER TEH count: 1, example: ريختگي (l.2)
+‎    ح U+062D ARABIC LETTER HAH count: 3, examples: ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3), رحــــــيم (l.3)
+‎    خ U+062E ARABIC LETTER KHAH count: 1, example: ريختگي (l.2)
+‎    ر U+0631 ARABIC LETTER REH count: 4, examples: ريختگي (l.2), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3), رحــــــيم (l.3)
+‎    س U+0633 ARABIC LETTER SEEN count: 1, example: بِسْمِ (l.3)
+‎    ـ U+0640 ARABIC TATWEEL count: 6, example: رحــــــيم (l.3)
+‎    ك U+0643 ARABIC LETTER KAF count: 2, examples: كې (l.1), یك (l.2)
+‎    ل U+0644 ARABIC LETTER LAM count: 5, examples: وبلاگ (l.2), ٱللَّٰهِ (l.3), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3)
+‎    م U+0645 ARABIC LETTER MEEM count: 4, examples: بِسْمِ (l.3), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3), رحــــــيم (l.3)
+‎    ن U+0646 ARABIC LETTER NOON count: 2, examples: این (l.2), ٱلرَّحْمَٰنِ (l.3)
+‎    ه U+0647 ARABIC LETTER HEH count: 3, examples: په (l.1), که (l.2), ٱللَّٰهِ (l.3)
+‎    و U+0648 ARABIC LETTER WAW count: 1, example: وبلاگ (l.2)
+‎    ي U+064A ARABIC LETTER YEH count: 7, examples: يې (l.1), کيږي (l.1), ريختگي (l.2), ٱلرَّحِيمِ (l.3), رحــــــيم (l.3)
+‎     َ U+064E ARABIC FATHA count: 4, examples: ٱللَّٰهِ (l.3), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3)
+‎     ِ U+0650 ARABIC KASRA count: 6, examples: بِسْمِ (l.3), ٱللَّٰهِ (l.3), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3)
+‎     ّ U+0651 ARABIC SHADDA count: 3, examples: ٱللَّٰهِ (l.3), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3)
+‎     ْ U+0652 ARABIC SUKUN count: 2, examples: بِسْمِ (l.3), ٱلرَّحْمَٰنِ (l.3)
+‎     ٓ U+0653 ARABIC MADDAH ABOVE count: 1, example: آ (l.17)
+    ٫ U+066B ARABIC DECIMAL SEPARATOR count: 1, line: 3
+‎     ٰ U+0670 ARABIC LETTER SUPERSCRIPT ALEF count: 2, examples: ٱللَّٰهِ (l.3), ٱلرَّحْمَٰنِ (l.3)
+‎    ٱ U+0671 ARABIC LETTER ALEF WASLA count: 3, examples: ٱللَّٰهِ (l.3), ٱلرَّحْمَٰنِ (l.3), ٱلرَّحِيمِ (l.3)
+‎    پ U+067E ARABIC LETTER PEH count: 1, example: په (l.1)
+‎    چ U+0686 ARABIC LETTER TCHEH count: 1, example: چې (l.1)
+‎    ږ U+0696 ARABIC LETTER REH WITH DOT BELOW AND DOT ABOVE count: 1, example: کيږي (l.1)
+‎    ک U+06A9 ARABIC LETTER KEHEH count: 3, examples: کيږي (l.1), کې (l.1), که (l.2)
+‎    گ U+06AF ARABIC LETTER GAF count: 2, examples: وبلاگ (l.2), ريختگي (l.2)
+‎    ی U+06CC ARABIC LETTER FARSI YEH count: 3, examples: یې (l.1), این (l.2), یك (l.2)
+‎    ې U+06D0 ARABIC LETTER E count: 5, examples: چې (l.1), يې (l.1), یې (l.1), كې (l.1), کې (l.1)
+ARABIC_PRESENTATION_FORMS_A characters:
+‎    ﭘ U+FB58 ARABIC LETTER PEH INITIAL FORM count: 1, example: ﭘﻪ (l.1)
+ARABIC_PRESENTATION_FORMS_B characters:
+‎    ﺍ U+FE8D ARABIC LETTER ALEF ISOLATED FORM count: 1, example: ﺍﻟﻠﻪ (l.1)
+‎    ﺪ U+FEAA ARABIC LETTER DAL FINAL FORM count: 1, example: اﺳﺪ (l.2)
+‎    ﺳ U+FEB3 ARABIC LETTER SEEN INITIAL FORM count: 1, example: اﺳﺪ (l.2)
+‎    ﻟ U+FEDF ARABIC LETTER LAM INITIAL FORM count: 1, example: ﺍﻟﻠﻪ (l.1)
+‎    ﻠ U+FEE0 ARABIC LETTER LAM MEDIAL FORM count: 1, example: ﺍﻟﻠﻪ (l.1)
+‎    ﻪ U+FEEA ARABIC LETTER HEH FINAL FORM count: 2, examples: ﭘﻪ (l.1), ﺍﻟﻠﻪ (l.1)
+HEBREW characters:
+‎     ְ U+05B0 HEBREW POINT SHEVA count: 2, examples: פְּנִימָה (l.6), יְהוּדִי (l.6)
+‎     ִ U+05B4 HEBREW POINT HIRIQ count: 3, examples: פְּנִימָה (l.6), יְהוּדִי (l.6), הוֹמִיָּה (l.6)
+‎     ֵ U+05B5 HEBREW POINT TSERE count: 1, example: בַּלֵּבָב (l.6)
+‎     ֶ U+05B6 HEBREW POINT SEGOL count: 2, example: נֶפֶשׁ (l.6)
+‎     ַ U+05B7 HEBREW POINT PATAH count: 1, example: בַּלֵּבָב (l.6)
+‎     ָ U+05B8 HEBREW POINT QAMATS count: 3, examples: בַּלֵּבָב (l.6), פְּנִימָה (l.6), הוֹמִיָּה (l.6)
+‎     ֹ U+05B9 HEBREW POINT HOLAM count: 3, examples: כֹּל (l.6), עוֹד (l.6), הוֹמִיָּה (l.6)
+‎     ּ U+05BC HEBREW POINT DAGESH OR MAPIQ count: 6, examples: כֹּל (l.6), בַּלֵּבָב (l.6), פְּנִימָה (l.6), יְהוּדִי (l.6), הוֹמִיָּה (l.6)
+‎     ׁ U+05C1 HEBREW POINT SHIN DOT count: 1, example: נֶפֶשׁ (l.6)
+‎    ב U+05D1 HEBREW LETTER BET count: 3, example: בַּלֵּבָב (l.6)
+‎    ד U+05D3 HEBREW LETTER DALET count: 2, examples: עוֹד (l.6), יְהוּדִי (l.6)
+‎    ה U+05D4 HEBREW LETTER HE count: 4, examples: פְּנִימָה (l.6), יְהוּדִי (l.6), הוֹמִיָּה (l.6)
+‎    ו U+05D5 HEBREW LETTER VAV count: 3, examples: עוֹד (l.6), יְהוּדִי (l.6), הוֹמִיָּה (l.6)
+‎    י U+05D9 HEBREW LETTER YOD count: 4, examples: פְּנִימָה (l.6), יְהוּדִי (l.6), הוֹמִיָּה (l.6)
+‎    כ U+05DB HEBREW LETTER KAF count: 1, example: כֹּל (l.6)
+‎    ל U+05DC HEBREW LETTER LAMED count: 2, examples: כֹּל (l.6), בַּלֵּבָב (l.6)
+‎    מ U+05DE HEBREW LETTER MEM count: 2, examples: פְּנִימָה (l.6), הוֹמִיָּה (l.6)
+‎    נ U+05E0 HEBREW LETTER NUN count: 2, examples: פְּנִימָה (l.6), נֶפֶשׁ (l.6)
+‎    ע U+05E2 HEBREW LETTER AYIN count: 1, example: עוֹד (l.6)
+‎    פ U+05E4 HEBREW LETTER PE count: 2, examples: פְּנִימָה (l.6), נֶפֶשׁ (l.6)
+‎    ש U+05E9 HEBREW LETTER SHIN count: 1, example: נֶפֶשׁ (l.6)
+HEBREW_ALPHABETIC_PRESENTATION_FORMS characters:
+‎    ﬡ U+FB21 HEBREW LETTER WIDE ALEF count: 1, line: 12
+DEVANAGARI characters:
+    क U+0915 DEVANAGARI LETTER KA count: 3, examples: टुकड़े (l.4), क़ख़ग़ज़ड़ढ़फ़य़ (l.4), टुकडे़ (l.4)
+    ख U+0916 DEVANAGARI LETTER KHA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ग U+0917 DEVANAGARI LETTER GA count: 2, examples: गाज़ा (l.4), क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ज U+091C DEVANAGARI LETTER JA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ट U+091F DEVANAGARI LETTER TTA count: 2, examples: टुकड़े (l.4), टुकडे़ (l.4)
+    ड U+0921 DEVANAGARI LETTER DDA count: 4, examples: बड़े (l.4), क़ख़ग़ज़ड़ढ़फ़य़ (l.4), टुकडे़ (l.4), बडे़ (l.4)
+    ढ U+0922 DEVANAGARI LETTER DDHA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    न U+0928 DEVANAGARI LETTER NA count: 1, example: ऩऱऴ (l.4)
+    ऩ U+0929 DEVANAGARI LETTER NNNA count: 1, example: ऩऱऴ (l.4)
+    फ U+092B DEVANAGARI LETTER PHA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ब U+092C DEVANAGARI LETTER BA count: 2, examples: बड़े (l.4), बडे़ (l.4)
+    य U+092F DEVANAGARI LETTER YA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    र U+0930 DEVANAGARI LETTER RA count: 1, example: ऩऱऴ (l.4)
+    ऱ U+0931 DEVANAGARI LETTER RRA count: 1, example: ऩऱऴ (l.4)
+    ळ U+0933 DEVANAGARI LETTER LLA count: 1, example: ऩऱऴ (l.4)
+    ऴ U+0934 DEVANAGARI LETTER LLLA count: 1, example: ऩऱऴ (l.4)
+     ़ U+093C DEVANAGARI SIGN NUKTA count: 14, examples: बड़े (l.4), क़ख़ग़ज़ड़ढ़फ़य़ (l.4), ऩऱऴ (l.4), टुकडे़ (l.4), बडे़ (l.4)
+     ा U+093E DEVANAGARI VOWEL SIGN AA count: 2, example: गाज़ा (l.4)
+     ु U+0941 DEVANAGARI VOWEL SIGN U count: 2, examples: टुकड़े (l.4), टुकडे़ (l.4)
+     े U+0947 DEVANAGARI VOWEL SIGN E count: 4, examples: बड़े (l.4), टुकड़े (l.4), टुकडे़ (l.4), बडे़ (l.4)
+    क़ U+0958 DEVANAGARI LETTER QA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ख़ U+0959 DEVANAGARI LETTER KHHA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ग़ U+095A DEVANAGARI LETTER GHHA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ज़ U+095B DEVANAGARI LETTER ZA count: 2, examples: गाज़ा (l.4), क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ड़ U+095C DEVANAGARI LETTER DDDHA count: 2, examples: टुकड़े (l.4), क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ढ़ U+095D DEVANAGARI LETTER RHA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    फ़ U+095E DEVANAGARI LETTER FA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    य़ U+095F DEVANAGARI LETTER YYA count: 1, example: क़ख़ग़ज़ड़ढ़फ़य़ (l.4)
+    ० U+0966 DEVANAGARI DIGIT ZERO count: 1, example: ९० (l.4)
+    ९ U+096F DEVANAGARI DIGIT NINE count: 1, example: ९० (l.4)
+MALAYALAM characters:
+    ൦ U+0D66 MALAYALAM DIGIT ZERO count: 1, example: ൯൦ (l.5)
+    ൯ U+0D6F MALAYALAM DIGIT NINE count: 1, example: ൯൦ (l.5)
+THAI characters:
+    า U+0E32 THAI CHARACTER SARA AA count: 1, example: ําໍາຫນຫມ (l.16)
+    ำ U+0E33 THAI CHARACTER SARA AM count: 1, example: ำຳໜໝ (l.16)
+     ํ U+0E4D THAI CHARACTER NIKHAHIT count: 1, example: ําໍາຫນຫມ (l.16)
+LAO characters:
+    ນ U+0E99 LAO LETTER NO count: 1, example: าໍາຫນຫມ (l.16)
+    ມ U+0EA1 LAO LETTER MO count: 1, example: าໍາຫນຫມ (l.16)
+    ຫ U+0EAB LAO LETTER HO SUNG count: 2, example: าໍາຫນຫມ (l.16)
+    າ U+0EB2 LAO VOWEL SIGN AA count: 1, example: าໍາຫນຫມ (l.16)
+    ຳ U+0EB3 LAO VOWEL SIGN AM count: 1, example: ำຳໜໝ (l.16)
+     ໍ U+0ECD LAO NIGGAHITA count: 1, example: าໍາຫນຫມ (l.16)
+    ໜ U+0EDC LAO HO NO count: 1, example: ำຳໜໝ (l.16)
+    ໝ U+0EDD LAO HO MO count: 1, example: ำຳໜໝ (l.16)
+TIBETAN characters:
+    ་ U+0F0B TIBETAN MARK INTERSYLLABIC TSHEG count: 1, line: 12
+    ༌ U+0F0C TIBETAN MARK DELIMITER TSHEG BSTAR count: 1, line: 12
+     ཱ U+0F71 TIBETAN VOWEL SIGN AA count: 1, line: 16
+     ི U+0F72 TIBETAN VOWEL SIGN I count: 1, line: 16
+     ཱི U+0F73 TIBETAN VOWEL SIGN II count: 1, line: 16
+     ུ U+0F74 TIBETAN VOWEL SIGN U count: 1, line: 16
+     ཱུ U+0F75 TIBETAN VOWEL SIGN UU count: 1, line: 16
+     ྲྀ U+0F76 TIBETAN VOWEL SIGN VOCALIC R count: 1, line: 16
+     ཷ U+0F77 TIBETAN VOWEL SIGN VOCALIC RR count: 1, line: 16
+     ླྀ U+0F78 TIBETAN VOWEL SIGN VOCALIC L count: 1, line: 16
+     ཹ U+0F79 TIBETAN VOWEL SIGN VOCALIC LL count: 1, line: 16
+     ེ U+0F7A TIBETAN VOWEL SIGN E count: 1, line: 16
+     ཻ U+0F7B TIBETAN VOWEL SIGN EE count: 1, line: 16
+     ོ U+0F7C TIBETAN VOWEL SIGN O count: 1, line: 16
+     ཽ U+0F7D TIBETAN VOWEL SIGN OO count: 1, line: 16
+     ཾ U+0F7E TIBETAN SIGN RJES SU NGA RO count: 1, line: 16
+     ཿ U+0F7F TIBETAN SIGN RNAM BCAD count: 1, line: 16
+     ྀ U+0F80 TIBETAN VOWEL SIGN REVERSED I count: 1, line: 16
+     ཱྀ U+0F81 TIBETAN VOWEL SIGN REVERSED II count: 1, line: 16
+GEORGIAN characters:
+    Ⴀ U+10A0 GEORGIAN CAPITAL LETTER AN count: 1, example: ႠჅ (l.24)
+    Ⴥ U+10C5 GEORGIAN CAPITAL LETTER HOE count: 1, example: ႠჅ (l.24)
+    ე U+10D4 GEORGIAN LETTER EN count: 1, example: ჴლმწიფე (l.24)
+    ი U+10D8 GEORGIAN LETTER IN count: 3, examples: ქრისტჱ (l.24), სხჳსი (l.24), ჴლმწიფე (l.24)
+    ლ U+10DA GEORGIAN LETTER LAS count: 1, example: ჴლმწიფე (l.24)
+    მ U+10DB GEORGIAN LETTER MAN count: 1, example: ჴლმწიფე (l.24)
+    რ U+10E0 GEORGIAN LETTER RAE count: 1, example: ქრისტჱ (l.24)
+    ს U+10E1 GEORGIAN LETTER SAN count: 3, examples: ქრისტჱ (l.24), სხჳსი (l.24)
+    ტ U+10E2 GEORGIAN LETTER TAR count: 1, example: ქრისტჱ (l.24)
+    ფ U+10E4 GEORGIAN LETTER PHAR count: 1, example: ჴლმწიფე (l.24)
+    ქ U+10E5 GEORGIAN LETTER KHAR count: 1, example: ქრისტჱ (l.24)
+    წ U+10EC GEORGIAN LETTER CIL count: 1, example: ჴლმწიფე (l.24)
+    ხ U+10EE GEORGIAN LETTER XAN count: 1, example: სხჳსი (l.24)
+    ჰ U+10F0 GEORGIAN LETTER HAE count: 1, example: ჰⴀⴥ (l.24)
+    ჱ U+10F1 GEORGIAN LETTER HE count: 1, example: ქრისტჱ (l.24)
+    ჳ U+10F3 GEORGIAN LETTER WE count: 1, example: სხჳსი (l.24)
+    ჴ U+10F4 GEORGIAN LETTER HAR count: 1, example: ჴლმწიფე (l.24)
+    ჵ U+10F5 GEORGIAN LETTER HOE count: 1, line: 24
+    Ა U+1C90 GEORGIAN MTAVRULI CAPITAL LETTER AN count: 1, example: ᲐᲯ (l.24)
+    Ი U+1C98 GEORGIAN MTAVRULI CAPITAL LETTER IN count: 1, example: ᲪᲘ (l.24)
+    Ც U+1CAA GEORGIAN MTAVRULI CAPITAL LETTER CAN count: 1, example: ᲪᲘ (l.24)
+    Ჯ U+1CAF GEORGIAN MTAVRULI CAPITAL LETTER JHAN count: 1, example: ᲐᲯ (l.24)
+    ⴀ U+2D00 GEORGIAN SMALL LETTER AN count: 1, example: ჰⴀⴥ (l.24)
+    ⴥ U+2D25 GEORGIAN SMALL LETTER HOE count: 1, example: ჰⴀⴥ (l.24)
+ETHIOPIC characters:
+    ፪ U+136A ETHIOPIC DIGIT TWO count: 1, example: ፪፻፶ (l.20)
+    ፶ U+1376 ETHIOPIC NUMBER FIFTY count: 1, example: ፪፻፶ (l.20)
+    ፻ U+137B ETHIOPIC NUMBER HUNDRED count: 1, example: ፪፻፶ (l.20)
+MATHEMATICAL_OPERATORS characters:
+    ∭ U+222D TRIPLE INTEGRAL count: 1, line: 21
+MISCELLANEOUS_TECHNICAL characters:
+    〈 U+2329 LEFT-POINTING ANGLE BRACKET count: 1, line: 21, decomposition: 〈 (LEFT ANGLE BRACKET)
+    〉 U+232A RIGHT-POINTING ANGLE BRACKET count: 1, line: 21, decomposition: 〉 (RIGHT ANGLE BRACKET)
+ENCLOSED_ALPHANUMERICS characters:
+    ① U+2460 CIRCLED DIGIT ONE count: 1, example: ①⒇㉑ (l.19)
+    ⒇ U+2487 PARENTHESIZED NUMBER TWENTY count: 1, example: ①⒇㉑ (l.19)
+    ⒈ U+2488 DIGIT ONE FULL STOP count: 1, example: ⒈⒛🄆 (l.21)
+    ⒛ U+249B NUMBER TWENTY FULL STOP count: 1, example: ⒈⒛🄆 (l.21)
+    ⒜ U+249C PARENTHESIZED LATIN SMALL LETTER A count: 1, line: 19
+    Ⓐ U+24B6 CIRCLED LATIN CAPITAL LETTER A count: 1, line: 19
+CJK_SYMBOLS_AND_PUNCTUATION characters:
+    　 U+3000 IDEOGRAPHIC SPACE count: 1, line: 8
+    、 U+3001 IDEOGRAPHIC COMMA count: 1, line: 21
+    。 U+3002 IDEOGRAPHIC FULL STOP count: 1, line: 21
+    「 U+300C LEFT CORNER BRACKET count: 1, line: 21
+    」 U+300D RIGHT CORNER BRACKET count: 1, line: 21
+    『 U+300E LEFT WHITE CORNER BRACKET count: 1, line: 21
+    』 U+300F RIGHT WHITE CORNER BRACKET count: 1, line: 21
+    【 U+3010 LEFT BLACK LENTICULAR BRACKET count: 1, line: 21
+    】 U+3011 RIGHT BLACK LENTICULAR BRACKET count: 1, line: 21
+    〶 U+3036 CIRCLED POSTAL MARK count: 1, line: 19
+    〹 U+3039 HANGZHOU NUMERAL TWENTY count: 1, line: 20
+ENCLOSED_CJK_LETTERS_AND_MONTHS characters:
+    ㈀ U+3200 PARENTHESIZED HANGUL KIYEOK count: 1, line: 19
+    ㈎ U+320E PARENTHESIZED HANGUL KIYEOK A count: 1, line: 19
+    ㈤ U+3224 PARENTHESIZED IDEOGRAPH FIVE count: 1, example: ㈤㊄ (l.19)
+    ㈷ U+3237 PARENTHESIZED IDEOGRAPH CONGRATULATION count: 1, line: 19
+    ㉄ U+3244 CIRCLED IDEOGRAPH QUESTION count: 1, line: 19
+    ㉐ U+3250 PARTNERSHIP SIGN count: 1, line: 16
+    ㉑ U+3251 CIRCLED NUMBER TWENTY ONE count: 1, example: ①⒇㉑ (l.19)
+    ㉰ U+3270 CIRCLED HANGUL TIKEUT A count: 1, line: 19
+    ㉼ U+327C CIRCLED KOREAN CHARACTER CHAMKO count: 1, line: 19
+    ㊄ U+3284 CIRCLED IDEOGRAPH FIVE count: 1, example: ㈤㊄ (l.19)
+    ㊗ U+3297 CIRCLED IDEOGRAPH CONGRATULATION count: 1, line: 19
+    ㋀ U+32C0 IDEOGRAPHIC TELEGRAPH SYMBOL FOR JANUARY count: 1, line: 16
+    ㋐ U+32D0 CIRCLED KATAKANA A count: 1, line: 19
+CJK_COMPATIBILITY characters:
+    ㍻ U+337B SQUARE ERA NAME HEISEI count: 1, line: 16
+    ㎢ U+33A2 SQUARE KM SQUARED count: 1, line: 16
+    ㏾ U+33FE IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY THIRTY-ONE count: 1, line: 16
+CJK_UNIFIED_IDEOGRAPHS characters:
+    二 U+4E8C CJK UNIFIED IDEOGRAPH-4E8C count: 1, example: 二百五十 (l.20)
+    五 U+4E94 CJK UNIFIED IDEOGRAPH-4E94 count: 1, example: 二百五十 (l.20)
+    十 U+5341 CJK UNIFIED IDEOGRAPH-5341 count: 1, example: 二百五十 (l.20)
+    年 U+5E74 CJK UNIFIED IDEOGRAPH-5E74 count: 1, line: 16
+    百 U+767E CJK UNIFIED IDEOGRAPH-767E count: 1, example: 二百五十 (l.20)
+VERTICAL_FORMS characters:
+    ︐ U+FE10 PRESENTATION FORM FOR VERTICAL COMMA count: 1, line: 12
+CJK_COMPATIBILITY_FORMS characters:
+    ︱ U+FE31 PRESENTATION FORM FOR VERTICAL EM DASH count: 1, line: 12
+    ﹇ U+FE47 PRESENTATION FORM FOR VERTICAL LEFT SQUARE BRACKET count: 1, line: 12
+    ﹈ U+FE48 PRESENTATION FORM FOR VERTICAL RIGHT SQUARE BRACKET count: 1, line: 12
+SMALL_FORM_VARIANTS characters:
+    ﹐ U+FE50 SMALL COMMA count: 1, line: 12
+    ﹑ U+FE51 SMALL IDEOGRAPHIC COMMA count: 1, line: 21
+    ﹠ U+FE60 SMALL AMPERSAND count: 1, line: 12
+    ﹫ U+FE6B SMALL COMMERCIAL AT count: 1, line: 12
+HALFWIDTH_AND_FULLWIDTH_FORMS characters:
+    ！ U+FF01 FULLWIDTH EXCLAMATION MARK count: 1, line: 7
+    ｟ U+FF5F FULLWIDTH LEFT WHITE PARENTHESIS count: 1, line: 7
+    ｠ U+FF60 FULLWIDTH RIGHT WHITE PARENTHESIS count: 1, line: 7
+    ｡ U+FF61 HALFWIDTH IDEOGRAPHIC FULL STOP count: 1, line: 21
+    ｢ U+FF62 HALFWIDTH LEFT CORNER BRACKET count: 1, line: 21
+    ｣ U+FF63 HALFWIDTH RIGHT CORNER BRACKET count: 1, line: 21
+    ､ U+FF64 HALFWIDTH IDEOGRAPHIC COMMA count: 1, line: 21
+    ｰ U+FF70 HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND MARK count: 1, example: ｶｰ (l.7)
+    ｶ U+FF76 HALFWIDTH KATAKANA LETTER KA count: 1, example: ｶｰ (l.7)
+    ﾸ U+FFB8 HALFWIDTH HANGUL LETTER CIEUC count: 1, line: 7
+    ￠ U+FFE0 FULLWIDTH CENT SIGN count: 2, lines: 7, 22
+    ￡ U+FFE1 FULLWIDTH POUND SIGN count: 1, line: 22
+    ￢ U+FFE2 FULLWIDTH NOT SIGN count: 1, line: 22
+    ￣ U+FFE3 FULLWIDTH MACRON count: 1, line: 22
+    ￤ U+FFE4 FULLWIDTH BROKEN BAR count: 1, line: 22
+    ￥ U+FFE5 FULLWIDTH YEN SIGN count: 2, lines: 7, 22
+    ￦ U+FFE6 FULLWIDTH WON SIGN count: 2, lines: 7, 22
+    ￨ U+FFE8 HALFWIDTH FORMS LIGHT VERTICAL count: 1, line: 22
+    ￩ U+FFE9 HALFWIDTH LEFTWARDS ARROW count: 1, line: 22
+    ￪ U+FFEA HALFWIDTH UPWARDS ARROW count: 1, line: 22
+    ￫ U+FFEB HALFWIDTH RIGHTWARDS ARROW count: 1, line: 22
+    ￬ U+FFEC HALFWIDTH DOWNWARDS ARROW count: 1, line: 22
+    ￭ U+FFED HALFWIDTH BLACK SQUARE count: 1, line: 22
+    ￮ U+FFEE HALFWIDTH WHITE CIRCLE count: 2, lines: 7, 22
+MUSICAL_SYMBOLS characters:
+    𝅘 U+1D158 MUSICAL SYMBOL NOTEHEAD BLACK count: 1, line: 17
+    𝅘𝅥 U+1D15F MUSICAL SYMBOL QUARTER NOTE count: 1, line: 17
+    𝅘𝅥𝅮 U+1D160 MUSICAL SYMBOL EIGHTH NOTE count: 1, line: 17
+     𝅥 U+1D165 MUSICAL SYMBOL COMBINING STEM count: 1, example: 𝅥𝅮 (l.17)
+     𝅮 U+1D16E MUSICAL SYMBOL COMBINING FLAG-1 count: 2, examples: 𝅮 (l.17), 𝅥𝅮 (l.17)
+MATHEMATICAL_ALPHANUMERIC_SYMBOLS characters:
+    𝐀 U+1D400 MATHEMATICAL BOLD CAPITAL A count: 1, line: 12
+‎    𝐴 U+1D434 MATHEMATICAL ITALIC CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+‎    𝑨 U+1D468 MATHEMATICAL BOLD ITALIC CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+‎    𝒜 U+1D49C MATHEMATICAL SCRIPT CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+‎    𝔄 U+1D504 MATHEMATICAL FRAKTUR CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+‎    𝔸 U+1D538 MATHEMATICAL DOUBLE-STRUCK CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+‎    𝖠 U+1D5A0 MATHEMATICAL SANS-SERIF CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+‎    𝗔 U+1D5D4 MATHEMATICAL SANS-SERIF BOLD CAPITAL A count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+OTHER characters:
+‎    𞸀 U+1EE00 ARABIC MATHEMATICAL ALEF count: 1, example: 𝐴𝑨𝒜𝔄𝔸𝖠𝗔𞸀 (l.12)
+ENCLOSED_ALPHANUMERIC_SUPPLEMENT characters:
+    🄆 U+1F106 DIGIT FIVE COMMA count: 1, example: ⒈⒛🄆 (l.21)
+    🄐 U+1F110 PARENTHESIZED LATIN CAPITAL LETTER A count: 1, line: 19
+    🄰 U+1F130 SQUARED LATIN CAPITAL LETTER A count: 1, line: 19
+    🅏 U+1F14F SQUARED WC count: 1, line: 19
+ENCLOSED_IDEOGRAPHIC_SUPPLEMENT characters:
+    🈀 U+1F200 SQUARE HIRAGANA HOKA count: 1, line: 16
+    🈁 U+1F201 SQUARED KATAKANA KOKO count: 1, line: 19
+    🈩 U+1F229 SQUARED CJK UNIFIED IDEOGRAPH-4E00 count: 1, line: 19
+    🈯 U+1F22F SQUARED CJK UNIFIED IDEOGRAPH-6307 count: 1, line: 19
+    🉀 U+1F240 TORTOISE SHELL BRACKETED CJK UNIFIED IDEOGRAPH-672C count: 1, line: 19
+    🉐 U+1F250 CIRCLED IDEOGRAPH ADVANTAGE count: 1, line: 19
+TOKENS WITH ! (U+0021 EXCLAMATION MARK):
+    Word¡Word±Word! count: 1, example: Â¡CoÃ±o! (l.10)
+    ¡Word! count: 1, example: ¡Coño! (l.11)
+TOKENS WITH % (U+0025 PERCENT SIGN):
+    Word%XmlWord_Word count: 1, example: Jo%25C3%25ABlle_Aubron (l.15)
+    %Xml count: 1, example: %25E2%2582%25AC%25E2%2582%25AC (l.15)
+TOKENS WITH & (U+0026 AMPERSAND):
+    &Xml; count: 6, examples: &bullet; (l.15), &#8204; (l.15), &#x200C; (l.15), &amp;quot; (l.15), &amp;amp;#8204; (l.15)
+TOKENS WITH , (U+002C COMMA):
+    Word, count: 11, examples: sentence, (l.8), Font, (l.12), small, (l.12), vertical, (l.12), punctuation, (l.12)
+    Number, count: 1, example: ⅭⅭⅬ, (l.20)
+TOKENS WITH - (U+002D HYPHEN-MINUS):
+    WordNumber-Word count: 1, example: O₂-detector (l.18)
+    Word-Word count: 1, example: Non-decimal (l.20)
+    Word-Word: count: 1, example: Look-alikes: (l.23)
+TOKENS WITH . (U+002E FULL STOP):
+    Word. count: 3, examples: spaces. (l.8), green. (l.13), Paolo. (l.14)
+    Word«Word». count: 1, example: Â«bÃªteÂ». (l.10)
+    «Word». count: 1, example: «bête». (l.11)
+    Word�Word. count: 1, example: Espa�a. (l.13)
+    Number.NumberWord count: 1, example: 273.15K (l.16)
+TOKENS WITH : (U+003A COLON):
+    Word: count: 23, examples: Pashto: (l.1), Farsi: (l.2), Arabic: (l.3), Devanagari: (l.4), Malayalam: (l.5)
+    Word:Modifier count: 1, example: t:ཱ (l.16)
+    Word-Word: count: 1, example: Look-alikes: (l.23)
+TOKENS WITH ; (U+003B SEMICOLON):
+    &Xml; count: 6, examples: &bullet; (l.15), &#8204; (l.15), &#x200C; (l.15), &amp;quot; (l.15), &amp;amp;#8204; (l.15)
+TOKENS WITH ORPHAN MODIFIER:
+    Modifier count: 16, examples: ི (l.16), ཱི (l.16), ུ (l.16), ཱུ (l.16), ྲྀ (l.16)
+    <U+000E><U+000F><U+0010><U+0011><U+0012><U+0013><U+0014><U+0015><U+0016><U+0017><U+0018><U+0019><U+001A><U+001B><U+001C><U+001D><U+001E><U+001F><U+007F><U+0080><U+009F>Word<U+200B><U+200C><U+200D><U+200E><U+200F>Modifiers<U+FEFF>Word count: 1, example: BC​‌‍‎‏︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿DE󠄀󠇯F (l.9)
+    ModifierWord count: 1, example: ําໍາຫນຫມ (l.16)
+    Word:Modifier count: 1, example: t:ཱ (l.16)
+    𝅘𝅥Modifier count: 1, example: 𝅘𝅥𝅮 (l.17)
+    𝅘Modifiers count: 1, example: 𝅘𝅥𝅮 (l.17)
+    Modifiers count: 1, example: ̀́̓ (l.17)
+TOKENS WITH _ (U+005F LOW LINE):
+    Word%XmlWord_Word count: 1, example: Jo%25C3%25ABlle_Aubron (l.15)
+TOKENS WITH ¡ (U+00A1 INVERTED EXCLAMATION MARK):
+    Word¡Word±Word! count: 1, example: Â¡CoÃ±o! (l.10)
+    ¡Word! count: 1, example: ¡Coño! (l.11)
+TOKENS WITH ¢ (U+00A2 CENT SIGN):
+    Word<U+0080>¢ count: 2, example: â¢ (l.10)
+TOKENS WITH ¤ (U+00A4 CURRENCY SIGN):
+    Word¤Word<U+0080>¦ count: 1, example: MÃ¤hrenâ¦ (l.10)
+TOKENS WITH ¦ (U+00A6 BROKEN BAR):
+    Word¤Word<U+0080>¦ count: 1, example: MÃ¤hrenâ¦ (l.10)
+TOKENS WITH § (U+00A7 SECTION SIGN):
+    Word§Word count: 1, example: Ã§a (l.10)
+TOKENS WITH ـ (U+0640 ARABIC TATWEEL):
+‎    Number٫NumberWordــــــWord count: 1, example: ۲۰٫۰۰۰رحــــــيم (l.3)
+TOKENS WITH ‌ (U+200C ZERO WIDTH NON-JOINER):
+    <U+000E><U+000F><U+0010><U+0011><U+0012><U+0013><U+0014><U+0015><U+0016><U+0017><U+0018><U+0019><U+001A><U+001B><U+001C><U+001D><U+001E><U+001F><U+007F><U+0080><U+009F>Word<U+200B><U+200C><U+200D><U+200E><U+200F>Modifiers<U+FEFF>Word count: 1, example: BC​‌‍‎‏︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿DE󠄀󠇯F (l.9)
+TOKENS WITH ‍ (U+200D ZERO WIDTH JOINER):
+    <U+000E><U+000F><U+0010><U+0011><U+0012><U+0013><U+0014><U+0015><U+0016><U+0017><U+0018><U+0019><U+001A><U+001B><U+001C><U+001D><U+001E><U+001F><U+007F><U+0080><U+009F>Word<U+200B><U+200C><U+200D><U+200E><U+200F>Modifiers<U+FEFF>Word count: 1, example: BC​‌‍‎‏︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿DE󠄀󠇯F (l.9)
+TOKENS WITH ‐ (U+2010 HYPHEN):
+    ‐་ count: 1, line: 12
+TOKENS WITH ‑ (U+2011 NON-BREAKING HYPHEN):
+    ‑༌ count: 1, line: 12
+TOKENS WITH ₨ (U+20A8 RUPEE SIGN):
+    ℃℉₨Word count: 1, example: ℃℉₨ℇ (l.16)
+TOKENS WITH ₹ (U+20B9 INDIAN RUPEE SIGN):
+    ₹Number count: 2, examples: ₹९० (l.4), ₹൯൦ (l.5)
+TOKENS WITH 、 (U+3001 IDEOGRAPHIC COMMA):
+    。、﹑､｡｢｣『』【】「」 count: 1, line: 21
+TOKENS WITH 。 (U+3002 IDEOGRAPHIC FULL STOP):
+    。、﹑､｡｢｣『』【】「」 count: 1, line: 21
