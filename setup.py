@@ -32,16 +32,21 @@ setup(
     platforms=['any'],
     author='Ulf Hermjakob',
     author_email='ulf@isi.edu',
-    packages=find_namespace_packages(exclude=['aux']),
+    packages=find_namespace_packages(exclude=['aux', 'old']),
     keywords=['machine translation', 'datasets', 'NLP', 'natural language processing,'
                                                         'computational linguistics'],
     entry_points={
         'console_scripts': [
-            'wb-norm=wildebeest.normalize:main'
+            'wb-norm=wildebeest.normalize:main',
+            'wb-analysis=wildebeest.wb_analysis:main'
         ],
     },
     scripts=['wildebeest/wb-analysis.pl'],
-    install_requires=[],
+    install_requires=[
+        'regex>=2021.8.3',
+        'tqdm>=4.40',
+        'unicodeblock>=0.3.1',
+    ],
     include_package_data=True,
     zip_safe=False,
 )
