@@ -985,7 +985,8 @@ def main():
     parser = argparse.ArgumentParser(description='Analyzes a given text for a wide range of anomalies')
     parser.add_argument('-i', '--input', type=Path,
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
-    parser.add_argument('--batch', type=Path, default=None, help='Batch of input files (./*txt)')
+    parser.add_argument('--batch', type=Path, default=None, metavar='BATCH_DIR',
+                        help='Directory with batch of input files (BATCH_DIR/*.txt)')
     parser.add_argument('-s', '--summary', action='count', default=0, help='single summary line per file')
     parser.add_argument('-o', '--output', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=sys.stdout, metavar='OUTPUT-FILENAME', help='(default: STDOUT)')
