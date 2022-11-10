@@ -38,7 +38,7 @@ setup(
     entry_points={
         'console_scripts': [
             'wb-norm=wildebeest.normalize:main',
-            'wb-analysis=wildebeest.wb_analysis:main'
+            'wb-ana=wildebeest.wb_analysis:main'
         ],
     },
     scripts=['wildebeest/wb-analysis.pl'],
