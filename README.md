@@ -1,6 +1,6 @@
 # wildebeest
 
-## wildebeest.py
+## normalize.py
 
 Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
 punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
@@ -127,9 +127,59 @@ errors:
 * `repair-url-escapes` (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 * `repair-token` (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
-## wildebeest_analysis
+## wb-analysis.py
 
 Script searches a tokenized text for a range of potential problems,
+such as UTF-8 encoding violations, control characters, zero-with characters,
+letters/numbers/punctuation/letter-modifiers from various scripts,
+tokens with letters from different scripts, XML tokens, tokens with certain
+punctuation of interest, orphan letter modifiers, non-canonical character
+combinations.
+
+```
+usage: wb-analysis.py [-h] [-i INPUT-FILENAME] [--batch BATCH] [-s] [-o OUTPUT-FILENAME] [-j JSON-OUTPUT-FILENAME] [--file_id FILE_ID]
+                      [-d DATA_DIRECTORY] [--lc LANGUAGE-CODE] [-v] [-pb] [-n MAX_CASES] [-x MAX_EXAMPLES] [-r REF-FILENAME] [--version]
+
+Analyzes a given text for a wide range of anomalies
+
+options:
+  -h, --help            show this help message and exit
+  -i INPUT-FILENAME, --input INPUT-FILENAME
+                        (default: STDIN)
+  --batch BATCH         Batch of input files (./*txt)
+  -s, --summary         single summary line per file
+  -o OUTPUT-FILENAME, --output OUTPUT-FILENAME
+                        (default: STDOUT)
+  -j JSON-OUTPUT-FILENAME, --json JSON-OUTPUT-FILENAME
+                        (default: None)
+  --file_id FILE_ID
+  -d DATA_DIRECTORY, --data_directory DATA_DIRECTORY
+                        (default: standard data directory)
+  --lc LANGUAGE-CODE    ISO 639-3, e.g. 'fas' for Persian
+  -v, --verbose         write change log etc. to STDERR
+  -pb, --progress_bar   Show progress bar
+  -n MAX_CASES, --max_cases MAX_CASES
+                        max number of cases per group
+  -x MAX_EXAMPLES, --max_examples MAX_EXAMPLES
+                        max number of examples per line
+  -r REF-FILENAME, --ref_id REF-FILENAME
+                        (optional file with sentence reference IDs)
+  --version             show program's version number and exit
+```
+
+Sample calls:
+```
+wb-analysis.py --help
+echo 'Hеllο!' | wb-analysis.py
+wb-analysis.py -i test/data/hello.txt
+wb-analysis.py -i test/data/wildebeest-test.txt -o test/data/wildebeest-test-out
+wb-analysis.py --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
+wb-analysis.py -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
+wb-analysis.py -i test/data/wildebeest-test-invalid-utf8.txt
+```
+## wb-analysis.pl
+
+Old Perl script searches a tokenized text for a range of potential problems,
 such as UTF-8 encoding violations, control characters, non-ASCII punctuation,
 characters from a variety of language groups, very long tokens, unsplit 's,
 unsplit punctuation, script mixing; split URLs, email addresses, filenames,
