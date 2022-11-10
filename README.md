@@ -127,7 +127,7 @@ errors:
 * `repair-url-escapes` (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 * `repair-token` (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
-## wb-analysis.py
+## wb_analysis.py
 
 Script searches a tokenized text for a range of potential problems,
 such as UTF-8 encoding violations, control characters, zero-with characters,
@@ -137,7 +137,7 @@ punctuation of interest, orphan letter modifiers, non-canonical character
 combinations.
 
 ```
-usage: wb-analysis.py [-h] [-i INPUT-FILENAME] [--batch BATCH] [-s] [-o OUTPUT-FILENAME] [-j JSON-OUTPUT-FILENAME] [--file_id FILE_ID]
+usage: wb_analysis.py [-h] [-i INPUT-FILENAME] [--batch BATCH] [-s] [-o OUTPUT-FILENAME] [-j JSON-OUTPUT-FILENAME] [--file_id FILE_ID]
                       [-d DATA_DIRECTORY] [--lc LANGUAGE-CODE] [-v] [-pb] [-n MAX_CASES] [-x MAX_EXAMPLES] [-r REF-FILENAME] [--version]
 
 Analyzes a given text for a wide range of anomalies
@@ -169,13 +169,13 @@ options:
 
 Sample calls:
 ```
-wb-analysis.py --help
-echo 'Hеllο!' | wb-analysis.py
-wb-analysis.py -i test/data/hello.txt
-wb-analysis.py -i test/data/wildebeest-test.txt -o test/data/wildebeest-test-out
-wb-analysis.py --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
-wb-analysis.py -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
-wb-analysis.py -i test/data/wildebeest-test-invalid-utf8.txt
+wb_analysis.py --help
+echo 'Hеllο!' | wb_analysis.py
+wb_analysis.py -i test/data/hello.txt
+wb_analysis.py -i test/data/wildebeest-test.txt -o test/data/wildebeest-test-out
+wb_analysis.py --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
+wb_analysis.py -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
+wb_analysis.py -i test/data/wildebeest-test-invalid-utf8.txt
 ```
 ## wb-analysis.pl
 
