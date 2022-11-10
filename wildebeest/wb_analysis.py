@@ -25,8 +25,8 @@ import unicodedata as ud
 import unicodeblock.blocks
 from normalize import Wildebeest
 
-__version__ = '0.1.0'
-last_mod_date = 'November 1, 2022'
+__version__ = '0.8.1'
+last_mod_date = 'November 10, 2022'
 
 log.basicConfig(level=log.INFO)
 
@@ -39,7 +39,6 @@ class WildebeestAnalysis:
     def __init__(self, args, verbose: Optional[bool] = False):
         self.wildebeest = Wildebeest()
         self.lang_code = args.lc
-        self.data_dir = args.data_directory
         self.verbose = verbose
         self.filename = None
         self.character_count = defaultdict(int)
@@ -273,7 +272,54 @@ class WildebeestAnalysis:
             self.token_to_pattern_dict[token] = result
         return result
 
-    def collect_counts_and_examples(self, input_file: IO, total_bytes=None, progress_bar=True) -> None:
+    def collect_counts_and_examples_in_line(self, line: str, line_number: int):
+        self.analysis['n_characters'] += len(line)
+        line = line.strip()
+        if line == '<range>':
+            return
+        # line_id = str(line_number)
+        char_position = 0
+        for char in line:
+            self.character_count[char] += 1
+            char_position += 1
+            if len(self.token_examples[char]) < self.max_n_token_examples:
+                # if char.isalpha():
+                if regex.search(r'(?:\pL|\pM|�)', char):
+                    token_examples = regex.findall(rf'((?:\pL\pM*|�)*\pM*{char}\pM*(?:\pL\pM*|�)*)', line)
+                elif char.isnumeric():
+                    token_examples = regex.findall(rf'(\pN*{char}\pN*)', line)
+                else:
+                    token_examples = [char]
+                for token_example in token_examples:
+                    token_tuple = [token_example, line_number]
+                    if len(self.token_examples[char]) < self.max_n_token_examples \
+                            and (token_tuple not in self.token_examples[char]):
+                        self.token_examples[char].append(token_tuple)
+        words = regex.findall(r'((?:\pL\pM*){2,})', line, re.IGNORECASE)
+        complex_chars = regex.findall(r'(\pL\pM+)', line, re.IGNORECASE)
+        xml_esc_dec_tokens = regex.findall(r'(&#\d{1,7};)', line, regex.IGNORECASE)
+        xml_esc_hex_tokens = regex.findall(r'(&#X[0-9A-F]{1,6};)', line, regex.IGNORECASE)
+        xml_esc_abc_tokens = regex.findall(r'(&(?:[a-z]{1,6});)', line, regex.IGNORECASE)
+        xml_esc_nst_tokens = regex.findall(r'&(?:amp;)+(?:#X[0-9A-F]{1,6}|#\d{1,7}|[a-z]{1,6});',
+                                           line, regex.IGNORECASE)
+        for token in words + complex_chars + xml_esc_dec_tokens + xml_esc_hex_tokens \
+                     + xml_esc_abc_tokens + xml_esc_nst_tokens:
+            self.token_count[token] += 1
+            token_tuple = [token, line_number]
+            if (len(self.token_examples[token]) < self.max_n_token_examples) \
+                    and (token_tuple not in self.token_examples[token]):
+                self.token_examples[token].append(token_tuple)
+        for token in regex.findall(r'(\S+)', line):
+            if self.pattern_characters_of_interest_re.search(token) \
+                    or regex.search(r'(?<!\pL\pM*)\pM', token):
+                token_tuple = [token, line_number]
+                for pattern in self.token_to_patterns(token):
+                    self.pattern_count[pattern] += 1
+                    if len(self.pattern_examples[pattern]) < self.max_n_token_examples \
+                            and (token_tuple not in self.pattern_examples[pattern]):
+                        self.pattern_examples[pattern].append(token_tuple)
+
+    def collect_counts_and_examples_in_file(self, input_file: IO, total_bytes=None, progress_bar=True) -> None:
         """Collect counts and examples for characters, tokens, and patterns occurring in file."""
         line_number = 0
         st = time.time()
@@ -288,51 +334,7 @@ class WildebeestAnalysis:
                         data_bar.set_postfix_str(f'{line_speed}L/s', refresh=False)
                         data_bar.set_description_str(f'{prefix} {line_number}', refresh=False)
                         data_bar.update(len(line.encode()))  # bytes
-                    self.analysis['n_characters'] += len(line)
-                    line = line.strip()
-                    if line == '<range>':
-                        continue
-                    # line_id = str(line_number)
-                    char_position = 0
-                    for char in line:
-                        self.character_count[char] += 1
-                        char_position += 1
-                        if len(self.token_examples[char]) < self.max_n_token_examples:
-                            # if char.isalpha():
-                            if regex.search(r'(?:\pL|\pM|�)', char):
-                                token_examples = regex.findall(rf'((?:\pL\pM*|�)*\pM*{char}\pM*(?:\pL\pM*|�)*)', line)
-                            elif char.isnumeric():
-                                token_examples = regex.findall(rf'(\pN*{char}\pN*)', line)
-                            else:
-                                token_examples = [char]
-                            for token_example in token_examples:
-                                token_tuple = [token_example, line_number]
-                                if len(self.token_examples[char]) < self.max_n_token_examples \
-                                        and (token_tuple not in self.token_examples[char]):
-                                    self.token_examples[char].append(token_tuple)
-                    words = regex.findall(r'((?:\pL\pM*){2,})', line, re.IGNORECASE)
-                    complex_chars = regex.findall(r'(\pL\pM+)', line, re.IGNORECASE)
-                    xml_esc_dec_tokens = regex.findall(r'(&#\d{1,7};)', line, regex.IGNORECASE)
-                    xml_esc_hex_tokens = regex.findall(r'(&#X[0-9A-F]{1,6};)', line, regex.IGNORECASE)
-                    xml_esc_abc_tokens = regex.findall(r'(&(?:[a-z]{1,6});)', line, regex.IGNORECASE)
-                    xml_esc_nst_tokens = regex.findall(r'&(?:amp;)+(?:#X[0-9A-F]{1,6}|#\d{1,7}|[a-z]{1,6});',
-                                                       line, regex.IGNORECASE)
-                    for token in words + complex_chars + xml_esc_dec_tokens + xml_esc_hex_tokens \
-                                 + xml_esc_abc_tokens + xml_esc_nst_tokens:
-                        self.token_count[token] += 1
-                        token_tuple = [token, line_number]
-                        if (len(self.token_examples[token]) < self.max_n_token_examples) \
-                                and (token_tuple not in self.token_examples[token]):
-                            self.token_examples[token].append(token_tuple)
-                    for token in regex.findall(r'(\S+)', line):
-                        if self.pattern_characters_of_interest_re.search(token) \
-                                or regex.search(r'(?<!\pL\pM*)\pM', token):
-                            token_tuple = [token, line_number]
-                            for pattern in self.token_to_patterns(token):
-                                self.pattern_count[pattern] += 1
-                                if len(self.pattern_examples[pattern]) < self.max_n_token_examples \
-                                        and (token_tuple not in self.pattern_examples[pattern]):
-                                    self.pattern_examples[pattern].append(token_tuple)
+                    self.collect_counts_and_examples_in_line(line, line_number)
             # Exception for safety only. Should not occur.
             except UnicodeError as error:
                 sys.stderr.write(f"*** Unicode error: {error}\n")
@@ -913,18 +915,18 @@ def load_ref_ids(filename) -> dict:
     return ref_id_dict
 
 
-def process_file(args, ref_id_dict: dict = None):
-    """Perform Wildebeest analysis for 1 file."""
+def process_args(args) -> WildebeestAnalysis:
+    """Perform Wildebeest analysis for 1 file, using argparse args."""
     wb = WildebeestAnalysis(args)
-    if ref_id_dict:
-        wb.ref_id_dict = ref_id_dict
+    if args.ref_id_dict:
+        wb.ref_id_dict = args.ref_id_dict
     if args.input is sys.stdin:
         args.total_bytes = None
         args.input = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8', errors='surrogateescape')
         if not re.search('utf-8', sys.stdin.encoding, re.IGNORECASE):
             log.error(f"Bad STDIN encoding '{sys.stdin.encoding}' as opposed to 'utf-8'. "
                       f"Suggestion: 'export PYTHONIOENCODING=UTF-8' or use '--input FILENAME' option")
-    else:
+    elif args.input:
         inp_path = args.input
         assert isinstance(inp_path, Path)
         if not inp_path.exists():
@@ -936,17 +938,45 @@ def process_file(args, ref_id_dict: dict = None):
     if args.output is sys.stdout and not re.search('utf-8', sys.stdout.encoding, re.IGNORECASE):
         log.error(f"Error: Bad STDIN/STDOUT encoding '{sys.stdout.encoding}' as opposed to 'utf-8'. \
                         Suggestion: 'export PYTHONIOENCODING=UTF-8' or use use '--output FILENAME' option")
-
-    wb.collect_counts_and_examples(args.input, total_bytes=args.total_bytes, progress_bar=args.progress_bar)
+    if args.input:
+        wb.collect_counts_and_examples_in_file(args.input, total_bytes=args.total_bytes, progress_bar=args.progress_bar)
+    elif args.strings:
+        line_number = 0
+        for line in args.strings:
+            line_number += 1
+            wb.collect_counts_and_examples_in_line(line, line_number)
+        wb.analysis['n_lines'] = line_number
+    else:  # nothing to process
+        log.warning('Called function process_with_args with neither args.input nor args.strings')
     wb.aggregate()  # Aggregate raw counts and examples into analysis.
     wb.remove_empty_dicts()
     if args.json:
         args.json.write(json.dumps(wb.analysis) + "\n")
     if args.summary:
         args.output.write(f"{args.file_id}: {'; '.join(wb.summary_list_of_issues())}\n")
-    else:
+    elif args.output:
         wb.pretty_print(args.output)
-    args.output.flush()
+    if args.output:
+        args.output.flush()
+    return wb
+
+
+def process(input_fn: Optional[str] = None,        # provide exactly one input: input filename, strings or string
+            strings: Optional[list[str]] = None,
+            string: Optional[str] = None,
+            pp_output: Optional[TextIO] = None,    # output filename (for pretty-print)
+            json_output: Optional[TextIO] = None,  # output filename (in json)
+            lang_code: Optional[str] = None,
+            max_cases: int = 100,                  # max cases per block (e.g. number of characters in script)
+            max_examples: int = 5,                 # max examples per case
+            # ref_id_dict is a dictionary mapping line_numbers/string_indexes (int, starting at 1) to snt IDs (str)
+            ref_id_dict: Optional[dict] = None) -> WildebeestAnalysis:
+    """Entry point when Wildebeest Analysis for non-CLI use; maps to CLI interface"""
+    return process_args(argparse.Namespace(strings=[string] if string and not strings else strings,
+                                           input=Path(input_fn) if input_fn else None,
+                                           output=pp_output, json=json_output,
+                                           lc=lang_code, max_cases=max_cases, max_examples=max_examples,
+                                           summary=None, progress_bar=None, ref_id_dict=ref_id_dict))
 
 
 def main():
@@ -962,17 +992,18 @@ def main():
     parser.add_argument('-j', '--json', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=None, metavar='JSON-OUTPUT-FILENAME', help='(default: None)')
     parser.add_argument('--file_id', type=str, default=None)
-    parser.add_argument('-d', '--data_directory', type=str, default=None, help='(default: standard data directory)')
     parser.add_argument('--lc', type=str, default=None,
                         metavar='LANGUAGE-CODE', help="ISO 639-3, e.g. 'fas' for Persian")
     parser.add_argument('-v', '--verbose', action='count', default=0, help='write change log etc. to STDERR')
     parser.add_argument('-pb', '--progress_bar', action='store_true', default=False, help='Show progress bar')
     parser.add_argument('-n', '--max_cases', type=int, default=100, help='max number of cases per group')
     parser.add_argument('-x', '--max_examples', type=int, default=5, help='max number of examples per line')
-    parser.add_argument('-r', '--ref_id', type=Path, metavar='REF-FILENAME',
+    parser.add_argument('-r', '--ref_id_file', type=Path, metavar='REF-FILENAME',
                         help='(optional file with sentence reference IDs)')
     parser.add_argument('--version', action='version',
                         version=f'%(prog)s {__version__} last modified: {last_mod_date}')
+    parser.add_argument('--ref_id_dict', default=None, help=argparse.SUPPRESS)
+    parser.add_argument('--strings', default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
     start_time = datetime.datetime.now()
     if args.verbose:
@@ -982,7 +1013,8 @@ def main():
             log.info(f'Input: {args.input.name}')
         if args.output is not sys.stdout:
             log.info(f'Output: {args.output.name}')
-    ref_snt_id_dict = load_ref_ids(args.ref_id) if args.ref_id else None
+    if args.ref_id_file:
+        args.ref_id_dict = load_ref_ids(args.ref_id_file)
     if args.batch:
         directory_str = args.batch
         directory_path = Path(directory_str)
@@ -997,11 +1029,11 @@ def main():
                 args.input = file
                 args.file_id = filename
                 sys.stderr.write(f'{args.file_id}\n')
-                process_file(args, ref_id_dict=ref_snt_id_dict)
+                process_args(args)
         if args.verbose:
             log.info(f"Processed {count_plus_noun(n_files, 'file')}")
     else:
-        process_file(args, ref_id_dict=ref_snt_id_dict)
+        process_args(args)
     if args.verbose:
         end_time = datetime.datetime.now()
         log.info(f'End: {end_time}')
