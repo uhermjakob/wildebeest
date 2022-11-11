@@ -64,8 +64,8 @@ pip install wildebeest
 # Latest master branch: either https or git/ssh 
 pip install git+https://github.com/uhermjakob/wildebeest.git
 
-# For editing/development  
-git clone git@github.com:uhermjakob/wildebeest.git
+# For editing/development
+git clone git://github.com/uhermjakob/wildebeest.git
 cd wildebeest
 pip install --editable .   # run it from dir having setup.py
 ```
