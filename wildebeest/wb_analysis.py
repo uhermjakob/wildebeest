@@ -20,7 +20,7 @@ import re
 import regex
 import sys
 from tqdm.auto import tqdm
-from typing import IO, Optional, TextIO, Union  # Callable, List, Match, Tuple, Type
+from typing import IO, Optional, TextIO, Union, List
 import unicodedata as ud
 import unicodeblock.blocks
 from .normalize import Wildebeest
@@ -245,7 +245,7 @@ class WildebeestAnalysis:
                 self.set_new_char_to_block_dict_entry(code_point, 'GENERAL_PUNCTUATION')
         self.set_new_char_to_block_dict_entry(0xB5, 'LETTERLIKE_SYMBOLS')  # micro sign
 
-    def token_to_patterns(self, token: str) -> list[str]:
+    def token_to_patterns(self, token: str) -> List[str]:
         # check for cached result
         if result := self.token_to_pattern_dict[token]:
             return result
@@ -828,7 +828,7 @@ class WildebeestAnalysis:
         except KeyError:
             return 0
 
-    def summary_list_of_issues(self) -> list[str]:
+    def summary_list_of_issues(self) -> List[str]:
         """List of major issues found in Wildebeest analysis, for a 1-line summary, useful for multi-file input"""
         result = []
         letter_scripts = sorted(self.analysis['letter-script'].keys(),
@@ -962,7 +962,7 @@ def process_args(args) -> WildebeestAnalysis:
 
 
 def process(input_fn: Optional[str] = None,        # provide exactly one input: input filename, strings or string
-            strings: Optional[list[str]] = None,
+            strings: Optional[List[str]] = None,
             string: Optional[str] = None,
             pp_output: Optional[TextIO] = None,    # output filename (for pretty-print)
             json_output: Optional[TextIO] = None,  # output filename (in json)
