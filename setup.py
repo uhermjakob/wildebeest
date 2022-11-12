@@ -41,7 +41,6 @@ setup(
             'wb-ana=wildebeest.wb_analysis:main'
         ],
     },
-    scripts=['wildebeest/wb-analysis.pl'],
     install_requires=[
         'regex>=2021.8.3',
         'tqdm>=4.40',
