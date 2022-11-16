@@ -65,7 +65,8 @@ pip install wildebeest
 pip install git+https://github.com/uhermjakob/wildebeest.git
 
 # For editing/development
-git clone git://github.com/uhermjakob/wildebeest.git
+git clone https://github.com/uhermjakob/wildebeest.git
+# or git clone git://github.com/uhermjakob/wildebeest.git
 cd wildebeest
 pip install --editable .   # run it from dir having setup.py
 ```
