@@ -45,6 +45,7 @@ setup(
         'regex>=2021.8.3',
         'tqdm>=4.40',
         'unicodeblock>=0.3.1',
+        'wheel>=0.38.4',
     ],
     include_package_data=True,
     zip_safe=False,
