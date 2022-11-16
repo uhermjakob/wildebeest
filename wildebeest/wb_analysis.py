@@ -23,7 +23,7 @@ from tqdm.auto import tqdm
 from typing import IO, Optional, TextIO, Union, List
 import unicodedata as ud
 import unicodeblock.blocks
-from .normalize import Wildebeest
+from wildebeest.normalize import Wildebeest
 
 __version__ = '0.8.1'
 last_mod_date = 'November 10, 2022'
