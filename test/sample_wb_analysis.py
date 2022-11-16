@@ -8,7 +8,6 @@ Pytest for wb_analysis.py
 import os
 import sys
 import wildebeest.wb_analysis as wb_ana
-# import wildebeest
 
 example = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 test_data_dir = os.path.join(os.path.dirname(sys.argv[0]), 'data')
