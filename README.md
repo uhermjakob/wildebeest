@@ -246,13 +246,13 @@ printf 'Hеllο!\nTschüß\n' > corpus.txt
   
 ```python 
 import wildebeest.wb_analysis as wb_ana
-wb = wb_ana.process(in_file=f'corpus.txt')
+wb = wb_ana.process(in_file='corpus.txt')
 print(wb.analysis)
 ```
   
 ```python 
 import wildebeest.wb_analysis as wb_ana
-with open(f'out.txt', 'w') as out, open(f'out.json', 'w') as json:
+with open(f'out.txt', 'w') as out, open('out.json', 'w') as json:
     wb_ana.process(in_file=f'corpus.txt', pp_output=out, json_output=json)
 ```  
 </details>
