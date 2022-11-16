@@ -10,6 +10,7 @@ data/U
 data/UnicodeData.txt
 data/log-diff*
 profile
+scripts
 test/data/kat*
 test/data/kaz*
 test/data/3S*
