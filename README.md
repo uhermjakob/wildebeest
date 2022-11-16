@@ -1,6 +1,51 @@
 # wildebeest
 
-## normalize.py
+## Script Overview
+
+### normalize.py (pip alias wb-norm)
+
+Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
+punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
+A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
+
+### wb_analysis.py (pip alias wb-ana)
+
+Script searches a tokenized text for a range of potential problems,
+such as UTF-8 encoding violations, control characters, zero-with characters,
+letters/numbers/punctuation/letter-modifiers from various scripts,
+tokens with letters from different scripts, XML tokens, tokens with certain
+punctuation of interest, orphan letter modifiers, non-canonical character
+combinations.
+
+## Installation
+
+<details>
+<summary>Click here for installation info</summary>
+
+```bash
+# from PyPi (after public release)
+pip install wildebeest
+
+# Latest master branch: either https or git/ssh 
+pip install git+https://github.com/uhermjakob/wildebeest.git
+
+# For editing/development
+git clone https://github.com/uhermjakob/wildebeest.git
+# or git clone git://github.com/uhermjakob/wildebeest.git
+cd wildebeest
+pip install --editable .   # run it from dir having setup.py
+```
+
+After a pip-install, you can call the program aliases `wb-norm` and `wb-ana`.
+
+To call the Python scripts `normalize.py` and `wb_analysis.py` directly (even without pip-install), make sure that 
+1. `normalize.py` and `wb_analysis.py` are executable (i.e. 'x' mode bits are set) 
+2. your $PYTHONPATH includes the directory in which this README file resides in ("outer wildebeest") and
+3. your $PATH includes the directory that includes `normalize.py` and `wb_analysis.py` ("inner wildebeest")
+
+</details>
+  
+## normalize.py (alias wb-norm)
 
 Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
 punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
@@ -8,12 +53,13 @@ A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
 The script contains a list of normalization modules as listed below. The script argument `--skip` allows users to specify
 any normalization modules they want to skip.
 
-## Usage &nbsp; (click below for details)
+### Usage &nbsp; (click below for details)
 <details>
-<summary>CLI to normalize a file: <code>python -m wildebeest</code> or its alias <code>wb-norm</code> </summary>
+<summary>CLI to normalize a file: <code>normalize.py</code> or its alias <code>wb-norm</code> </summary>
 
 ```
-python -m wildebeest  [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS] [-v] [--version]
+wb-norm  [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS] [-v] [--version]
+# or normalize.py  [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS] [-v] [--version]
 optional arguments:
   -h, --help            show this help message and exit
   -i INPUT-FILENAME, --input INPUT-FILENAME
@@ -31,15 +77,17 @@ optional arguments:
 ```
 Example:
 ```
-python -m wildebeest -i corpus-raw.txt -o corpus-wb.txt --lc eng --skip punct-dash,enclosure,del-arabic-diacr
+wb-norm -i corpus-raw.txt -o corpus-wb.txt --lc eng --skip punct-dash,enclosure,del-arabic-diacr
+# or normalize.py -i corpus-raw.txt -o corpus-wb.txt --lc eng --skip punct-dash,enclosure,del-arabic-diacr
 ```
-Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+
 Note: For robustness regarding input files that do not fully conform to UTF8, please use -i (rather than STDIN), as it includes UTF8-encoding error handling.
 </details>
 
 <details>
 <summary>norm_clean_string (Python function call to normalize a string)</summary>
- 
+
+Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
 ```python 
 from wildebeest.normalize import Wildebeest
 wb = Wildebeest()
@@ -51,32 +99,11 @@ wb.load_look_alike_file()           # optional
 print(wb.norm_clean_string('🄐…25kmÂ²', ht, lang_code='eng'))
 print(wb.norm_clean_string('೧೯೨೩', ht, lang_code='kan'))
 ``` 
-Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
 </details>
 
-<details>
-<summary>Installation</summary>
+### List of Normalization Steps
 
-```bash
-# from PyPi (after public release)
-pip install wildebeest
-
-# Latest master branch: either https or git/ssh 
-pip install git+https://github.com/uhermjakob/wildebeest.git
-
-# For editing/development
-git clone https://github.com/uhermjakob/wildebeest.git
-# or git clone git://github.com/uhermjakob/wildebeest.git
-cd wildebeest
-pip install --editable .   # run it from dir having setup.py
-```
-
-To call wildebeest after installation, run `python -m wildebeest` or its alias `wb-norm`. 
-</details>
-
-## List of Normalization Steps
-
-### repair-encodings-errors
+#### repair-encodings-errors
 The script generally expects input encoded in UTF8. However, it will recognize and repair some common text encoding
 errors:
 * (Some) text is still encoded in Windows1252 or Latin1. Any byte that is not part of a well-formed UTF8 character will
@@ -92,7 +119,7 @@ errors:
     * Input: Donât tell your âfiancÃ©â â SchÃ¶ne GrÃ¼Ãe aus MÃ¤hrenâ¦ â Ma sÅur trouve Ã§a Â«bÃªteÂ». Â¡CoÃ±o! â¬50 â¢ 25kmÂ² â¢ Â½Âµm
     * Output: Don’t tell your “fiancé” — Schöne Grüße aus Mähren… – Ma sœur trouve ça «bête». ¡Coño! €50 • 25km² • ½µm
 
-### Other normalization modules
+#### Other normalization modules
 * `del-surrogate` (deletes surrogate characters (representing non-UTF8 characters in input), alternative/backup to windows-1252)
 * `del-ctrl-char` (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark, directional marks, join marks, variation selectors, Arabic tatweel)
 * `core-compat` (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
@@ -128,7 +155,7 @@ errors:
 * `repair-url-escapes` (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 * `repair-token` (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 
-## wb_analysis.py
+## wb_analysis.py (alias wb-ana)
 
 Script searches a tokenized text for a range of potential problems,
 such as UTF-8 encoding violations, control characters, zero-with characters,
@@ -137,10 +164,16 @@ tokens with letters from different scripts, XML tokens, tokens with certain
 punctuation of interest, orphan letter modifiers, non-canonical character
 combinations.
 
-```
-usage: wb_analysis.py [-h] [-i INPUT-FILENAME] [--batch BATCH] [-s] [-o OUTPUT-FILENAME] [-j JSON-OUTPUT-FILENAME] [--file_id FILE_ID]
-                      [--lc LANGUAGE-CODE] [-v] [-pb] [-n MAX_CASES] [-x MAX_EXAMPLES] [-r REF-FILENAME] [--version]
+### Usage
 
+<details>
+<summary>CLI to analyze a file: <code>wb_analysis.py</code> or its alias <code>wb-ana</code> </summary>
+
+```
+usage: wb-ana  [-h] [-i INPUT-FILENAME] [--batch BATCH] [-s] [-o OUTPUT-FILENAME] [-j JSON-OUTPUT-FILENAME] [--file_id FILE_ID]
+               [--lc LANGUAGE-CODE] [-v] [-pb] [-n MAX_CASES] [-x MAX_EXAMPLES] [-r REF-FILENAME] [--version]
+# or wb_analysis.py  [-h] ... 
+  
 Analyzes a given text for a wide range of anomalies
 
 options:
@@ -166,7 +199,18 @@ options:
   --version             show program's version number and exit
 ```
 
-Sample calls:
+Examples:
+```
+wb-ana --help
+echo 'Hеllο!' | wb-ana
+# cd to inner wildebeest that contains test/data
+wb-ana -i test/data/hello.txt
+wb-ana -i test/data/wildebeest-test.txt -o test/data/wildebeest-test-out
+wb-ana --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
+wb-ana -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
+wb-ana -i test/data/wildebeest-test-invalid-utf8.txt
+```
+or
 ```
 wb_analysis.py --help
 echo 'Hеllο!' | wb_analysis.py
@@ -176,7 +220,44 @@ wb_analysis.py --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
 wb_analysis.py -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
 wb_analysis.py -i test/data/wildebeest-test-invalid-utf8.txt
 ```
-## wb-analysis.pl
+</details>
+
+<details>
+<summary>wildebeest.wb_analysis.process (Python function call to analyze a string, a list of strings, or a file)</summary>
+
+Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+```python 
+import sys
+import wildebeest.wb_analysis as wb_ana
+wb = wb_ana.process(string="Hеllο!")
+wb.pretty_print(sys.stdout)  # pretty-print with OVERVIEW and DETAIL sections to STDOUT  
+```
+  
+```python 
+import wildebeest.wb_analysis as wb_ana
+wb = wb_ana.process(strings=["Hеllο!", "Tschüß"])
+print(wb.analysis)  # print analysis object (nested dictionary)
+```
+
+Assuming an input file `corpus.txt`, e.g. built by:
+```
+printf 'Hеllο!\nTschüß\n' > corpus.txt
+```
+  
+```python 
+import wildebeest.wb_analysis as wb_ana
+wb = wb_ana.process(input_fn=f'corpus.txt')
+print(wb.analysis)
+```
+  
+```python 
+import wildebeest.wb_analysis as wb_ana
+with open(f'out.txt', 'w') as out, open(f'out.json', 'w') as json:
+    wb_ana.process(input_fn=f'corpus.txt', pp_output=out, json_output=json)
+```  
+</details>
+
+### wb-analysis.pl
 
 Old Perl script searches a tokenized text for a range of potential problems,
 such as UTF-8 encoding violations, control characters, non-ASCII punctuation,
@@ -184,8 +265,5 @@ characters from a variety of language groups, very long tokens, unsplit 's,
 unsplit punctuation, script mixing; split URLs, email addresses, filenames,
 XML tokens.
 
-It will report the number of instances in each category and give examples.
-
+Reports the number of instances in each category and give examples.
 Currently available: wildebeest_analysis.pl (Perl) v2.6 (April 28, 2021)
-
-
