@@ -19,11 +19,11 @@ if example == 2:
     wb = wb_ana.process(strings=[s1, s2])
     print(wb.analysis)  # print analysis object (nested dictionary)
 elif example == 3:
-    wb = wb_ana.process(input_fn=f'{test_data_dir}/corpus.txt')
+    wb = wb_ana.process(in_file=f'{test_data_dir}/corpus.txt')
     print(wb.analysis)
 elif example == 4:
     with open(f'{test_data_dir}/out.txt', 'w') as out, open(f'{test_data_dir}/out.json', 'w') as json:
-        wb_ana.process(input_fn=f'{test_data_dir}/corpus.txt', pp_output=out, json_output=json)
+        wb_ana.process(in_file=f'{test_data_dir}/corpus.txt', pp_output=out, json_output=json)
 else:
     wb = wb_ana.process(string=s1)
     wb.pretty_print(sys.stdout)  # pretty-print with OVERVIEW and DETAIL to STDOUT

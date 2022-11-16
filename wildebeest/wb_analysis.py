@@ -960,7 +960,7 @@ def process_args(args) -> WildebeestAnalysis:
     return wb
 
 
-def process(input_fn: Optional[str] = None,        # provide exactly one input: input filename, strings or string
+def process(in_file: Optional[str] = None,     # provide exactly one input: input filename, strings or string
             strings: Optional[List[str]] = None,
             string: Optional[str] = None,
             pp_output: Optional[TextIO] = None,    # output filename (for pretty-print)
@@ -972,7 +972,7 @@ def process(input_fn: Optional[str] = None,        # provide exactly one input: 
             ref_id_dict: Optional[dict] = None) -> WildebeestAnalysis:
     """Entry point when Wildebeest Analysis for non-CLI use; maps to CLI interface"""
     return process_args(argparse.Namespace(strings=[string] if string and not strings else strings,
-                                           input=Path(input_fn) if input_fn else None,
+                                           input=Path(in_file) if in_file else None,
                                            output=pp_output, json=json_output,
                                            lc=lang_code, max_cases=max_cases, max_examples=max_examples,
                                            summary=None, progress_bar=None, ref_id_dict=ref_id_dict))
