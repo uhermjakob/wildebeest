@@ -24,7 +24,7 @@ from typing import IO, Optional, TextIO, Union, List
 import unicodedata as ud
 import unicodeblock.blocks
 from wildebeest.normalize import Wildebeest
-from . import __version__, last_mod_date
+from wildebeest import __version__, last_mod_date
 
 
 log.basicConfig(level=log.INFO)
