@@ -981,7 +981,7 @@ def process(in_file: Optional[str] = None,     # provide exactly one input: inpu
 def main():
     """Wrapper around Wildebeest analysis that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
-    parser = argparse.ArgumentParser(description='Analyzes a given text for a wide range of anomalies')
+    parser = argparse.ArgumentParser(description='Analyzes a given text for a wide range of anomalies', prog="wb-ana")
     parser.add_argument('-i', '--input', type=Path,
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
     parser.add_argument('--batch', type=Path, default=None, metavar='BATCH_DIR',
