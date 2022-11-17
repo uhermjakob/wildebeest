@@ -96,6 +96,7 @@ Examples:
 ```
 wb-norm -h  # for full usage info
 wb-norm --version
+cd wildebeest/test/data
 wb-norm --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
 wb-norm --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
 wb-norm --all < wildebeest-test.txt > wildebeest-test-norm-all.txt
@@ -107,6 +108,7 @@ or
 ```
 wb_normalize.py -h  # for full usage info
 wb_normalize.py --version
+cd wildebeest/test/data
 wb_normalize.py --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
 wb_normalize.py --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
 wb_normalize.py --all < wildebeest-test.txt > wildebeest-test-norm-all.txt
@@ -245,22 +247,23 @@ Examples:
 ```
 wb-ana --help
 echo 'Hеllο!' | wb-ana
-# cd to inner wildebeest that contains test/data
-wb-ana -i test/data/hello.txt
-wb-ana -i test/data/wildebeest-test.txt -o test/data/wildebeest-test-out
-wb-ana --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
-wb-ana -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
-wb-ana -i test/data/wildebeest-test-invalid-utf8.txt
+cd wildebeest/test/data
+wb-ana -i hello.txt
+wb-ana -i wildebeest-test.txt -o wildebeest-test-out
+wb-ana --batch phrasebook -s -o phrasebook-dir-out
+wb-ana -i phrasebook/deu.txt -r phrasebook/eng.txt -o phrasebook-deu-out
+wb-ana -i wildebeest-test-invalid-utf8.txt
 ```
 or
 ```
 wb_analysis.py --help
 echo 'Hеllο!' | wb_analysis.py
-wb_analysis.py -i test/data/hello.txt
-wb_analysis.py -i test/data/wildebeest-test.txt -o test/data/wildebeest-test-out
-wb_analysis.py --batch test/data/phrasebook -s -o test/data/phrasebook-dir-out
-wb_analysis.py -i test/data/phrasebook/deu.txt -r test/data/phrasebook/eng.txt -o test/data/phrasebook-deu-out
-wb_analysis.py -i test/data/wildebeest-test-invalid-utf8.txt
+cd wildebeest/test/data
+wb_analysis.py -i hello.txt
+wb_analysis.py -i wildebeest-test.txt -o wildebeest-test-out
+wb_analysis.py --batch phrasebook -s -o phrasebook-dir-out
+wb_analysis.py -i phrasebook/deu.txt -r phrasebook/eng.txt -o phrasebook-deu-out
+wb_analysis.py -i wildebeest-test-invalid-utf8.txt
 ```
 </details>
 
