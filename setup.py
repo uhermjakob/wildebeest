@@ -37,7 +37,7 @@ setup(
                                                         'computational linguistics'],
     entry_points={
         'console_scripts': [
-            'wb-norm=wildebeest.normalize:main',
+            'wb-norm=wildebeest.wb_normalize:main',
             'wb-ana=wildebeest.wb_analysis:main'
         ],
     },

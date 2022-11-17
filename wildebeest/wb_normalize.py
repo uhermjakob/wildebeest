@@ -4,14 +4,14 @@
 Written by Ulf Hermjakob, USC/ISI
 This script normalizes and cleans text, largely at the character level (details below).
 Examples:
-  normalize.py -h  # for full usage info
-  normalize.py --version
-  normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
-  normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
-  normalize.py --all < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok  # perform all normalization/cleaning steps
-  normalize.py --all-except del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
-  normalize.py --only del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
-  normalize.py --add del-arabic-diacr, del-hebrew-diacr --skip del-tatweel, hangul < 3S-dev-ssplit.aux.tok
+  wb_normalize.py -h  # for full usage info
+  wb_normalize.py --version
+  wb_normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
+  wb_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
+  wb_normalize.py --all < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok  # perform all normalization/cleaning steps
+  wb_normalize.py --all-except del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
+  wb_normalize.py --only del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
+  wb_normalize.py --add del-arabic-diacr, del-hebrew-diacr --skip del-tatweel, hangul < 3S-dev-ssplit.aux.tok
 
 Notes:
  * The default setting includes repairs and mapping to canonical representations. It is generally suitable
@@ -1553,7 +1553,7 @@ def main():
     start_time = datetime.datetime.now()
     if args.verbose:
         log.info(f'Start: {start_time}')
-        log.info('Script normalize.py')
+        log.info('Script wb_normalize.py')
         if args.input is not sys.stdin:
             log.info(f'Input: {args.input.name}')
         if args.output is not sys.stdout:

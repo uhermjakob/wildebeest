@@ -2,7 +2,7 @@
 
 ## Script Overview
 
-### normalize.py (pip alias wb-norm)
+### wb_normalize.py (pip alias wb-norm)
 
 Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
 punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
@@ -38,14 +38,14 @@ pip install --editable .   # run it from dir having setup.py
 
 After a pip-install, you can call the program aliases `wb-norm` and `wb-ana`.
 
-To call the Python scripts `normalize.py` and `wb_analysis.py` directly (even without pip-install), make sure that 
-1. `normalize.py` and `wb_analysis.py` are executable (i.e. 'x' mode bits are set) 
+To call the Python scripts `wb_normalize.py` and `wb_analysis.py` directly (even without pip-install), make sure that 
+1. `wb_normalize.py` and `wb_analysis.py` are executable (i.e. 'x' mode bits are set) 
 2. your $PYTHONPATH includes the directory in which this README file resides in ("outer wildebeest") and
-3. your $PATH includes the directory that includes `normalize.py` and `wb_analysis.py` ("inner wildebeest")
+3. your $PATH includes the directory that includes `wb_normalize.py` and `wb_analysis.py` ("inner wildebeest")
 
 </details>
   
-## normalize.py (alias wb-norm)
+## wb_normalize.py (alias wb-norm)
 
 The script repairs common encoding errors, normalizes characters into their canonical form,
 deletes many non-printable characters and performs other repair, normalization and cleaning steps.
@@ -55,12 +55,12 @@ A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
 
 ### Usage &nbsp; (click below for details)
 <details>
-<summary>CLI to normalize a file: <code>normalize.py</code> or its alias <code>wb-norm</code> </summary>
+<summary>CLI to normalize a file: <code>wb_normalize.py</code> or its alias <code>wb-norm</code> </summary>
 
 ```
 usage: wb-norm [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS]
                [--add NORM-STEPS] [--all] [--all-except NORM-STEPS] [--only NORM-STEPS] [-v] [--version]
-# or normalize.py [-h] ...
+# or wb_normalize.py [-h] ...
 
 Normalizes and cleans a given text
 
@@ -105,14 +105,14 @@ wb-norm --add del-arabic-diacr, del-hebrew-diacr --skip del-ctrl-char, del-tatwe
 ```
 or
 ```
-normalize.py -h  # for full usage info
-normalize.py --version
-normalize.py --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
-normalize.py --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
-normalize.py --all < wildebeest-test.txt > wildebeest-test-norm-all.txt
-normalize.py --all-except del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
-normalize.py --only del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
-normalize.py --add del-arabic-diacr,del-hebrew-diacr --skip del-ctrl-char,del-tatweel < wildebeest-test.txt
+wb_normalize.py -h  # for full usage info
+wb_normalize.py --version
+wb_normalize.py --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
+wb_normalize.py --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
+wb_normalize.py --all < wildebeest-test.txt > wildebeest-test-norm-all.txt
+wb_normalize.py --all-except del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
+wb_normalize.py --only del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
+wb_normalize.py --add del-arabic-diacr,del-hebrew-diacr --skip del-ctrl-char,del-tatweel < wildebeest-test.txt
 ```
 
 Note: For robustness regarding input files that do not fully conform to UTF8, please use -i (rather than STDIN), as it includes UTF8-encoding error handling.
