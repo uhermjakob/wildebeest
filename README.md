@@ -246,7 +246,8 @@ options:
 Examples:
 ```
 wb-ana --help
-echo 'Hеllο!' | wb-ana
+echo 'Hеllο!' | wb-ana                  # 'Hеllο!' mischievously includes a Cyrillic and a Greek character
+echo 'Hеllο!' | wb-norm --all | wb-ana  # different result
 cd wildebeest/test/data
 wb-ana -i hello.txt
 wb-ana -i wildebeest-test.txt -o wildebeest-test-out
@@ -258,6 +259,7 @@ or
 ```
 wb_analysis.py --help
 echo 'Hеllο!' | wb_analysis.py
+echo 'Hеllο!' | wb_normalize.py --all | wb_analysis.py
 cd wildebeest/test/data
 wb_analysis.py -i hello.txt
 wb_analysis.py -i wildebeest-test.txt -o wildebeest-test-out
@@ -274,8 +276,8 @@ Note: Please make sure that your $PYTHONPATH includes the directory in which thi
 ```python 
 import sys
 import wildebeest.wb_analysis as wb_ana
-wb = wb_ana.process(string="Hеllο!")
-wb.pretty_print(sys.stdout)  # pretty-print with OVERVIEW and DETAIL sections to STDOUT  
+wb = wb_ana.process(string="Hеllο!")   # "Hеllο!" mischievously includes a Cyrillic and a Greek character
+wb.pretty_print(sys.stdout)            # pretty-print with OVERVIEW and DETAIL sections to STDOUT
 ```
   
 ```python 
