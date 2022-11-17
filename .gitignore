@@ -5,10 +5,12 @@ old
 aux/old
 aux/old/norm_clean_text.py~v02
 aux/exp.py
+build
 data/old
 data/U
 data/UnicodeData.txt
 data/log-diff*
+dist
 profile
 scripts
 test/data/kat*
@@ -26,6 +28,7 @@ wildebeest/normalize-v0*
 wildebeest/wb_analysis3*py
 wildebeest/__pycache__
 wildebeest.egg-info
+wildebeest_nlp.egg-info
 __pycache__
 
 feedback.txt
