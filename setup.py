@@ -20,7 +20,7 @@ classifiers = [  # copied from https://pypi.org/classifiers/
 ]
 
 setup(
-    name='wildebeest',
+    name='wildebeest-nlp',
     version=wildebeest.__version__,
     description=wildebeest.__description__,
     long_description=long_description,
