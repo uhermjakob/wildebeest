@@ -2,26 +2,48 @@
 # -*- coding: utf-8 -*-
 """
 Written by Ulf Hermjakob, USC/ISI
-Ported Pashto and Farsi-specific normalization from Perl to Python in August 2020.
-Ported general normalization from Perl to Python in September 2020.
-This script normalizes and cleans text (details below).
+This script normalizes and cleans text, largely at the character level (details below).
 Examples:
   normalize.py -h  # for full usage info
   normalize.py --version
   normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
   normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
-List of available normalization/cleaning-types (default: all are applied):
- * repair-encodings-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
+  normalize.py --all < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok  # perform all normalization/cleaning steps
+  normalize.py --all-except del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
+  normalize.py --only del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
+  normalize.py --add del-arabic-diacr, del-hebrew-diacr --skip del-tatweel, hangul < 3S-dev-ssplit.aux.tok
+
+Notes:
+ * The default setting includes repairs and mapping to canonical representations. It is generally suitable
+   for texts to be published. The --all setting covers all normalization/cleaning steps and is generally suitable
+   for NLP tasks. Previously, until version 0.7, the default setting included all normalization/cleaning steps,
+   so the new --all option will make the script generally perform like the old default version.
+ * Incompatible options
+   The options --all, -all-except, and --only exclude each other.
+   Normalization steps must not be listed under both --add (or --only) and --skip (or --all-except).
+   Incompatible options will trigger a warning. In case of conflict, --add will take precedence over --skip.
+
+List of default normalization/cleaning-types (performed by default, but can be controlled using
+                                              options --all, --all-except, --only, --add, --skip):
+ * repair-encoding-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
                   alternative/backup to windows-1252)
- * del-ctrl-char (deletes control characters (expect tab and linefeed), zero-width characters, byte order mark,
-                          directional marks, join marks, variation selectors, Arabic tatweel)
+ * del-ctrl-char (deletes control characters (expect tab and linefeed), some variation selectors)
+ * del-tatweel (deletes Arabic tatweel)
  * core-compat (normalizes Hangul Compatibility characters to Unicode standard Hangul characters)
+ * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
+ * hangul (combine Hangul jamos onto Hangul syllables)
+ * repair-combining (e.g. order of nukta/vowel-sign)
+ * combining-compose (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
+ * combining-decompose (e.g. for some Indian characters, splits off Nukta)
+ * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
+ * repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
+List of non-default normalization/cleaning-types (specify options --all, --all-except, or --add):
+ * del-zero-width (deletes zero-width characters, byte order mark, directional marks, join marks)
  * arabic-char (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
  * farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
  * pashto-char (to Pashto canonical forms, e.g. maps Arabic kaf to Farsi version)
  * georgian-char (to Georgian canonical forms, e.g. to standard script, map archaic characters)
- * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * ligatures (e.g. decomposes ligatures)
  * signs-and-symbols (e.g. maps symbols (e.g. kappa symbol), signs (e.g. micro sign))
  * cjk
@@ -31,10 +53,6 @@ List of available normalization/cleaning-types (default: all are applied):
  * vertical (maps vertical versions of punctuation characters with normal horizontal version,
                   such as vertical em-dash ︱ to horizontal em-dash —)
  * enclosure (decomposes circled, squared and parenthesized characters)
- * hangul (combine Hangul jamos onto Hangul syllables)
- * repair-combining (e.g. order of nukta/vowel-sign)
- * combining-compose (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
- * combining-decompose (e.g. for some Indian characters, splits off Nukta)
  * del-arabic-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
  * del-hebrew-diacr (e.g. deletes Hebrew points)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
@@ -47,8 +65,6 @@ List of available normalization/cleaning-types (default: all are applied):
  * space (e.g. normalizes non-zero spaces to normal space)
  * look-alike (normalizes Latin/Cyrillic/Greek look-alike characters,
                e.g. Latin character A to Greek Α (capital alpha) in otherwise Greek word)
- * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
- * repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
  * repair-token (e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen)
 When using STDIN and/or STDOUT, if might be necessary, particularly for older versions of Python, to do
 'export PYTHONIOENCODING=UTF-8' before calling this Python script to ensure UTF-8 encoding.
@@ -63,7 +79,8 @@ from pathlib import Path
 import re
 import sys
 from typing import Callable, Match, Optional, TextIO
-from . import __version__, last_mod_date
+from wildebeest import __version__, last_mod_date
+
 
 log.basicConfig(level=log.INFO)
 data_dir = Path(__file__).parent / 'data'
@@ -115,6 +132,8 @@ class Wildebeest:
         self.lv = 0
         bit_vector = 1
         self.char_is_deletable_control_character = bit_vector
+        bit_vector = 1
+        self.char_is_zero_width_character = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_decomposable_ligature = bit_vector
         bit_vector = bit_vector << 1
@@ -127,6 +146,8 @@ class Wildebeest:
         self.char_is_composable_combining_diacritic = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_decomposable_arabic_punctuation = bit_vector
+        bit_vector = bit_vector << 1
+        self.char_is_arabic_tatweel = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_decomposable_cjk_punctuation = bit_vector
         bit_vector = bit_vector << 1
@@ -246,14 +267,20 @@ class Wildebeest:
         # Deletable control characters
         for code_point in chain(range(0x0000, 0x0009), range(0x000B, 0x000D), range(0x000E, 0x0020), [0x007F],  # C0
                                 range(0x0080, 0x00A0),     # C1 block of control characters
-                                [0x0640],                  # Arabic tatweel
-                                range(0x200B, 0x2010),     # zero width space/non-joiner/joiner, direction marks
                                 range(0xFE00, 0xFE10),     # variation selectors 1-16
-                                [0xFEFF],                  # byte order mark, zero width no-break space
                                 range(0xE0100, 0xE01F0)):  # variation selectors 17-256
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_deletable_control_character
+        # Zero-width characters
+        for code_point in chain(range(0x200B, 0x2010),     # zero width space/non-joiner/joiner, direction marks
+                                [0xFEFF]):                 # byte order mark, zero width no-break space
+            char = chr(code_point)
+            self.char_type_vector_dict[char] \
+                = self.char_type_vector_dict.get(char, 0) | self.char_is_zero_width_character
+        # Arabic tatweel
+        char = chr(0x0640)
+        self.char_type_vector_dict[char] = self.char_type_vector_dict.get(char, 0) | self.char_is_arabic_tatweel
         # Surrogate
         for code_point in range(0xDC80, 0xDD00):
             char = chr(code_point)
@@ -566,21 +593,31 @@ class Wildebeest:
         return re.sub(r"[\uDC80-\uDCFF]", default, s)
 
     @staticmethod
-    def delete_control_characters(s: str) -> str:
-        """Deletes control characters (except tab and linefeed), zero-width characters, byte order mark,
-           directional marks, join marks, variation selectors, Arabic tatweel"""
+    def delete_zero_width_characters(s: str) -> str:
+        """Deletes zero-width characters, byte order mark, directional marks, join marks"""
         s = s.replace('\u00AD', '')  # U+00AD soft hyphen
+        s = re.sub(r'[\u200B-\u200F]', '', s)  # zero width space/non-joiner/joiner, direction marks
+        # noinspection SpellCheckingInspection
+        s = s.replace('\uFEFF', '')  # byte order mark, zero width no-break space
+        return s
+
+    @staticmethod
+    def delete_arabic_tatweel(s: str) -> str:
+        """Deletes Arabic tatweel"""
+        s = s.replace('\u0640', '')  # Arabic tatweel
+        return s
+
+    @staticmethod
+    def delete_control_characters(s: str) -> str:
+        """Deletes control characters (except tab and linefeed), some variation selectors"""
         s = re.sub(r'[\u0000-\u0008]', '', s)  # control characters C0 code block (except tab \x09, linefeed \x0A)
         s = re.sub(r'[\u000B-\u000C]', '', s)  # control characters C0 code block (continued, except CR \x0D)
         s = re.sub(r'[\u000E-\u001F]', '', s)  # control characters C0 code block (continued)
         s = re.sub(r'[\u007F-\u009F]', '', s)  # control characters 'DELETE' and C1 code block
-        s = s.replace('\u0640', '')  # Arabic tatweel
-        s = re.sub(r'[\u200B-\u200F]', '', s)  # zero width space/non-joiner/joiner, direction marks
         # Remove variation selectors that follow most letters, numbers, punctuation. Keep after emoji etc.
         s = re.sub(r'(?<=[\u0000-\u218F])[\uFE00-\uFE0F]', '', s)  # variation selectors 1-16
         s = re.sub(r'(?<=[\u0000-\u218F])[\U000E0100-\U000E01EF]', '', s)  # variation selectors 17-256
         # noinspection SpellCheckingInspection
-        s = s.replace('\uFEFF', '')  # byte order mark, zero width no-break space
         return s
 
     @staticmethod
@@ -819,15 +856,15 @@ class Wildebeest:
         """This function repairs the order of combining modifiers."""
         # If an Indic vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
         if self.lv & self.char_is_devanagari:
-            s = re.sub(r'([\u093E-\u094D])(\u093C)', r'\2\1', s)  # Devanagari
+            s = re.sub(r'([\u093E-\u094D])(\u093C+)', r'\2\1', s)  # Devanagari
             s = re.sub(r'(\u093C)\u093C+', r'\1', s)  # remove duplicate Devanagari nuktas
         # Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala
         if self.lv & self.char_is_bengali_plus:
-            s = re.sub(r'([\u09BE-\u09CD])(\u09BC)', r'\2\1', s)  # Bengali
-            s = re.sub(r'([\u0A3E-\u0A4D])(\u0A3C)', r'\2\1', s)  # Gurmukhi
-            s = re.sub(r'([\u0ABE-\u0ACD])(\u0ABC)', r'\2\1', s)  # Gujarati
-            s = re.sub(r'([\u0B3E-\u0B4D])(\u0B3C)', r'\2\1', s)  # Oriya
-            s = re.sub(r'([\u0CBE-\u0CCD])(\u0CBC)', r'\2\1', s)  # Kannada
+            s = re.sub(r'([\u09BE-\u09CD])(\u09BC+)', r'\2\1', s)  # Bengali
+            s = re.sub(r'([\u0A3E-\u0A4D])(\u0A3C+)', r'\2\1', s)  # Gurmukhi
+            s = re.sub(r'([\u0ABE-\u0ACD])(\u0ABC+)', r'\2\1', s)  # Gujarati
+            s = re.sub(r'([\u0B3E-\u0B4D])(\u0B3C+)', r'\2\1', s)  # Oriya
+            s = re.sub(r'([\u0CBE-\u0CCD])(\u0CBC+)', r'\2\1', s)  # Kannada
             s = re.sub(r'(\u09BC)\u09BC+', r'\1', s)  # remove duplicate Bengali nuktas
             s = re.sub(r'(\u0A3C)\u0A3C+', r'\1', s)  # remove duplicate Gurmukhi nuktas
             s = re.sub(r'(\u0ABC)\u0ABC+', r'\1', s)  # remove duplicate Gujarati nuktas
@@ -1297,7 +1334,7 @@ class Wildebeest:
                     ht[loc_key] = loc_id
         return s
 
-    def set_lv(self, s:str) -> None:
+    def set_lv(self, s: str) -> None:
         self.lv = 0  # line_char_type_vector
         # Each bit in this vector is to capture character type info, e.g. char_is_arabic
         for char in s:
@@ -1310,19 +1347,24 @@ class Wildebeest:
 
     # noinspection SpellCheckingInspection,SpellCheckingInspection
     def norm_clean_string(self, s: str, ht: dict, lang_code: str = '', loc_id: str = '') -> str:
+        # log.info(f'ht: {ht}')
         """Go through a list of applicable normalization/cleaning steps and keep track of the number of changes."""
         number_of_lines = ht.get('NUMBER-OF-LINES', 0) + 1
         ht['NUMBER-OF-LINES'] = number_of_lines
         orig_s = s
         self.set_lv(s)
         if self.lv & self.char_is_encoding_repair_anchor:
-            s = self.ncs_group(s, ht, 'repair-encodings-errors', self.repair_encoding_errors, loc_id)
+            s = self.ncs_group(s, ht, 'repair-encoding-errors', self.repair_encoding_errors, loc_id)
         # Cleaning step 'del-surrogate' is an alternative/backup to windows-1252.
         # It should not be skipped because surrogates are not printable.
         if self.lv & self.char_is_surrogate:
             s = self.ncs_group(s, ht, 'del-surrogate', self.delete_surrogates, loc_id)
         if self.lv & self.char_is_deletable_control_character:
             s = self.ncs_group(s, ht, 'del-ctrl-char', self.delete_control_characters, loc_id)
+        if self.lv & self.char_is_zero_width_character:
+            s = self.ncs_group(s, ht, 'del-zero-width', self.delete_zero_width_characters, loc_id)
+        if self.lv & self.char_is_arabic_tatweel:
+            s = self.ncs_group(s, ht, 'del-tatweel', self.delete_arabic_tatweel, loc_id)
         if self.lv & self.char_is_deletable_arabic_diacritic:
             s = self.ncs_group(s, ht, 'del-arabic-diacr', self.delete_arabic_diacritics, loc_id)
         if self.lv & self.char_is_deletable_hebrew_diacritic:
@@ -1412,32 +1454,52 @@ class Wildebeest:
                               + "\n")
 
 
+def listify_by_comma(s: str) -> list:
+    return [] if re.match(r'\s*$', s) else re.split(r',\s*', s.strip())
+
+
 # noinspection SpellCheckingInspection
 def main():
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     # parse arguments
-    all_skip_elems = ['repair-encodings-errors', 'del-surrogate', 'del-ctrl-char', 'del-arabic-diacr',
-                      'del-hebrew-diacr', 'core-compat', 'pres-form', 'ligatures', 'signs-and-symbols', 'cjk',
-                      'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
+    all_norm_elems = ['repair-encoding-errors', 'del-surrogate', 'del-zero-width', 'del-ctrl-char',
+                      'del-tatweel', 'del-arabic-diacr', 'del-hebrew-diacr', 'core-compat', 'pres-form', 'ligatures',
+                      'signs-and-symbols', 'cjk', 'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
                       'repair-combining', 'combining-compose', 'combining-decompose',
                       'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
                       'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char', 'georgian-char',
                       'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
-    skip_help = f"comma-separated list of normalization/cleaning steps to be skipped: {','.join(all_skip_elems)} \
-    (default: nothing skipped)"
-    parser = argparse.ArgumentParser(description='Normalizes and cleans a given text', prog="python -m wildebeest")
+    default_norm_elems = ['repair-encoding-errors', 'del-surrogate', 'del-ctrl-char', 'del-tatweel',
+                          'core-compat', 'pres-form', 'hangul', 'repair-combining', 'combining-compose',
+                          'combining-decompose', 'repair-xml', 'repair-url-escapes']
+    # additional_norm_elems = all_norm_elems - default_norm_elems
+    additional_norm_elems = [elem for elem in all_norm_elems if elem not in default_norm_elems]
+    skip_help = f"perform all default normalization/cleaning steps except those specified in comma-separated list \
+    (default normalization/cleaning steps: {','.join(default_norm_elems)})"
+    add_help = f"perform all default normalization/cleaning steps plus those specified in comma-separated list \
+    (non-default normalization/cleaning steps: {','.join(additional_norm_elems)})"
+    parser = argparse.ArgumentParser(description='Normalizes and cleans a given text, largely at the character level',
+                                     prog="wb-norm")
     parser.add_argument('-i', '--input', type=argparse.FileType('r', encoding='utf-8', errors='surrogateescape'),
                         default=sys.stdin, metavar='INPUT-FILENAME', help='(default: STDIN)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=sys.stdout, metavar='OUTPUT-FILENAME', help='(default: STDOUT)')
     parser.add_argument('--lc', type=str, default='', metavar='LANGUAGE-CODE', help="ISO 639-3, e.g. 'fas' for Persian")
     parser.add_argument('--skip', type=str, default='', metavar='NORM-STEPS', help=skip_help)
+    parser.add_argument('--add', type=str, default='', metavar='NORM-STEPS', help=add_help)
+    parser.add_argument('--all', action='count', default=0, help=f"perform all normalization/cleaning steps, i.e. "
+                                                                 f"{','.join(all_norm_elems)}")
+    parser.add_argument('--all-except', type=str, default='', metavar='NORM-STEPS',
+                        help='perform all normalization/cleaning steps except those specified in comma-separated list')
+    parser.add_argument('--only', type=str, default='', metavar='NORM-STEPS',
+                        help='perform only normalization/cleaning steps specified in comma-separated list')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='write change log etc. to STDERR')
     parser.add_argument('--version', action='version',
                         version=f'%(prog)s {__version__} last modified: {last_mod_date}')
     args = parser.parse_args()
     lang_code = args.lc
-    skip_list_csv = args.skip
+    add_list = listify_by_comma(args.add) + listify_by_comma(args.only)
+    skip_list = listify_by_comma(args.skip) + listify_by_comma(args.all_except)
     wb = Wildebeest()
 
     # Open any input or output files. Make sure utf-8 encoding is properly set (in older Python3 versions).
@@ -1449,9 +1511,42 @@ def main():
                     Suggestion: 'export PYTHONIOENCODING=UTF-8' or use use '--output FILENAME' option")
 
     ht = {}
-    if skip_list_csv != '':
-        for skip_elem in re.split(r',\s*', skip_list_csv):
-            ht[f'SKIP-{skip_elem}'] = 1
+    norm_elems, skip_elems = [], []
+    if args.all and args.all_except:
+        log.warning("Will ignore option --all due to presence of option --all-except")
+    if args.only:
+        if args.all_except:
+            log.warning("Will re-interpret option --only as option --add due to presence of option --all-except")
+        elif args.all:
+            log.warning("Will ignore option --only due to presence of optioen --all")
+    if add_and_skip := [elem for elem in add_list if elem in skip_list]:
+        if len(add_and_skip) == 1:
+            plural_s, be_verb = "", "is"
+        else:
+            plural_s, be_verb = "s", "are"
+        log.warning(f"The following normalization step{plural_s} {be_verb} specified as both to be performed "
+                    f"and not to be performed: {', '.join(add_and_skip)} (will perform the step{plural_s}).")
+    for norm_elem in all_norm_elems:
+        if norm_elem in add_list:
+            skip = False
+        elif norm_elem in skip_list:
+            skip = True
+        elif args.all or args.all_except:
+            skip = False
+        elif args.only:
+            skip = True
+        elif norm_elem in default_norm_elems:
+            skip = False
+        else:
+            skip = True
+        if skip:
+            skip_elems.append(norm_elem)
+            ht[f'SKIP-{norm_elem}'] = 1
+        else:
+            norm_elems.append(norm_elem)
+    if args.verbose:
+        log.info(f"NORM: {norm_elems}")
+        log.info(f"SKIP: {skip_elems}")
     # Add a little language code robustness for Persian language code, more comprehensive solution to come
     if lang_code == 'fa':
         lang_code = 'fas'
@@ -1484,7 +1579,7 @@ def main():
         number_of_lines = ht.get('NUMBER-OF-LINES', 0)
         lines = 'line' if change_count == 1 else 'lines'
         log_info = f"{str(change_count)} out of {str(number_of_lines)} {lines} changed"
-        for skip_elem in all_skip_elems:
+        for skip_elem in all_norm_elems:
             n_changed_lines = ht.get(f'COUNT-{skip_elem}', 0)
             n_lines_with_call = ht.get(f'CALL-{skip_elem}', 0)
             if n_changed_lines:
