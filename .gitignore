@@ -31,6 +31,7 @@ wildebeest.egg-info
 wildebeest_nlp.egg-info
 __pycache__
 .idea
+.*.swp
 
 feedback.txt
 notes.txt
