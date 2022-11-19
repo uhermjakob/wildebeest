@@ -21,6 +21,8 @@ Text
 
 * The result analysis for an object `wb` of type `Wildebeest` will be stored in the nested dictionary `wb.analysis`
 * Output functions such as `pretty_print` iterate through this `wb.analysis` dictionary.
+  * Example of wild 25-line input file: see wildebeest/test/data/wildebeest-test.txt
+  * Example of its pretty-print analysis output file: see wildebeest/test/data/wildebeest-test-analysis-pprint.txt
 
 Example content of `wb.analysis` (abridged):
 ```
