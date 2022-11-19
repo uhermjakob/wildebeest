@@ -948,7 +948,7 @@ def process_args(args) -> WildebeestAnalysis:
     else:  # nothing to process
         log.warning('Called function process_with_args with neither args.input nor args.strings')
     wb.aggregate()  # Aggregate raw counts and examples into analysis.
-    wb.remove_empty_dicts()
+    wb.remove_empty_dicts()  # Remove empty dictionaries that were created to impose a specific order
     if args.json:
         args.json.write(json.dumps(wb.analysis) + "\n")
     if args.summary:
