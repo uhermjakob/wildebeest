@@ -1,21 +1,23 @@
 # wildebeest
 
-## Script Overview
+The wildebeest scripts investigate, repair and normalize text for a wide range of issues at the character level.
 
-### wb_normalize.py (pip alias wb-norm)
+**wb-ana** (or wb_analysis.py)
 
-Script repairs common encoding errors, normalizes characters into their canonical form, maps digits and some
-punctuation to ASCII, deletes many non-printable characters and performs other repair, normalization and cleaning steps.
+This script searches a tokenized text for a range of potential problems, 
+such as UTF-8 encoding violations, control characters, zero-with characters, 
+letters/numbers/punctuation/letter-modifiers from various scripts 
+(e.g. Latin and Cyrillic), tokens with letters from different scripts, 
+XML tokens, tokens with certain punctuation of interest, orphan letter modifiers, 
+non-canonical character combinations.
+
+**wb-norm** (or wb_normalize.py)
+
+This script automatically corrects some of the issues raised by wb-ana.
+The script can repair common encoding errors, normalize characters into their UTF8-canonical form, map digits and some
+punctuation to ASCII, delete many non-printable characters and perform other repair, normalization and cleaning steps.
 A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
-
-### wb_analysis.py (pip alias wb-ana)
-
-Script searches a tokenized text for a range of potential problems,
-such as UTF-8 encoding violations, control characters, zero-with characters,
-letters/numbers/punctuation/letter-modifiers from various scripts,
-tokens with letters from different scripts, XML tokens, tokens with certain
-punctuation of interest, orphan letter modifiers, non-canonical character
-combinations.
+Normalization steps can be activated *à la carte*.
 
 ## Installation
 
@@ -23,29 +25,29 @@ combinations.
 <summary>Click here for installation info</summary>
 
 ```bash
-# from PyPi (after public release)
+# Install from PyPi (after public release):
 pip install wildebeest-nlp
 
-# Latest master branch: either https or git/ssh 
+# Alternatively, pip-install from GitHub master branch:
 pip install git+https://github.com/uhermjakob/wildebeest.git
 
-# For editing/development
+# Alternatively, clone GitHub, which might be useful for editing/development:
 git clone https://github.com/uhermjakob/wildebeest.git
 # or git clone git://github.com/uhermjakob/wildebeest.git
 cd wildebeest
 pip install --editable .   # run it from dir having setup.py
 ```
 
-After a pip-install, you can call the program aliases `wb-norm` and `wb-ana`.
+A pip-install will provide commands `wb-norm` and `wb-ana` as well as their alternate forms `wb_normalize.py` and `wb_analysis.py`.
 
-To call the Python scripts `wb_normalize.py` and `wb_analysis.py` directly (even without pip-install), make sure that 
-1. `wb_normalize.py` and `wb_analysis.py` are executable (i.e. 'x' mode bits are set) 
+After a regular `git clone` (without pip-install), in order to be able to call the Python scripts `wb_normalize.py` and `wb_analysis.py`, make sure that:
+1. `wb_normalize.py` and `wb_analysis.py` are executable (i.e. 'x' mode bits are set)
 2. your $PYTHONPATH includes the directory in which this README file resides in ("outer wildebeest") and
 3. your $PATH includes the directory that includes `wb_normalize.py` and `wb_analysis.py` ("inner wildebeest")
 
 </details>
   
-## wb_normalize.py (alias wb-norm)
+## wb-norm (or wb_normalize.py)
 
 The script repairs common encoding errors, normalizes characters into their canonical form,
 deletes many non-printable characters and performs other repair, normalization and cleaning steps.
@@ -55,7 +57,7 @@ A few steps are specific to Pashto, Farsi, or Devanagari (Hindi etc.).
 
 ### Usage &nbsp; (click below for details)
 <details>
-<summary>CLI to normalize a file: <code>wb_normalize.py</code> or its alias <code>wb-norm</code> </summary>
+<summary>CLI to normalize a file: <code>wb-norm</code> or <code>wb_normalize.py</code></summary>
 
 ```
 usage: wb-norm [-h] [-i INPUT-FILENAME] [-o OUTPUT-FILENAME] [--lc LANGUAGE-CODE] [--skip NORM-STEPS]
@@ -101,10 +103,12 @@ wb-norm --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
 wb-norm --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
 wb-norm --all < wildebeest-test.txt > wildebeest-test-norm-all.txt
 wb-norm --all-except del-arabic-diacr, del-hebrew-diacr < wildebeest-test.txt
-wb-norm --only del-arabic-diacr, del-hebrew-diacr < wildebeest-test.txt
-wb-norm --add del-arabic-diacr, del-hebrew-diacr --skip del-ctrl-char, del-tatweel < wildebeest-test.txt
+wb-norm --only del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
+wb-norm --add del-arabic-diacr,del-hebrew-diacr --skip del-ctrl-char,del-tatweel < wildebeest-test.txt
 ```
-or
+<details>
+<summary>Same for alternate script name wb_normalize.py</summary>
+
 ```
 wb_normalize.py -h  # for full usage info
 wb_normalize.py --version
@@ -116,6 +120,7 @@ wb_normalize.py --all-except del-arabic-diacr,del-hebrew-diacr < wildebeest-test
 wb_normalize.py --only del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
 wb_normalize.py --add del-arabic-diacr,del-hebrew-diacr --skip del-ctrl-char,del-tatweel < wildebeest-test.txt
 ```
+</details>
 
 Note: For robustness regarding input files that do not fully conform to UTF8, please use -i (rather than STDIN), as it includes UTF8-encoding error handling.
 </details>
@@ -127,10 +132,11 @@ Note: Please make sure that your $PYTHONPATH includes the directory in which thi
 ```python 
 from wildebeest.normalize import Wildebeest
 wb = Wildebeest()
-ht = {}                             # dictionary sets/resets steps to be skipped (default: not skipped)
-# ht['SKIP-punct-dash'] = 1         # optionally skip normalization of ndash, mdash etc. to ASCII hyphen-minus.
-# ht['SKIP-enclosure'] = 1          # optionally skip 'enclosure' normalization
-# ht['SKIP-del-arabic-diacr'] = 1   # optionally skip 'delete arabic diacritic' normalization
+ht = wb.build_norm_step_dict(base='ALL')  # base values: 'NONE', 'DEFAULT', 'ALL' (normalization steps)
+# ht = wb.build_norm_step_dict()  # defaults: base = 'DEFAULT', skip = None, add = None
+# ht = wb.build_norm_step_dict(base='NONE', add=['digit', 'enclosure'])  # normalize only digits (to ASCII) and enclosures
+# ht = wb.build_norm_step_dict(base='DEFAULT', skip=['del-tatweel'], add=['digit', 'space'])
+# ht = wb.build_norm_step_dict(base='ALL', skip=['punct-dash', 'enclosure', 'del-arabic-diacr'])
 wb.load_look_alike_file()           # optional
 print(wb.norm_clean_string('🄐…25kmÂ²', ht, lang_code='eng'))
 print(wb.norm_clean_string('೧೯೨೩', ht, lang_code='kan'))
@@ -199,7 +205,7 @@ The script can perform a wide variety of normalization steps.
 * `repair-token` e.g. splits +/-/*/digits off Arabic words; maps not-sign inside Arabic to token-separating hyphen
 </details>
 
-## wb_analysis.py (alias wb-ana)
+## wb-ana (or wb_analysis.py)
 
 Script searches a tokenized text for a range of potential problems,
 such as UTF-8 encoding violations, control characters, zero-with characters,
@@ -211,7 +217,7 @@ combinations.
 ### Usage
 
 <details>
-<summary>CLI to analyze a file: <code>wb_analysis.py</code> or its alias <code>wb-ana</code> </summary>
+<summary>CLI to analyze a file: <code>wb-ana</code> or <code>wb_analysis.py</code> </summary>
 
 ```
 usage: wb-ana  [-h] [-i INPUT-FILENAME] [--batch BATCH] [-s] [-o OUTPUT-FILENAME] [-j JSON-OUTPUT-FILENAME] [--file_id FILE_ID]
@@ -255,7 +261,10 @@ wb-ana --batch phrasebook -s -o phrasebook-dir-out
 wb-ana -i phrasebook/deu.txt -r phrasebook/eng.txt -o phrasebook-deu-out
 wb-ana -i wildebeest-test-invalid-utf8.txt
 ```
-or
+
+<details>
+<summary>Same for alternate script name wb_analysis.py</summary>
+
 ```
 wb_analysis.py --help
 echo 'Hеllο!' | wb_analysis.py
@@ -267,6 +276,7 @@ wb_analysis.py --batch phrasebook -s -o phrasebook-dir-out
 wb_analysis.py -i phrasebook/deu.txt -r phrasebook/eng.txt -o phrasebook-deu-out
 wb_analysis.py -i wildebeest-test-invalid-utf8.txt
 ```
+</details>
 </details>
 
 <details>
