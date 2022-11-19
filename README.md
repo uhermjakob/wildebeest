@@ -102,7 +102,7 @@ cd wildebeest/test/data
 wb-norm --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
 wb-norm --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
 wb-norm --all < wildebeest-test.txt > wildebeest-test-norm-all.txt
-wb-norm --all-except del-arabic-diacr, del-hebrew-diacr < wildebeest-test.txt
+wb-norm --all-except del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
 wb-norm --only del-arabic-diacr,del-hebrew-diacr < wildebeest-test.txt
 wb-norm --add del-arabic-diacr,del-hebrew-diacr --skip del-ctrl-char,del-tatweel < wildebeest-test.txt
 ```
