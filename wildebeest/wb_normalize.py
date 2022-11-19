@@ -8,7 +8,7 @@ Examples:
   wb_normalize.py --version
   wb_normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
   wb_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
-  wb_normalize.py --all < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok  # perform all normalization/cleaning steps
+  wb_normalize.py --all < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok  # perform all normalization steps
   wb_normalize.py --all-except del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
   wb_normalize.py --only del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
   wb_normalize.py --add del-arabic-diacr, del-hebrew-diacr --skip del-tatweel, hangul < 3S-dev-ssplit.aux.tok
@@ -78,7 +78,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from typing import Callable, Match, Optional, TextIO
+from typing import Callable, List, Match, Optional, TextIO
 from wildebeest import __version__, last_mod_date
 
 
@@ -91,6 +91,18 @@ class Wildebeest:
     # noinspection PyPep8
     def __init__(self):
         # The following dictionary captures the irregular mappings from Windows1252 to UTF8.
+        self.all_norm_elems = [
+            'repair-encoding-errors', 'del-surrogate', 'del-zero-width', 'del-ctrl-char',
+            'del-tatweel', 'del-arabic-diacr', 'del-hebrew-diacr', 'core-compat', 'pres-form', 'ligatures',
+            'signs-and-symbols', 'cjk', 'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
+            'repair-combining', 'combining-compose', 'combining-decompose',
+            'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
+            'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char', 'georgian-char',
+            'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
+        self.default_norm_elems = [
+            'repair-encoding-errors', 'del-surrogate', 'del-ctrl-char', 'del-tatweel',
+            'core-compat', 'pres-form', 'hangul', 'repair-combining', 'combining-compose',
+            'combining-decompose', 'repair-xml', 'repair-url-escapes']
         # noinspection SpellCheckingInspection
         self.spec_windows1252_to_utf8_dict = {
             '\x80': '\u20AC',  # Euro Sign
@@ -421,6 +433,7 @@ class Wildebeest:
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_lisu_plus
 
     def load_look_alike_file(self) -> None:
+        """Loads entries of characters that look alike, e.g. 'AΑА' (Latin A, Greek Α, Cyrillic А respectively)"""
         look_alike_filename = os.path.join(data_dir_path, 'look-alikes.txt')
         line_number = 0
         n_entries = 0
@@ -700,6 +713,7 @@ class Wildebeest:
         return s
 
     def normalize_georgian_characters(self, s: str) -> str:
+        """maps archaic Georgian letters to standard Georgian"""
         s = s.translate(self.georgian_trantab)
         s = s.replace('ჱ', 'ე')    # archaic Georgian letter he
         s = s.replace('ჲ', 'ი')    # archaic Georgian letter hie
@@ -1184,14 +1198,13 @@ class Wildebeest:
             return None
 
     def tokenize_mixed_script_tokens(self, orig_token: str) -> str:
+        """insert space (effectively split) token with mixed scripts at certain script transition points"""
         token = ''
         script = None
         script_start = 0
-        position = -1
         orig_token_len = len(orig_token)
         last_char_is_punctuation = False
-        for char in orig_token:
-            position += 1
+        for position, char in enumerate(orig_token):
             if char in ['.', '/', '_', '-']:
                 last_char_is_punctuation = True
             else:
@@ -1322,7 +1335,8 @@ class Wildebeest:
         ncs_group: normalize and clean string group.
         For a given normalization/cleaning group, call appropriate function and update stats.
         """
-        if f'SKIP-{group_name}' not in ht:
+        skip_key = f'SKIP-{group_name}'
+        if not ht.get(skip_key, False):
             self.increment_dict_count(ht, f'CALL-{group_name}')  # keep track of how often norm-group is called
             orig_s = s
             s = group_function(s)
@@ -1453,29 +1467,42 @@ class Wildebeest:
                                                      loc_id=str(line_number))
                               + "\n")
 
+    def build_norm_step_dict(self, base: str = 'DEFAULT',
+                             skip: Optional[List[str]] = None,
+                             add: Optional[List[str]] = None) -> dict:
+        """Builds dictionary which lists which specific normalization steps should be skipped"""
+        if base == 'NONE':
+            base_elems = []
+        elif base == 'ALL':
+            base_elems = self.all_norm_elems
+        else:  # base == 'DEFAULT'
+            base_elems = self.default_norm_elems
+        norm_step_dict = {}
+        for norm_elem in self.all_norm_elems:
+            norm_step_dict[f'SKIP-{norm_elem}'] = (norm_elem not in base_elems)
+        if skip:
+            for norm_elem in skip:
+                norm_step_dict[f'SKIP-{norm_elem}'] = True
+        if add:
+            for norm_elem in add:
+                norm_step_dict[f'SKIP-{norm_elem}'] = False
+        return norm_step_dict
+
 
 def listify_by_comma(s: str) -> list:
+    """Converts string with comma-separated elements to list, e.g. 'a,b, c' -> ['a', 'b', 'c']; '' -> []"""
     return [] if re.match(r'\s*$', s) else re.split(r',\s*', s.strip())
 
 
 # noinspection SpellCheckingInspection
 def main():
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
-    # parse arguments
-    all_norm_elems = ['repair-encoding-errors', 'del-surrogate', 'del-zero-width', 'del-ctrl-char',
-                      'del-tatweel', 'del-arabic-diacr', 'del-hebrew-diacr', 'core-compat', 'pres-form', 'ligatures',
-                      'signs-and-symbols', 'cjk', 'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
-                      'repair-combining', 'combining-compose', 'combining-decompose',
-                      'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
-                      'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char', 'georgian-char',
-                      'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
-    default_norm_elems = ['repair-encoding-errors', 'del-surrogate', 'del-ctrl-char', 'del-tatweel',
-                          'core-compat', 'pres-form', 'hangul', 'repair-combining', 'combining-compose',
-                          'combining-decompose', 'repair-xml', 'repair-url-escapes']
+    wb = Wildebeest()
     # additional_norm_elems = all_norm_elems - default_norm_elems
-    additional_norm_elems = [elem for elem in all_norm_elems if elem not in default_norm_elems]
+    additional_norm_elems = [elem for elem in wb.all_norm_elems if elem not in wb.default_norm_elems]
+    # parse arguments
     skip_help = f"perform all default normalization/cleaning steps except those specified in comma-separated list \
-    (default normalization/cleaning steps: {','.join(default_norm_elems)})"
+    (default normalization/cleaning steps: {','.join(wb.default_norm_elems)})"
     add_help = f"perform all default normalization/cleaning steps plus those specified in comma-separated list \
     (non-default normalization/cleaning steps: {','.join(additional_norm_elems)})"
     parser = argparse.ArgumentParser(description='Normalizes and cleans a given text, largely at the character level',
@@ -1488,7 +1515,7 @@ def main():
     parser.add_argument('--skip', type=str, default='', metavar='NORM-STEPS', help=skip_help)
     parser.add_argument('--add', type=str, default='', metavar='NORM-STEPS', help=add_help)
     parser.add_argument('--all', action='count', default=0, help=f"perform all normalization/cleaning steps, i.e. "
-                                                                 f"{','.join(all_norm_elems)}")
+                                                                 f"{','.join(wb.all_norm_elems)}")
     parser.add_argument('--all-except', type=str, default='', metavar='NORM-STEPS',
                         help='perform all normalization/cleaning steps except those specified in comma-separated list')
     parser.add_argument('--only', type=str, default='', metavar='NORM-STEPS',
@@ -1500,7 +1527,6 @@ def main():
     lang_code = args.lc
     add_list = listify_by_comma(args.add) + listify_by_comma(args.only)
     skip_list = listify_by_comma(args.skip) + listify_by_comma(args.all_except)
-    wb = Wildebeest()
 
     # Open any input or output files. Make sure utf-8 encoding is properly set (in older Python3 versions).
     if args.input is sys.stdin and not re.search('utf-8', sys.stdin.encoding, re.IGNORECASE):
@@ -1526,7 +1552,7 @@ def main():
             plural_s, be_verb = "s", "are"
         log.warning(f"The following normalization step{plural_s} {be_verb} specified as both to be performed "
                     f"and not to be performed: {', '.join(add_and_skip)} (will perform the step{plural_s}).")
-    for norm_elem in all_norm_elems:
+    for norm_elem in wb.all_norm_elems:
         if norm_elem in add_list:
             skip = False
         elif norm_elem in skip_list:
@@ -1535,13 +1561,13 @@ def main():
             skip = False
         elif args.only:
             skip = True
-        elif norm_elem in default_norm_elems:
+        elif norm_elem in wb.default_norm_elems:
             skip = False
         else:
             skip = True
         if skip:
             skip_elems.append(norm_elem)
-            ht[f'SKIP-{norm_elem}'] = 1
+            ht[f'SKIP-{norm_elem}'] = True
         else:
             norm_elems.append(norm_elem)
     if args.verbose:
@@ -1579,7 +1605,7 @@ def main():
         number_of_lines = ht.get('NUMBER-OF-LINES', 0)
         lines = 'line' if change_count == 1 else 'lines'
         log_info = f"{str(change_count)} out of {str(number_of_lines)} {lines} changed"
-        for skip_elem in all_norm_elems:
+        for skip_elem in wb.all_norm_elems:
             n_changed_lines = ht.get(f'COUNT-{skip_elem}', 0)
             n_lines_with_call = ht.get(f'CALL-{skip_elem}', 0)
             if n_changed_lines:
