@@ -128,9 +128,9 @@ Note: For robustness regarding input files that do not fully conform to UTF8, pl
 <details>
 <summary>norm_clean_string (Python function call to normalize a string)</summary>
 
-Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+Note: When working on a clone (as opposed to a pip-install), please make sure that your $PYTHONPATH includes the directory in which this README file resides.
 ```python 
-from wildebeest.normalize import Wildebeest
+from wildebeest.wb_normalize import Wildebeest
 wb = Wildebeest()
 ht = wb.build_norm_step_dict(base='ALL')  # base values: 'NONE', 'DEFAULT', 'ALL' (normalization steps)
 # ht = wb.build_norm_step_dict()  # defaults: base = 'DEFAULT', skip = None, add = None
@@ -282,7 +282,7 @@ wb_analysis.py -i wildebeest-test-invalid-utf8.txt
 <details>
 <summary>wildebeest.wb_analysis.process (Python function call to analyze a string, a list of strings, or a file)</summary>
 
-Note: Please make sure that your $PYTHONPATH includes the directory in which this README file resides.
+Note: When working on a clone (as opposed to a pip-install), please make sure that your $PYTHONPATH includes the directory in which this README file resides.
 ```python 
 import sys
 import wildebeest.wb_analysis as wb_ana
