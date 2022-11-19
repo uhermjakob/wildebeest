@@ -98,6 +98,7 @@ Examples:
 ```
 wb-norm -h  # for full usage info
 wb-norm --version
+cd `pip show wildebeest-nlp | grep ^Location | cut -d ' ' -f 2`  # go to directory where wildebeest-nlp is installed
 cd wildebeest/test/data
 wb-norm --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
 wb-norm --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
@@ -112,6 +113,7 @@ wb-norm --add del-arabic-diacr,del-hebrew-diacr --skip del-ctrl-char,del-tatweel
 ```
 wb_normalize.py -h  # for full usage info
 wb_normalize.py --version
+cd `pip show wildebeest-nlp | grep ^Location | cut -d ' ' -f 2`
 cd wildebeest/test/data
 wb_normalize.py --lc fas -i wildebeest-test.txt -o wildebeest-test-norm.txt
 wb_normalize.py --lc fas --verbose --skip del-ctrl-char,del-tatweel < wildebeest-test.txt > wildebeest-test-norm-custom.txt
@@ -254,6 +256,7 @@ Examples:
 wb-ana --help
 echo 'Hеllο!' | wb-ana                  # 'Hеllο!' mischievously includes a Cyrillic and a Greek character
 echo 'Hеllο!' | wb-norm --all | wb-ana  # different result
+cd `pip show wildebeest-nlp | grep ^Location | cut -d ' ' -f 2`  # go to directory where wildebeest-nlp is installed
 cd wildebeest/test/data
 wb-ana -i hello.txt
 wb-ana -i wildebeest-test.txt -o wildebeest-test-out
@@ -269,6 +272,7 @@ wb-ana -i wildebeest-test-invalid-utf8.txt
 wb_analysis.py --help
 echo 'Hеllο!' | wb_analysis.py
 echo 'Hеllο!' | wb_normalize.py --all | wb_analysis.py
+cd `pip show wildebeest-nlp | grep ^Location | cut -d ' ' -f 2`
 cd wildebeest/test/data
 wb_analysis.py -i hello.txt
 wb_analysis.py -i wildebeest-test.txt -o wildebeest-test-out
