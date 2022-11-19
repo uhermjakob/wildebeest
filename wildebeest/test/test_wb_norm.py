@@ -6,7 +6,7 @@ Pytest for normalize.py
 """
 
 import logging as log
-import wildebeest.normalize as wb_norm
+import wildebeest.wb_normalize as wb_norm
 
 log.basicConfig(level=log.INFO)
 
