@@ -13,21 +13,22 @@ Text
 
 #### Algorithm
 
-In phase 1, functions collect_counts_and_examples_in_file/collect_counts_and_examples_in_line iterate over the text, collecting counts of characters and tokens of interest.
-In phase 2, function aggregate aggregates these raw counts into an analysis dictionary.
-The resulting wb.analysis directory can be dumped as a json file or output using a pretty_print method.
+* In phase 1, functions collect_counts_and_examples_in_file/collect_counts_and_examples_in_line iterate over the text, collecting counts of characters and tokens of interest.
+* In phase 2, function aggregate aggregates these raw counts into an analysis dictionary.
+* The resulting wb.analysis directory can be dumped as a json file or output using a pretty_print method.
 
 #### Output
 
-The result analysis for an object wb of type Wildebeest will be stored in dictionary wb.analysis
+* The result analysis for an object `wb` of type `Wildebeest` will be stored in the nested dictionary `wb.analysis`
+* Output functions such as `pretty_print` iterate through this `wb.analysis` dictionary.
 
-Example:
+Example content of `wb.analysis` (abridged):
 ```
 wb.analysis['n_lines']          # type: int
 wb.analysis['n_characters']	# type: int
 wb.analysis['letter-script']    # type: dict, records scripts that letters are written in
-wb.analysis['letter-script']['LATIN']['count']
-wb.analysis['letter-script']['GREEK']['ex']    # string of characters
+wb.analysis['letter-script']['LATIN']['count']  # type: int
+wb.analysis['letter-script']['GREEK']['ex']     # type: string of characters. 'ex' stands for 'examples'.
 wb.analysis['number-script']    # type: dict, records scripts that numbers are written in
 wb.analysis['number-script']['KANNADA']['count']
 wb.analysis['number-script']['KANNADA']['ex']
@@ -45,7 +46,7 @@ wb.analysis['non-canonical']['é']['norm-count']
 wb.analysis['non-canonical']['é']['orig-form']    # NFD
 wb.analysis['non-canonical']['é']['norm-form']    # NFC
 wb.analysis['non-canonical']['é']['changes']      # compose
-wb.analysis['char-conflict']    # type: dict, records when competing characters occur in the same text, e.g. both an Arabic and a Persian k
+wb.analysis['char-conflict']    # type: dict, records when 2 or more competing characters occur in the same text, e.g. both an Arabic and a Persian k
 wb.analysis['char-conflict']['ك/ک']               # type: list
 wb.analysis['char-conflict']['ك/ک'][0]['char']    # 'ك'
 wb.analysis['char-conflict']['ك/ک'][0]['id']
