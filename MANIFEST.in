@@ -3,7 +3,7 @@ include wildebeest/data/*.tsv
 include wildebeest/data/look-alikes.txt
 include wildebeest/test/data/corpus.txt
 include wildebeest/test/data/hello.txt
-include wildebeest/test/data/phrasebook
+include wildebeest/test/data/phrasebook/*.txt
 include wildebeest/test/data/wildebeest-test*.txt
 include wildebeest/test/data/*.ref
 include wildebeest/wb-analysis.pl
