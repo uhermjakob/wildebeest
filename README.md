@@ -25,7 +25,7 @@ Normalization steps can be activated *à la carte*.
 <summary>Click here for installation info</summary>
 
 ```bash
-# Install from PyPi (after public release):
+# Install from PyPi:
 pip install wildebeest-nlp
 
 # Alternatively, pip-install from GitHub master branch:
@@ -288,10 +288,12 @@ wb_analysis.py -i wildebeest-test-invalid-utf8.txt
 
 Note: When working on a clone (as opposed to a pip-install), please make sure that your $PYTHONPATH includes the directory in which this README file resides.
 ```python 
+import pprint
 import sys
 import wildebeest.wb_analysis as wb_ana
 wb = wb_ana.process(string="Hеllο!")   # "Hеllο!" mischievously includes a Cyrillic and a Greek character
-wb.pretty_print(sys.stdout)            # pretty-print with OVERVIEW and DETAIL sections to STDOUT
+wb.pretty_print(sys.stdout)            # custom pretty-print with OVERVIEW and DETAIL sections to STDOUT
+pprint.pprint(wb.analysis)             # generic pretty-print
 ```
   
 ```python 
