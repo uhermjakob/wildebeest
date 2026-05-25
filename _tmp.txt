@@ -1,0 +1,4 @@
+Changes:
+* add --decode_unicode option
+* Chinese fractions, percentages
+* romanization cache size
