@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# noinspection SpellCheckingInspection
 """
 Written by Ulf Hermjakob, USC/ISI
 This script normalizes and cleans text, largely at the character level (details below).
@@ -9,9 +10,9 @@ Examples:
   wb_normalize.py --lc fas -i 3S-dev-ssplit.aux.tok -o 3S-dev-ssplit.aux.clean2.tok
   wb_normalize.py --lc fas --verbose --skip digit,punct < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok
   wb_normalize.py --all < 3S-dev-ssplit.aux.tok > 3S-dev-ssplit.aux.clean1.tok  # perform all normalization steps
-  wb_normalize.py --all-except del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
-  wb_normalize.py --only del-arabic-diacr, del-hebrew-diacr < 3S-dev-ssplit.aux.tok
-  wb_normalize.py --add del-arabic-diacr, del-hebrew-diacr --skip del-tatweel, hangul < 3S-dev-ssplit.aux.tok
+  wb_normalize.py --all-except del-arabic-diacr, del-hebrew-points < 3S-dev-ssplit.aux.tok
+  wb_normalize.py --only del-arabic-diacr, del-hebrew-points < 3S-dev-ssplit.aux.tok
+  wb_normalize.py --add del-arabic-diacr, del-hebrew-points --skip del-tatweel, hangul < 3S-dev-ssplit.aux.tok
 
 Notes:
  * The default setting includes repairs and mapping to canonical representations. It is generally suitable
@@ -25,7 +26,6 @@ Notes:
 
 List of default normalization/cleaning-types (performed by default, but can be controlled using
                                               options --all, --all-except, --only, --add, --skip):
- * repair-encoding-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-surrogate (deletes surrogate characters (representing non-UTF8 characters in input),
                   alternative/backup to windows-1252)
  * del-ctrl-char (deletes control characters (expect tab and linefeed), some variation selectors)
@@ -34,11 +34,17 @@ List of default normalization/cleaning-types (performed by default, but can be c
  * pres-form (e.g. maps from presentation form (isolated, initial, medial, final) to standard form)
  * hangul (combine Hangul jamos onto Hangul syllables)
  * repair-combining (e.g. order of nukta/vowel-sign)
+ * order-hebrew-letter-modifiers
+ * order-arabic-letter-modifiers
+ * order-latin-letter-modifiers
+ * order-syriac-letter-modifiers
+ * order-myanmar-letter-modifiers
  * combining-compose (e.g. applies combining-modifiers to preceding character, e.g. ö (o +  ̈) -> ö)
  * combining-decompose (e.g. for some Indian characters, splits off Nukta)
  * repair-xml (e.g. repairs multi-escaped tokens such as &amp;quot; or &amp;amp;#x200C;)
  * repair-url-escapes (e.g. repairs multi-escaped url substrings such as Jo%25C3%25ABlle_Aubron)
 List of non-default normalization/cleaning-types (specify options --all, --all-except, or --add):
+ * repair-encoding-errors (repairs missing, wrong, or double conversion from Windows-1252 or Latin-1 to UTF8)
  * del-zero-width (deletes zero-width characters, byte order mark, directional marks, join marks)
  * arabic-char (to Arabic canonical forms, e.g. maps Farsi kaf/yeh to Arabic versions)
  * farsi-char (to Farsi canonical forms, e.g. maps Arabic yeh, kaf to Farsi versions)
@@ -54,7 +60,8 @@ List of non-default normalization/cleaning-types (specify options --all, --all-e
                   such as vertical em-dash ︱ to horizontal em-dash —)
  * enclosure (decomposes circled, squared and parenthesized characters)
  * del-arabic-diacr (e.g. deletes diacritics such as Arabic fatha, damma, kasra)
- * del-hebrew-diacr (e.g. deletes Hebrew points)
+ * del-hebrew-accents (e.g. deletes Hebrew accents, e.g. cantillation marks in Hebrew Bible)
+ * del-hebrew-points (e.g. deletes Hebrew points)
  * digit (e.g. maps Arabic-Indic digits and extended Arabic-Indic digits to ASCII digits)
  * punct (e.g. maps ellipsis … to periods ... and two-dot-lead ‥ to ..; a few math symbols ∭; ⒛ 🄆 )
  * punct-dash (e.g. maps various dashes, hyphens, minus signs to ASCII hyphen-minus)
@@ -73,12 +80,15 @@ When using STDIN and/or STDOUT, if might be necessary, particularly for older ve
 import argparse
 from itertools import chain
 import datetime
+from collections import defaultdict
 import logging as log
 import os
 from pathlib import Path
 import re
+import regex
 import sys
 from typing import Callable, List, Match, Optional, TextIO
+import unicodedata as ud
 from wildebeest import __version__, last_mod_date
 
 
@@ -87,23 +97,195 @@ data_dir = Path(__file__).parent / 'data'
 data_dir_path = str(data_dir.resolve())
 
 
+class OrderLetterModifiers:
+    # Source: https://www.sbl-site.org/Fonts/SBLHebrewUserManual1.5x.pdf
+    # noinspection SpellCheckingInspection
+    hebrew_priority_list\
+        = (('\u05C1',    # HEBREW POINT SHIN DOT
+            '\u05C2'),   # HEBREW POINT SIN DOT
+           ('\u05BC',),  # HEBREW POINT DAGESH OR MAPIQ
+           ('\u05BF',),  # HEBREW POINT RAFE
+           ('\u05B9',    # HEBREW POINT HOLAM
+            '\u05BA'),   # HEBREW POINT HOLAM HASER FOR VAV
+           ('\u05B0',    # HEBREW POINT SHEVA ("e/")
+            '\u05B1',    # HEBREW POINT HATAF SEGOL
+            '\u05B2',    # HEBREW POINT HATAF PATAH
+            '\u05B3',    # HEBREW POINT HATAF QAMATS
+            '\u05B4',    # HEBREW POINT HIRIQ ("i")
+            '\u05B5',    # HEBREW POINT TSERE
+            '\u05B6',    # HEBREW POINT SEGOL
+            '\u05B7',    # HEBREW POINT PATAH ("a")
+            '\u05B8',    # HEBREW POINT QAMATS ("a/o")
+            '\u05C7',    # HEBREW POINT QAMATS QATAN
+            '\u05BB',    # HEBREW POINT QUBUTS
+            '\u05BD',    # HEBREW POINT METEG
+            '\u0591',    # HEBREW ACCENT ETNAHTA (ATNAH)
+            '\u05A2',    # HEBREW ACCENT ATNAH HAFUKH
+            '\u0596',    # HEBREW ACCENT TIPEHA
+            '\u059B',    # HEBREW ACCENT TEVIR
+            '\u05A3',    # HEBREW ACCENT MUNAH
+            '\u05A4',    # HEBREW ACCENT MAHAPAKH
+            '\u05A5',    # HEBREW ACCENT MERKHA
+            '\u05A6',    # HEBREW ACCENT MERKHA KEFULA
+            '\u05A7',    # HEBREW ACCENT DARGA
+            '\u05AA',    # HEBREW ACCENT YERAH BEN YOMO
+            '\u05C5'),   # HEBREW MARK LOWER DOT
+           ('\u059A',    # HEBREW ACCENT YETIV
+            '\u05AD'),   # HEBREW ACCENT DEHI
+           ('\u0593',    # HEBREW ACCENT SHALSHELET
+            '\u0594',    # HEBREW ACCENT ZAQEF QATAN
+            '\u0595',    # HEBREW ACCENT ZAQEF GADOL
+            '\u0597',    # HEBREW ACCENT REVIA
+            '\u0598',    # HEBREW ACCENT ZARQA
+            '\u059F',    # HEBREW ACCENT QARNEY PARA
+            '\u059E',    # HEBREW ACCENT GERSHAYIM
+            '\u059D',    # HEBREW ACCENT GERESH MUQDAM
+            '\u059C',    # HEBREW ACCENT GERESH
+            '\u05A0',    # HEBREW ACCENT TELISHA GEDOLA
+            '\u05AC',    # HEBREW ACCENT ILUY
+            '\u05A8',    # HEBREW ACCENT QADMA (AZLA)
+            '\u05AB',    # HEBREW ACCENT OLE
+            '\u05A1',    # HEBREW ACCENT PAZER
+            '\u0307',    # COMBINING DOT ABOVE
+            '\u05C4',    # HEBREW MARK UPPER DOT
+            '\u05AF'),   # HEBREW MARK MASORA CIRCLE
+           ('\u0592',    # HEBREW ACCENT SEGOL (SEGOLTA)
+            '\u0599',    # HEBREW ACCENT PASHTA
+            '\u05A9',    # HEBREW ACCENT TELISHA QETANA
+            '\u05AE'))   # HEBREW ACCENT ZINOR
+    # noinspection SpellCheckingInspection
+    arabic_priority_list \
+        = (('\u0654',    # ARABIC HAMZA ABOVE
+            '\u0655'),   # ARABIC HAMZA BELOW
+           ('\u0651',),  # ARABIC SHADDA
+           ('\u064E',    # ARABIC FATHA
+            '\u064F',    # ARABIC DAMMA
+            '\u0650',    # ARABIC KASRA
+            '\u0652',    # ARABIC SUKUN
+            '\u064B',    # ARABIC FATHATAN
+            '\u064C',    # ARABIC DAMMATAN
+            '\u064D'))   # ARABIC KASRATAN
+    latin_priority_list \
+        = (('\u0308',),  # COMBINING DIAERESIS
+           ('\u031B',    # COMBINING HORN Vietnamese
+            '\u0306',    # COMBINING BREVE
+            '\u0303',    # COMBINING TILDE
+            '\u0304',    # COMBINING MACRON
+            '\u030C',    # COMBINING CARON
+            '\u0313',    # COMBINING COMMA ABOVE
+            '\u0314',    # COMBINING REVERSED COMMA ABOVE
+            '\u0323'),   # COMBINING DOT BELOW
+           ('\u0300',    # COMBINING GRAVE ACCENT
+            '\u0301',    # COMBINING ACUTE ACCENT
+            '\u0302',    # COMBINING CIRCUMFLEX ACCENT
+            '\u030B',    # COMBINING DOUBLE ACUTE ACCENT
+            '\u030F'),   # COMBINING DOUBLE GRAVE ACCENT
+           ('\u0327',),  # COMBINING CEDILLA
+           ('\u0328',),  # COMBINING OGONEK
+           ('\u0331',),  # COMBINING MACRON BELOW
+           ('\u0316',    # COMBINING GRAVE ACCENT BELOW
+            '\u0317'))   # COMBINING ACUTE ACCENT BELOW
+    # noinspection SpellCheckingInspection
+    syriac_priority_list \
+        = (('\u073C',),  # SYRIAC HBASA-ESASA DOTTED
+           ('\u0330',),  # COMBINING TILDE BELOW
+           ('\u0308',),  # COMBINING DIAERESIS
+           ('\u0742',),  # SYRIAC RUKKAKHA (indicates an aspirated pronunciation)
+           ('\u0730',    # SYRIAC PTHAHA ABOVE - Syriac points (vowels)
+            '\u0731',    # SYRIAC PTHAHA BELOW
+            '\u0732',    # SYRIAC PTHAHA DOTTED
+            '\u0733',    # SYRIAC ZQAPHA ABOVE
+            '\u0734',    # SYRIAC ZQAPHA BELOW
+            '\u0735',    # SYRIAC ZQAPHA DOTTED
+            '\u0736',    # SYRIAC RBASA ABOVE
+            '\u0737',    # SYRIAC RBASA BELOW
+            '\u0738',    # SYRIAC DOTTED ZLAMA HORIZONTAL
+            '\u0739',    # SYRIAC DOTTED ZLAMA ANGULAR
+            '\u073A',    # SYRIAC HBASA ABOVE
+            '\u073B',    # SYRIAC HBASA BELOW
+            '\u073D',    # SYRIAC ESASA ABOVE
+            '\u073E',    # SYRIAC ESASA BELOW
+            '\u073F'))   # SYRIAC RWAHA
+    # noinspection SpellCheckingInspection
+    myanmar_priority_list \
+        = (('\u1037',),  # MYANMAR SIGN DOT BELOW (a tone mark: creaky)
+           ('\u103A',))  # MYANMAR SIGN ASAT ("no vowel", virama)
+    priority_list = {'Hebrew': hebrew_priority_list,
+                     'Arabic': arabic_priority_list,
+                     'Latin': latin_priority_list,
+                     'Syriac': syriac_priority_list,
+                     'Myanmar': myanmar_priority_list}
+    priority_dict = {}  # keys are tuples: (script, letter); values are integers (priorities)
+    letter_modifiers_dict = defaultdict(str)  # keys are: script; values are: string (consisting of letter modifiers)
+    cache = {}
+
+    @staticmethod
+    def __init__():
+        for script in OrderLetterModifiers.priority_list:
+            for priority, priority_group in enumerate(OrderLetterModifiers.priority_list[script]):
+                for letter_modifier in priority_group:
+                    OrderLetterModifiers.priority_dict[(script, letter_modifier)] = priority
+                    OrderLetterModifiers.letter_modifiers_dict[script] += letter_modifier
+
+    @staticmethod
+    def char_unicode_names(s: str) -> str:
+        result = ''
+        for c in s:
+            result += f"{c}  U+{ord(c):04X}  {ud.name(c, '')}\n"
+        return result
+
+    @staticmethod
+    def sort_letter_modifiers(s: str, script: str) -> str:
+        if (cache_result := OrderLetterModifiers.cache.get(s)) is not None:
+            return cache_result
+        else:
+            sorted_modifiers = ''.join(sorted(s, key=lambda x: OrderLetterModifiers.priority_dict.get((script, x), 99)))
+            OrderLetterModifiers.cache[s] = sorted_modifiers
+            return sorted_modifiers
+
+    @staticmethod
+    def sort_letter_modifiers_in_line(s: str, script: str) -> str:
+        result = ''
+        rest = s
+        if script == 'Latin':
+            re1 = f'(.*?)(\\pL[{OrderLetterModifiers.letter_modifiers_dict[script]}]+)(.*)$'
+        else:
+            rep = '{2,}'
+            re1 = f'(.*?)([{OrderLetterModifiers.letter_modifiers_dict[script]}]{rep})(.*)$'
+        while m3 := regex.match(re1, rest):
+            pre, group, rest = m3.group(1, 2, 3)
+            if script == 'Latin':
+                if m2 := regex.match(r'(\pL*)(\pM*)$', ud.normalize('NFD', group)):
+                    ordered_group = m2.group(1) + OrderLetterModifiers.sort_letter_modifiers(m2.group(2), script)
+                else:
+                    ordered_group = group
+            else:
+                ordered_group = OrderLetterModifiers.sort_letter_modifiers(group, script)
+            result += pre + ordered_group
+        result += rest
+        return result
+
+
 class Wildebeest:
     # noinspection PyPep8
+    # noinspection SpellCheckingInspection
     def __init__(self):
         # The following dictionary captures the irregular mappings from Windows1252 to UTF8.
         self.all_norm_elems = [
-            'repair-encoding-errors', 'del-surrogate', 'del-zero-width', 'del-ctrl-char',
-            'del-tatweel', 'del-arabic-diacr', 'del-hebrew-diacr', 'core-compat', 'pres-form', 'ligatures',
+            'repair-encoding-errors', 'del-surrogate', 'del-zero-width', 'del-ctrl-char', 'del-tatweel',
+            'del-arabic-diacr', 'del-hebrew-points', 'del-hebrew-accents', 'core-compat', 'pres-form', 'ligatures',
             'signs-and-symbols', 'cjk', 'width', 'font', 'small', 'vertical', 'enclosure', 'hangul',
-            'repair-combining', 'combining-compose', 'combining-decompose',
+            'repair-combining', 'order-hebrew-letter-modifiers', 'order-arabic-letter-modifiers',
+            'order-latin-letter-modifiers', 'order-syriac-letter-modifiers', 'order-myanmar-letter-modifiers',
+            'combining-compose', 'combining-decompose',
             'punct', 'punct-dash', 'punct-arabic', 'punct-cjk', 'punct-greek', 'punct-misc-f',
             'space', 'digit', 'arabic-char', 'farsi-char', 'pashto-char', 'georgian-char',
             'look-alike', 'repair-xml', 'repair-url-escapes', 'repair-token']
         self.default_norm_elems = [
-            'repair-encoding-errors', 'del-surrogate', 'del-ctrl-char', 'del-tatweel',
-            'core-compat', 'pres-form', 'hangul', 'repair-combining', 'combining-compose',
-            'combining-decompose', 'repair-xml', 'repair-url-escapes']
-        # noinspection SpellCheckingInspection
+            'del-surrogate', 'del-ctrl-char', 'del-tatweel', 'del-hebrew-accents', 'pres-form', 'hangul',
+            'repair-combining', 'order-hebrew-letter-modifiers', 'order-arabic-letter-modifiers',
+            'order-latin-letter-modifiers', 'order-syriac-letter-modifiers', 'order-myanmar-letter-modifiers',
+            'combining-compose', 'combining-decompose', 'repair-xml', 'repair-url-escapes']
         self.spec_windows1252_to_utf8_dict = {
             '\x80': '\u20AC',  # Euro Sign
             #  81 is unassigned in Windows-1252
@@ -130,7 +312,7 @@ class Wildebeest:
             '\x96': '\u2013',  # En Dash
             '\x97': '\u2014',  # Em Dash
             '\x98': '\u02DC',  # Small Tilde
-            '\x99': '\u2122',  # Trade Mark Sign
+            '\x99': '\u2122',  # Trademark Symbol
             '\x9A': '\u0161',  # Latin Small Letter S With Caron
             '\x9B': '\u203A',  # Single Right-Pointing Angle Quotation Mark
             '\x9C': '\u0153',  # Latin Small Ligature OE
@@ -144,7 +326,7 @@ class Wildebeest:
         self.lv = 0
         bit_vector = 1
         self.char_is_deletable_control_character = bit_vector
-        bit_vector = 1
+        bit_vector = bit_vector << 1
         self.char_is_zero_width_character = bit_vector
         bit_vector = bit_vector << 1
         self.char_is_decomposable_ligature = bit_vector
@@ -249,7 +431,7 @@ class Wildebeest:
         # Initialize general mapping dictionary, which normalizes source strings (of length 1-3 characters)
         # to target strings (of length 0-5 characters).
         self.mapping_dict = {}
-        self.init_mapping_dict()
+        # self.init_mapping_dict()
         self.look_alike_dict = {}
         self.look_alike_unchanged_dict = {}
         self.look_alike_split_dict = {}
@@ -257,8 +439,24 @@ class Wildebeest:
         self.look_alike_scripts = ['Latin', 'Greek', 'Cyrillic']
         self.repair_tok_punct_arabic_match = re.compile(r"([-_+*|%0-9]+)([\u0600-\u06FF])")
         self.repair_tok_arabic_punct_match = re.compile(r"([\u0600-\u06FF])([-_+*|%0-9]+)")
-        self.georgian_intab = "\u1C90\u1C91\u1C92\u1C93\u1C94\u1C95\u1C96\u1C97\u1C98\u1C99\u1C9A\u1C9B\u1C9C\u1C9D\u1C9E\u1C9F\u1CA0\u1CA1\u1CA2\u1CA3\u1CA4\u1CA5\u1CA6\u1CA7\u1CA8\u1CA9\u1CAA\u1CAB\u1CAC\u1CAD\u1CAE\u1CAF\u1CB0\u1CB1\u1CB2\u1CB3\u1CB4\u1CB5\u1CB6\u1CB7\u1CB8\u1CB9\u1CBA\u1CBD\u1CBE\u1CBF\u10A0\u10A1\u10A2\u10A3\u10A4\u10A5\u10A6\u10A7\u10A8\u10A9\u10AA\u10AB\u10AC\u10AD\u10AE\u10AF\u10B0\u10B1\u10B2\u10B3\u10B4\u10B5\u10B6\u10B7\u10B8\u10B9\u10BA\u10BB\u10BC\u10BD\u10BE\u10BF\u10C0\u10C1\u10C2\u10C3\u10C4\u10C5\u10C7\u10CD\u2D00\u2D01\u2D02\u2D03\u2D04\u2D05\u2D06\u2D07\u2D08\u2D09\u2D0A\u2D0B\u2D0C\u2D0D\u2D0E\u2D0F\u2D10\u2D11\u2D12\u2D13\u2D14\u2D15\u2D16\u2D17\u2D18\u2D19\u2D1A\u2D1B\u2D1C\u2D1D\u2D1E\u2D1F\u2D20\u2D21\u2D22\u2D23\u2D24\u2D25\u2D27\u2D2D"
-        self.georgian_outtab = "\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F6\u10F7\u10F8\u10F9\u10FA\u10FD\u10FE\u10FF\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F7\u10FD\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F7\u10FD"
+        self.georgian_intab \
+            = ("\u1C90\u1C91\u1C92\u1C93\u1C94\u1C95\u1C96\u1C97\u1C98\u1C99\u1C9A\u1C9B\u1C9C\u1C9D\u1C9E\u1C9F"
+               "\u1CA0\u1CA1\u1CA2\u1CA3\u1CA4\u1CA5\u1CA6\u1CA7\u1CA8\u1CA9\u1CAA\u1CAB\u1CAC\u1CAD\u1CAE\u1CAF"
+               "\u1CB0\u1CB1\u1CB2\u1CB3\u1CB4\u1CB5\u1CB6\u1CB7\u1CB8\u1CB9\u1CBA\u1CBD\u1CBE\u1CBF\u10A0\u10A1"
+               "\u10A2\u10A3\u10A4\u10A5\u10A6\u10A7\u10A8\u10A9\u10AA\u10AB\u10AC\u10AD\u10AE\u10AF\u10B0\u10B1"
+               "\u10B2\u10B3\u10B4\u10B5\u10B6\u10B7\u10B8\u10B9\u10BA\u10BB\u10BC\u10BD\u10BE\u10BF\u10C0\u10C1"
+               "\u10C2\u10C3\u10C4\u10C5\u10C7\u10CD\u2D00\u2D01\u2D02\u2D03\u2D04\u2D05\u2D06\u2D07\u2D08\u2D09"
+               "\u2D0A\u2D0B\u2D0C\u2D0D\u2D0E\u2D0F\u2D10\u2D11\u2D12\u2D13\u2D14\u2D15\u2D16\u2D17\u2D18\u2D19"
+               "\u2D1A\u2D1B\u2D1C\u2D1D\u2D1E\u2D1F\u2D20\u2D21\u2D22\u2D23\u2D24\u2D25\u2D27\u2D2D")
+        self.georgian_outtab \
+            = ("\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF"
+               "\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF"
+               "\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F6\u10F7\u10F8\u10F9\u10FA\u10FD\u10FE\u10FF\u10D0\u10D1"
+               "\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1"
+               "\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1"
+               "\u10F2\u10F3\u10F4\u10F5\u10F7\u10FD\u10D0\u10D1\u10D2\u10D3\u10D4\u10D5\u10D6\u10D7\u10D8\u10D9"
+               "\u10DA\u10DB\u10DC\u10DD\u10DE\u10DF\u10E0\u10E1\u10E2\u10E3\u10E4\u10E5\u10E6\u10E7\u10E8\u10E9"
+               "\u10EA\u10EB\u10EC\u10ED\u10EE\u10EF\u10F0\u10F1\u10F2\u10F3\u10F4\u10F5\u10F7\u10FD")
         self.georgian_trantab = str.maketrans(self.georgian_intab, self.georgian_outtab)
 
     def windows1252_to_utf8_char(self, index: int) -> str:
@@ -275,6 +473,7 @@ class Wildebeest:
         if verbose:
             log.info(f'map-{loc} {index} {key} -> {value}   byte_string:{byte_string}')
 
+    # noinspection SpellCheckingInspection
     def range_init_char_type_vector_dict(self) -> None:
         # Deletable control characters
         for code_point in chain(range(0x0000, 0x0009), range(0x000B, 0x000D), range(0x000E, 0x0020), [0x007F],  # C0
@@ -351,7 +550,7 @@ class Wildebeest:
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_hebrew
-        for code_point in chain(range(0x05B0, 0x05BE), [0x05BF, 0x05C1, 0x05C2, 0x05C7]):
+        for code_point in chain(range(0x0590, 0x05BE), [0x0323, 0x05BF, 0x05C1, 0x05C2, 0x05C4, 0x05C5, 0x05C7]):
             char = chr(code_point)
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_deletable_hebrew_diacritic
@@ -432,8 +631,16 @@ class Wildebeest:
             self.char_type_vector_dict[char] \
                 = self.char_type_vector_dict.get(char, 0) | self.char_is_lisu_plus
 
+    @staticmethod
+    def char_unicode_names(s: str) -> str:
+        result = ''
+        for c in s:
+            result += f"{c}  U+{ord(c):04X}  {ud.name(c, '')}\n"
+        return result
+
     def load_look_alike_file(self) -> None:
         """Loads entries of characters that look alike, e.g. 'AΑА' (Latin A, Greek Α, Cyrillic А respectively)"""
+        # noinspection SpellCheckingInspection
         look_alike_filename = os.path.join(data_dir_path, 'look-alikes.txt')
         line_number = 0
         n_entries = 0
@@ -468,7 +675,7 @@ class Wildebeest:
                                             line_contains_entry = True
                 if line_contains_entry:
                     n_entries += 1
-            # log.info(f'Loaded {n_entries} entries from {look_alike_filename}')
+            # # log.info(f"Loaded {n_entries} entries from {look_alike_filename}")
 
     def update_char_type_vector_dict(self, source: str, target: str, filename_core: str) -> None:
         if filename_core == 'Digit':
@@ -502,7 +709,7 @@ class Wildebeest:
                     self.char_type_vector_dict[source] \
                         = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_arabic_punctuation
                 elif ((0x3008 <= code_point <= 0x3011) or (0x3014 <= code_point <= 0x301B)  # Chinese brackets
-                        or (0xFF61 <= code_point <= 0xFF64)  # Chinese halfwidth punctuation
+                        or (0xFF61 <= code_point <= 0xFF64)  # Chinese half-width punctuation
                         or (code_point in [0x3001, 0x3002, 0xFE11, 0xFE12, 0xFE51])):  # periods, commas
                     self.char_type_vector_dict[source] \
                         = self.char_type_vector_dict.get(source, 0) | self.char_is_decomposable_cjk_punctuation
@@ -532,7 +739,7 @@ class Wildebeest:
                 log.info('Unexpected CombiningModifier entry {source}/{target}')
 
     # noinspection SpellCheckingInspection
-    def init_mapping_dict(self, undef_default: str = '') -> None:
+    def init_mapping_dict(self, ht: dict, undef_default: str = '') -> None:
         """Initialize mapping_dict that maps from various misencodings to proper UTF8."""
         # Misencodings that resulted from missing conversion from Windows1252/Latin1 to UTF8.
         # Control characters section in surrogate code block
@@ -558,6 +765,10 @@ class Wildebeest:
                              'EnclosureMapping.tsv',
                              'EncodingRepairMapping.tsv',
                              'FontSmallVerticalMapping.tsv'):
+            if ht.get('SKIP-digit', False) and tsv_filename == 'DigitMapping.tsv':
+                continue  # TODO check for more such files to skip
+            if ht.get('SKIP-core-compat', False) and tsv_filename == 'CoreCompatibilityMapping.tsv':
+                continue  # TODO check for more such files to skip
             filename_core = tsv_filename.replace('Mapping.tsv', '')
             full_tsv_filename = os.path.join(data_dir_path, tsv_filename)
             filenames_considered = [full_tsv_filename]
@@ -577,7 +788,7 @@ class Wildebeest:
                 log.error(f"Could not open {' or '.join(filenames_considered)}")
 
     def apply_mapping_dict(self, match: Match[str]) -> str:
-        """Maps substring resulting from misencoding to repaired UTF8."""
+        """Maps substring resulting from mis-encoding to repaired UTF8."""
         s = match.group()
         if s in self.mapping_dict:
             return self.mapping_dict[s]
@@ -602,7 +813,7 @@ class Wildebeest:
     # noinspection SpellCheckingInspection
     @staticmethod
     def delete_surrogates(s: str, default: str = '') -> str:
-        """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters \uDC80-\uDCFF])."""
+        """As an alternative or backup to windows1252_to_utf8, delete all surrogate characters [\uDC80-\uDCFF])."""
         return re.sub(r"[\uDC80-\uDCFF]", default, s)
 
     @staticmethod
@@ -616,8 +827,9 @@ class Wildebeest:
 
     @staticmethod
     def delete_arabic_tatweel(s: str) -> str:
-        """Deletes Arabic tatweel"""
-        s = s.replace('\u0640', '')  # Arabic tatweel
+        """Deletes any Arabic tatweel next to letters"""
+        s = regex.sub('(?V1)([\\pL--\u0640]\\pM*)\u0640+', r'\1', s)  # Arabic tatweel
+        s = regex.sub('(?V1)\u0640+([\\pL--\u0640])', r'\1', s)  # Arabic tatweel
         return s
 
     @staticmethod
@@ -633,6 +845,7 @@ class Wildebeest:
         # noinspection SpellCheckingInspection
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def delete_arabic_diacritics(s: str) -> str:
         s = s.replace('\u064B', '')  # delete Arabic fathatan
@@ -645,8 +858,9 @@ class Wildebeest:
         s = s.replace('\u0652', '')  # delete Arabic sukun
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
-    def delete_hebrew_diacritics(s: str) -> str:
+    def delete_hebrew_points(s: str) -> str:
         s = s.replace('\u05B0', '')  # HEBREW POINT SHEVA
         s = s.replace('\u05B1', '')  # HEBREW POINT HATAF SEGOL
         s = s.replace('\u05B2', '')  # HEBREW POINT HATAF PATAH
@@ -669,9 +883,19 @@ class Wildebeest:
 
     # noinspection SpellCheckingInspection
     @staticmethod
+    def delete_hebrew_accents(s: str) -> str:
+        s = regex.sub(r'[\u0591-\u05AE]', '', s)       # HEBREW ACCENTs, e.g. cantiallation marks in Hebrew Bible
+        s = regex.sub(r'[\u05AF\u05C4\u05C5\u05BD]', '', s)  # HEBREW MARKs: MASORA CIRCLE, UPPER DOT, LOWER DOT; METEG
+        # When precede3d by a Hebrew letter/letter modifier,
+        #    remove COMBINING DOT BELOW, COMBINING GRAPHEME JOINER, ZERO WIDTH NON-JOINER, ZERO WIDTH JOINER
+        s = regex.sub(r'(?<=[\u0591-\u05F4])[\u0323\u034F\u200C\u200D]', '', s)
+        return s
+
+    # noinspection SpellCheckingInspection
+    @staticmethod
     def normalize_arabic_characters(s: str) -> str:
         # For any additions below, also update setting of char_is_mappable_in_arabic
-        # Some of the below, particularly the alef maksura, might be too aggressive. Too be verified.
+        # Some of the below, particularly the alef maksura, might be too aggressive. To be verified.
         #    More conservative: keep alef maksura and map final/isolated Farsi yeh to alef maksura.
         # s = s.replace('\u0649', '\u064A')  # alef maksura to yeh
         s = s.replace('\u06A9', '\u0643')  # Farsi kaf/keheh to (Arabic) kaf
@@ -704,6 +928,7 @@ class Wildebeest:
         s = s.replace('\u06CD', '\u064A')  # (Pashto) yeh with tail to yeh
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_pashto_characters(s: str) -> str:
         # For any additions below, also update setting of char_is_mappable_in_pashto
@@ -767,6 +992,7 @@ class Wildebeest:
         s = s.replace('\uFB4F', '\u05D0\u05DC')  # U+FB4F HEBREW LIGATURE ALEF LAMED ﭏ -> אל
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_signs_and_symbols(s: str) -> str:
         s = s.replace('\u00B5', '\u03BC')        # U+00B5 MICRO SIGN µ -> μ (GREEK SMALL LETTER MU)
@@ -804,6 +1030,7 @@ class Wildebeest:
         s = re.sub(r'[\U0001F190\U0001F200\U0002F800-\U0002FA1F]', self.apply_mapping_dict, s)
         return s
 
+    # noinspection SpellCheckingInspection
     def apply_combining_modifiers_compose(self, s: str) -> str:
         """
         Combines 2 Unicode characters (incl. combining modifier) into one Unicode character, e.g. ö (o +  ̈) -> ö
@@ -838,6 +1065,7 @@ class Wildebeest:
             s = re.sub(r'[\U0001D100-\U0001D1FF]', self.apply_mapping_dict, s)
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def hangul_jamo_triple_to_syllable(leading_jamo: str, vowel_jamo: str, trailing_jamo: str) -> str:
         """
@@ -866,6 +1094,32 @@ class Wildebeest:
                        self.hangul_jamo_triple_match_to_syllable, s)
         return s
 
+    def order_hebrew_letter_modifiers(self, s: str) -> str:
+        if self.lv & self.char_is_hebrew:
+            s = OrderLetterModifiers.sort_letter_modifiers_in_line(s, "Hebrew")
+        return s
+
+    def order_arabic_letter_modifiers(self, s: str) -> str:
+        if self.lv & self.char_is_arabic:
+            s = OrderLetterModifiers.sort_letter_modifiers_in_line(s, "Arabic")
+        return s
+
+    def order_latin_letter_modifiers(self, s: str) -> str:
+        if (self.lv & self.char_is_composable_combining_diacritic) and (self.lv & self.char_is_latin):
+            s = OrderLetterModifiers.sort_letter_modifiers_in_line(s, "Latin")
+        return s
+
+    def order_syriac_letter_modifiers(self, s: str) -> str:
+        if self.lv & self.char_is_thaana_plus:
+            s = OrderLetterModifiers.sort_letter_modifiers_in_line(s, "Syriac")
+        return s
+
+    def order_myanmar_letter_modifiers(self, s: str) -> str:
+        if self.lv & self.char_is_thai_plus:
+            s = OrderLetterModifiers.sort_letter_modifiers_in_line(s, "Myanmar")
+        return s
+
+    # noinspection SpellCheckingInspection
     def repair_combining_modifiers_with_nukta(self, s: str) -> str:
         """This function repairs the order of combining modifiers."""
         # If an Indic vowel-sign (incl. virama) is followed by a nukta, reverse the order of the two diacritics.
@@ -945,6 +1199,7 @@ class Wildebeest:
         s = s.replace('\u06D4', '.')        # U+06D4 Arabic full stop
         return s
 
+    # noinspection SpellCheckingInspection
     @staticmethod
     def normalize_greek_punctuation(s: str) -> str:
         s = s.replace('\u0340', '\u0300')   # U+0340 combining grave tone mark -> combining grave accent
@@ -1230,13 +1485,13 @@ class Wildebeest:
                     or re.match(r'(?:https?://)?[\u0400-\u04FF][-_./0-9\u0400-\u04FF]*'
                                 r'\.(bg|by|me|mk|kg|kz|rs|ru|tj|tm|ua|uz|com|info)$', s))
 
-    def map_look_alikes_to_script(self, s: str, source_script: str, target_script: str) -> str:
+    def map_lookalikes_to_script(self, s: str, source_script: str, target_script: str) -> str:
         result = ''
         for char in s:
             result += self.look_alike_dict.get(f'{source_script} {target_script} {char}', char)
         return result
 
-    def correct_look_alikes(self, s: str) -> str:
+    def correct_lookalikes(self, s: str) -> str:
         # orig_s = s
         result = ''
         while True:
@@ -1276,13 +1531,13 @@ class Wildebeest:
                           and stat_dict.get('Cyrillic', 0) >= 3):
                         target_script = 'Cyrillic'
                     else:
-                        lat_token = self.map_look_alikes_to_script(orig_token, 'Cyrillic', 'Latin')
+                        lat_token = self.map_lookalikes_to_script(orig_token, 'Cyrillic', 'Latin')
                         if (lat_token in ['SpA', 'USA']
                             or (len(orig_token) >= 2
                                 and re.match(r'(?:X|XX|XXX|XL|L|LX|LXX|LXXX|XC|)(?:I|II|III|IV|V|VI|VII|VIII|IX|)$',
                                              lat_token))):
                             target_script = 'Latin'
-                        cyr_token = self.map_look_alikes_to_script(orig_token, 'Latin', 'Cyrillic')
+                        cyr_token = self.map_lookalikes_to_script(orig_token, 'Latin', 'Cyrillic')
                         if cyr_token in ['әр', 'Әр', 'әрі', 'сі', 'Сі', 'іс', 'Іс', 'ісі', 'ірі']:
                             target_script = 'Cyrillic'
                 if target_script:
@@ -1294,6 +1549,7 @@ class Wildebeest:
                     key = 'n-to-' + target_script
                     self.look_alike_dict[key] = self.look_alike_dict.get(key, 0) + 1
                 else:
+                    # noinspection SpellCheckingInspection
                     retok_orig_token = self.tokenize_mixed_script_tokens(orig_token)
                     if retok_orig_token != orig_token:
                         token = retok_orig_token
@@ -1341,6 +1597,7 @@ class Wildebeest:
             orig_s = s
             s = group_function(s)
             if s != orig_s:
+                # # print(f"NCS {group_name}\nOrig: {orig_s}\nNow: {s}")
                 count_key = f'COUNT-{group_name}'
                 count = self.increment_dict_count(ht, count_key)
                 if loc_id and (count <= 20):
@@ -1359,7 +1616,13 @@ class Wildebeest:
                 # If not, some Arabic-specific normalization steps can be skipped to improve run-time.
                 self.lv = self.lv | char_type_vector
 
-    # noinspection SpellCheckingInspection,SpellCheckingInspection
+    def update_lv(self, s: str) -> None:
+        for char in s:
+            char_type_vector = self.char_type_vector_dict.get(char, 0)
+            if char_type_vector:
+                self.lv = self.lv | char_type_vector
+
+    # noinspection SpellCheckingInspection
     def norm_clean_string(self, s: str, ht: dict, lang_code: str = '', loc_id: str = '') -> str:
         # log.info(f'ht: {ht}')
         """Go through a list of applicable normalization/cleaning steps and keep track of the number of changes."""
@@ -1382,7 +1645,8 @@ class Wildebeest:
         if self.lv & self.char_is_deletable_arabic_diacritic:
             s = self.ncs_group(s, ht, 'del-arabic-diacr', self.delete_arabic_diacritics, loc_id)
         if self.lv & self.char_is_deletable_hebrew_diacritic:
-            s = self.ncs_group(s, ht, 'del-hebrew-diacr', self.delete_hebrew_diacritics, loc_id)
+            s = self.ncs_group(s, ht, 'del-hebrew-accents', self.delete_hebrew_accents, loc_id)
+            s = self.ncs_group(s, ht, 'del-hebrew-points', self.delete_hebrew_points, loc_id)
         if self.lv & self.char_is_core_compatibility:
             s = self.ncs_group(s, ht, 'core-compat', self.normalize_core_compat_characters, loc_id)
         if self.lv & self.char_is_arabic_presentation_form:
@@ -1403,13 +1667,26 @@ class Wildebeest:
             s = self.ncs_group(s, ht, 'enclosure', self.normalize_enclosure_characters, loc_id)
         if self.lv & self.char_is_mappable_hangul:
             s = self.ncs_group(s, ht, 'hangul', self.normalize_hangul, loc_id)
+        if self.lv & self.char_is_decomposable_with_combining:
+            s = self.ncs_group(s, ht, 'combining-decompose', self.apply_combining_modifiers_decompose, loc_id)
         if self.lv & self.char_is_nukta:
             s = self.ncs_group(s, ht, 'repair-combining', self.repair_combining_modifiers_with_nukta, loc_id)
+        if self.lv & self.char_is_hebrew:
+            s = self.ncs_group(s, ht, 'order-hebrew-letter-modifiers', self.order_hebrew_letter_modifiers, loc_id)
+        if self.lv & self.char_is_arabic:
+            s = self.ncs_group(s, ht, 'order-arabic-letter-modifiers', self.order_arabic_letter_modifiers, loc_id)
+        if (self.lv & self.char_is_composable_combining_diacritic) and (self.lv & self.char_is_latin):
+            orig_s = s
+            s = self.ncs_group(s, ht, 'order-latin-letter-modifiers', self.order_latin_letter_modifiers, loc_id)
+            if s != orig_s:
+                self.update_lv(s)
+        if self.lv & self.char_is_thaana_plus:
+            s = self.ncs_group(s, ht, 'order-syriac-letter-modifiers', self.order_syriac_letter_modifiers, loc_id)
+        if self.lv & self.char_is_thai_plus:
+            s = self.ncs_group(s, ht, 'order-myanmar-letter-modifiers', self.order_myanmar_letter_modifiers, loc_id)
         if (self.lv & self.char_is_composable_anchor_with_combining) \
                 and (self.lv & self.char_is_composable_combining_diacritic):
             s = self.ncs_group(s, ht, 'combining-compose', self.apply_combining_modifiers_compose, loc_id)
-        if self.lv & self.char_is_decomposable_with_combining:
-            s = self.ncs_group(s, ht, 'combining-decompose', self.apply_combining_modifiers_decompose, loc_id)
         if self.lv & self.char_is_core_compatibility:
             s = self.ncs_group(s, ht, 'punct', self.normalize_punctuation, loc_id)
         if self.lv & self.char_is_decomposable_arabic_punctuation:
@@ -1443,7 +1720,7 @@ class Wildebeest:
             if self.lv & script_lv:
                 n_scripts += 1
         if n_scripts >= 2:
-            s = self.ncs_group(s, ht, 'look-alike', self.correct_look_alikes, loc_id)
+            s = self.ncs_group(s, ht, 'look-alike', self.correct_lookalikes, loc_id)
         if (self.lv & self.char_is_ampersand) and (self.lv & self.char_is_semicolon):
             s = self.ncs_group(s, ht, 'repair-xml', self.repair_xml, loc_id)
         if self.lv & self.char_is_percent_sign:
@@ -1472,14 +1749,14 @@ class Wildebeest:
                              add: Optional[List[str]] = None) -> dict:
         """Builds dictionary which lists which specific normalization steps should be skipped"""
         if base == 'NONE':
-            base_elems = []
+            base_elements = []
         elif base == 'ALL':
-            base_elems = self.all_norm_elems
+            base_elements = self.all_norm_elems
         else:  # base == 'DEFAULT'
-            base_elems = self.default_norm_elems
+            base_elements = self.default_norm_elems
         norm_step_dict = {}
         for norm_elem in self.all_norm_elems:
-            norm_step_dict[f'SKIP-{norm_elem}'] = (norm_elem not in base_elems)
+            norm_step_dict[f'SKIP-{norm_elem}'] = (norm_elem not in base_elements)
         if skip:
             for norm_elem in skip:
                 norm_step_dict[f'SKIP-{norm_elem}'] = True
@@ -1498,6 +1775,7 @@ def listify_by_comma(s: str) -> list:
 def main():
     """Wrapper around normalization/cleaning that takes care of argument parsing and prints change stats to STDERR."""
     wb = Wildebeest()
+    wb.order_letter_mods = OrderLetterModifiers()
     # additional_norm_elems = all_norm_elems - default_norm_elems
     additional_norm_elems = [elem for elem in wb.all_norm_elems if elem not in wb.default_norm_elems]
     # parse arguments
@@ -1576,6 +1854,7 @@ def main():
     # Add a little language code robustness for Persian language code, more comprehensive solution to come
     if lang_code == 'fa':
         lang_code = 'fas'
+    wb.init_mapping_dict(ht)
     start_time = datetime.datetime.now()
     if args.verbose:
         log.info(f'Start: {start_time}')
