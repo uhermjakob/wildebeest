@@ -13,6 +13,7 @@ data/log-diff*
 dist
 profile
 scripts
+runs/
 test/data/kat*
 test/data/kaz*
 test/data/3S*
